@@ -1,4 +1,4 @@
-.PHONY: help up down logs ps build db-init db-migrate seed test test-backend test-frontend typecheck lint worker demo
+.PHONY: help up down logs ps build db-init db-migrate seed seed-calculator user test test-backend test-frontend typecheck lint worker demo
 
 help:
 	@echo "up            — поднять весь стек (postgres+postgis, redis, api, worker, web)"
@@ -7,10 +7,14 @@ help:
 	@echo "db-revision   — создать миграцию autogenerate (m='название')"
 	@echo "seed          — загрузить демонстрационный набор"
 	@echo "demo          — пересоздать data/seed/demo_bundle.json"
+	@echo "seed-calculator — таблицы и данные калькулятора сделок (модуль 3)"
+	@echo "user          — make user email=me@example.com: пользователь + секрет 2FA"
 	@echo "test          — тесты backend и frontend"
 	@echo "typecheck     — tsc --noEmit"
 
-COMPOSE := docker compose -f infra/docker/docker-compose.yml --env-file .env
+# Пути в docker-compose.yml заданы от папки infra (../backend, ../.env), поэтому она —
+# каталог проекта; .env берётся из корня репозитория.
+COMPOSE := docker compose -f infra/docker/docker-compose.yml --project-directory infra --env-file "$(CURDIR)/.env"
 
 up:
 	$(COMPOSE) up --build -d
@@ -40,6 +44,13 @@ seed:
 
 demo:
 	python3 infra/scripts/make_demo_bundle.py
+
+seed-calculator:  ## калькулятор сделок: таблицы calc_* (и недостающие остальные) + данные кейса
+	$(COMPOSE) exec backend python -m modules.deal_calculator.seed --create-all
+
+user:  ## make user email=me@example.com [role=manager] — спросит пароль, покажет секрет 2FA
+	$(COMPOSE) exec backend python -m app.cli create-user --email $(email) --role $(or $(role),manager)
+	$(COMPOSE) exec backend python -m app.cli enable-2fa --email $(email)
 
 worker:
 	$(COMPOSE) up -d worker
