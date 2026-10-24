@@ -1,223 +1,189 @@
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 
-import { api, downloadBlob } from '@/api/client';
-import { ErrorState, QualityBadge, Warning } from '@/components/states';
-import type { DealEstimate } from '@/types/api';
-
-const schema = z.object({
-  project_type: z.string().min(2, 'Выберите тип проекта'),
-  scale: z.string().min(2, 'Укажите масштаб'),
-  works: z.string().optional(),
-  equipment: z.string().optional(),
-  software: z.string().optional(),
-  urgency: z.enum(['normal', 'high', 'critical']),
-  has_unique_solution: z.boolean().optional(),
-});
-
-type FormValues = z.infer<typeof schema>;
-
-const splitList = (value?: string) =>
-  (value ?? '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
+import { ErrorState, Loading, Warning } from '@/components/states';
+import { calculatorApi } from '@/features/calculator/api';
+import '@/features/calculator/calculator.css';
+import { emptyForm, type FormState, ParamsForm } from '@/features/calculator/ParamsForm';
+import { ResultView } from '@/features/calculator/ResultView';
+import { clearSession, loadSession, saveSession } from '@/features/calculator/session';
+import type { DealDraft, DealEstimate, DealEstimateRequest } from '@/features/calculator/types';
 
 /**
- * Калькулятор сделок: форма → диапазон, аналоги, факторы, разбивка.
- * Результат всегда с предупреждением об оценке и требует подтверждения сотрудником.
+ * Калькулятор сделок (модуль 3): себестоимость по справочникам кейса → вилка
+ * «минимум / оптимум» по аналогам → график маржинальности → утверждение цены → КП.
+ *
+ * Открывается из навигатора по ссылке /calculator?project=ID: форма заполняется
+ * черновиком из инвестпроекта (тип объекта, площадь, регион, срок, заказчик).
  */
 export function CalculatorPage() {
-  const [result, setResult] = useState<DealEstimate | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-  const [pending, setPending] = useState(false);
-  const [docxError, setDocxError] = useState<string | null>(null);
+  const [params] = useSearchParams();
+  const projectId = Number(params.get('project')) || null;
 
-  const docx = useMutation({
-    mutationFn: (estimateId: number) => api.exportProposal(estimateId),
-    onSuccess: (blob) => {
-      setDocxError(null);
-      downloadBlob(blob, 'commercial-proposal.docx');
-    },
-    onError: (exc: Error) => setDocxError(exc.message),
+  const catalog = useQuery({ queryKey: ['calculator-catalog'], queryFn: calculatorApi.catalog, staleTime: 5 * 60_000 });
+  const draft = useQuery({
+    queryKey: ['calculator-draft', projectId],
+    queryFn: () => calculatorApi.draft(projectId as number),
+    enabled: projectId !== null,
   });
 
-  const {
-    register,
-    handleSubmit,
-    setError: setFieldError,
-    formState: { errors },
-  } = useForm<FormValues>({ defaultValues: { urgency: 'normal' } });
+  // Расчёт переживает уход со страницы и обновление вкладки (см. features/calculator/session).
+  const [restored] = useState(() => loadSession(projectId));
+  const [form, setForm] = useState<FormState>(() => ({ ...emptyForm, ...restored?.form }));
+  const [result, setResult] = useState<DealEstimate | null>(restored?.result ?? null);
+  useEffect(() => {
+    saveSession({ projectId, form, result });
+  }, [projectId, form, result]);
 
-  async function onSubmit(values: FormValues) {
-    // Схема zod описывает обязательные поля: без явного прогона ошибки не появятся в форме.
-    const parsed = schema.safeParse(values);
-    if (!parsed.success) {
-      for (const issue of parsed.error.issues) {
-        if (issue.path[0] === 'project_type') setFieldError('project_type', { message: issue.message });
-        if (issue.path[0] === 'scale') setFieldError('scale', { message: issue.message });
+  // Черновик из инвестпроекта заполняет форму один раз — дальше её правит менеджер.
+  // Если по этому проекту уже есть сохранённый расчёт, черновик его не затирает.
+  useEffect(() => {
+    if (draft.data && !restored) setForm(fromDraft(draft.data));
+  }, [draft.data, restored]);
+
+  // Регион по умолчанию — Ростов-на-Дону: все данные кейса по Ростовской области.
+  useEffect(() => {
+    if (!catalog.data || form.region_id !== null || projectId) return;
+    const rnd = catalog.data.regions.find((r) => r.code === 'RU-ROS-RND' || r.code === 'RU-ROS');
+    if (rnd) setForm((f) => ({ ...f, region_id: rnd.id }));
+  }, [catalog.data, form.region_id, projectId]);
+
+  const estimate = useMutation({
+    mutationFn: (payload: DealEstimateRequest) => calculatorApi.estimate(payload),
+    onSuccess: (data, payload) => {
+      setResult(data);
+      // «Подобрать по площади»: состав, который подобрал сервер, переносим в форму.
+      if (!payload.items?.length && data.cost) {
+        const items: Record<string, number> = {};
+        for (const line of data.cost.lines) if (line.code) items[line.code] = line.qty;
+        setForm((f) => ({ ...f, items }));
       }
-      return;
-    }
-    const data = parsed.data;
-    setPending(true);
-    setError(null);
-    // Новая оценка — новая попытка выгрузки: старая ошибка скачивания не должна висеть.
-    setDocxError(null);
-    try {
-      setResult(
-        await api.estimateDeal({
-          project_type: data.project_type,
-          scale: data.scale,
-          works: splitList(data.works),
-          equipment: splitList(data.equipment),
-          software: splitList(data.software),
-          urgency: data.urgency,
-          has_unique_solution: Boolean(data.has_unique_solution),
-        }),
-      );
-    } catch (exc) {
-      setError(exc instanceof Error ? exc : new Error('Расчёт не выполнен'));
-    } finally {
-      setPending(false);
-    }
-  }
+    },
+  });
+
+  const submit = (suggest: boolean) => estimate.mutate(toRequest(form, suggest));
+  const startOver = () => {
+    clearSession();
+    setResult(null);
+    setForm(draft.data ? fromDraft(draft.data) : emptyForm);
+    estimate.reset();
+  };
+  // Утверждённая цена сохраняется и в результате — после возврата на страницу она на месте.
+  const onApproved = (price: string) => setResult((r) => (r ? { ...r, approved_price: price } : r));
+
+  if (catalog.isPending) return <main className="app-body"><Loading label="Загружаем каталог оборудования" /></main>;
+  if (catalog.error)
+    return (
+      <main className="app-body">
+        <ErrorState error={catalog.error} onRetry={() => catalog.refetch()} />
+      </main>
+    );
 
   return (
-    <main className="app-body">
-      <form className="card" onSubmit={handleSubmit(onSubmit)}>
-        <h2>Калькулятор сделок</h2>
-        <div className="form-row">
-          <label>
-            Тип проекта
-            <select {...register('project_type')}>
-              <option value="">—</option>
-              <option value="connectivity">Связь и каналы</option>
-              <option value="it_infrastructure">ИТ-инфраструктура</option>
-              <option value="video_surveillance">Видеонаблюдение</option>
-              <option value="iot_asu_tp">IoT и АСУ ТП</option>
-              <option value="information_security">Информационная безопасность</option>
-            </select>
-            {errors.project_type && <span className="warning">{errors.project_type.message}</span>}
-          </label>
-          <label>
-            Масштаб
-            <select {...register('scale')}>
-              <option value="">—</option>
-              <option value="small">Небольшой</option>
-              <option value="medium">Средний</option>
-              <option value="large">Крупный</option>
-            </select>
-            {errors.scale && <span className="warning">{errors.scale.message}</span>}
-          </label>
-          <label>
-            Срочность
-            <select {...register('urgency')}>
-              <option value="normal">Стандартные сроки</option>
-              <option value="high">Сжатые сроки</option>
-              <option value="critical">Критично</option>
-            </select>
-          </label>
-        </div>
-        <div className="form-row">
-          <label>
-            Виды работ (через запятую)
-            <input placeholder="works_cabling, smr_volos" {...register('works')} />
-          </label>
-          <label>
-            Оборудование
-            <input placeholder="oborudovanie_server" {...register('equipment')} />
-          </label>
-          <label>
-            ПО
-            <input placeholder="software_security" {...register('software')} />
-          </label>
-        </div>
-        <button type="submit" disabled={pending}>
-          {pending ? 'Считаем…' : 'Рассчитать диапазон'}
-        </button>
-      </form>
-
-      {error && <ErrorState error={error} />}
-
-      {result && (
-        <section className="card">
-          <h2>Ценовая вилка</h2>
-          <div className="grid">
-            <div>
-              <div className="metric">{Number(result.estimate.min).toLocaleString('ru-RU')} ₽</div>
-              <div className="muted">Минимум</div>
-            </div>
-            <div>
-              <div className="metric">{Number(result.estimate.optimum).toLocaleString('ru-RU')} ₽</div>
-              <div className="muted">Оптимум</div>
-            </div>
-            <div>
-              <div className="metric">{Number(result.estimate.max).toLocaleString('ru-RU')} ₽</div>
-              <div className="muted">Максимум</div>
-            </div>
-          </div>
-
-          <p>
-            <QualityBadge quality={result.data_quality} /> метод: {result.estimator_mode} · модель{' '}
-            {result.model_version}
-            {result.price_period ? ` · цены периода ${result.price_period}` : ''}
+    <main className="app-body calc">
+      <header className="calc-head">
+        <div>
+          <h1>Калькулятор сделок</h1>
+          <p className="muted">
+            Диспетчеризация инженерных систем: себестоимость по справочникам кейса, вилка по похожим сделкам,
+            КП в Word
           </p>
-
-          {result.warning && <Warning>{result.warning}</Warning>}
-
-          <h3>Аналоги</h3>
-          <ul className="explanation">
-            {result.comparables.map((item) => (
-              <li key={item.deal_id}>
-                {item.title} — {Number(item.contract_value).toLocaleString('ru-RU')} ₽ · сходство{' '}
-                {item.similarity} · цена: {item.retro_price_basis}
-              </li>
-            ))}
-            {result.comparables.length === 0 && <li>Аналоги не подобраны</li>}
-          </ul>
-
-          <h3>Поправки</h3>
-          <ul className="explanation">
-            {result.adjustments.map((adj) => (
-              <li key={adj.factor}>
-                {adj.factor}: {adj.value}
-              </li>
-            ))}
-            {result.adjustments.length === 0 && <li>Поправки не применялись</li>}
-          </ul>
-
-          <h3>Разбивка по статьям</h3>
-          <ul className="explanation">
-            {result.breakdown.map((row) => (
-              <li key={row.article}>
-                {row.article}: {Number(row.amount).toLocaleString('ru-RU')} ₽
-              </li>
-            ))}
-            {result.breakdown.length === 0 && <li>Разбивка не рассчитана</li>}
-          </ul>
-
-          <Warning>
-            Оценку утверждает сотрудник: расчёт опирается на найденные аналоги и не заменяет
-            стоимостную экспертизу.
-          </Warning>
-
-          <button
-            type="button"
-            disabled={docx.isPending}
-            onClick={() => result && docx.mutate(result.estimate_id)}
-          >
-            {docx.isPending ? 'Готовим документ…' : 'Скачать КП (DOCX)'}
+        </div>
+        {result && (
+          <button type="button" className="secondary" onClick={startOver}>
+            Новый расчёт
           </button>
-          {docxError && (
-            <p className="warning" role="alert">
-              {docxError}
-            </p>
+        )}
+      </header>
+
+      {draft.data && <DraftBanner draft={draft.data} />}
+      {draft.error && <ErrorState error={draft.error} onRetry={() => draft.refetch()} />}
+
+      <div className="calc-layout">
+        <ParamsForm
+          catalog={catalog.data}
+          form={form}
+          onChange={setForm}
+          onSuggest={() => submit(true)}
+          onSubmit={() => submit(false)}
+          pending={estimate.isPending}
+          normMonths={result?.cost?.norm_months ?? null}
+        />
+        <div className="calc-output">
+          {estimate.isPending && <Loading label="Считаем себестоимость и подбираем аналоги" />}
+          {estimate.error && <ErrorState error={estimate.error} onRetry={() => submit(false)} />}
+          {!result && !estimate.isPending && (
+            <div className="card empty-hint">
+              <strong>Задайте объект и нажмите «Рассчитать цену»</strong>
+              <p className="muted">
+                Или откройте проект в <Link to="/navigator">инвестиционном навигаторе</Link> и нажмите «Оценить
+                сделку» — форма заполнится сама.
+              </p>
+            </div>
           )}
-        </section>
-      )}
+          {result && !result.cost && (
+            <Warning>{result.warning ?? 'Не удалось рассчитать: укажите состав или площадь'}</Warning>
+          )}
+          {result?.cost && <ResultView result={result} catalog={catalog.data} onApproved={onApproved} />}
+        </div>
+      </div>
     </main>
   );
+}
+
+function DraftBanner({ draft }: { draft: DealDraft }) {
+  const e = draft.explain;
+  return (
+    <div className="card draft">
+      <strong>Черновик из инвестпроекта «{e.project_title}»</strong>
+      <ul className="explanation">
+        <li>
+          Тип объекта: {e.object_type_label} ({e.object_type_from})
+        </li>
+        <li>
+          Площадь: {draft.request.area_m2?.toLocaleString('ru-RU')} м² — {e.area_from}
+        </li>
+        <li>Срок: {e.duration_from}</li>
+        {e.company && <li>Заказчик: {e.company.name}{e.company.inn ? `, ИНН ${e.company.inn}` : ''}</li>}
+      </ul>
+    </div>
+  );
+}
+
+function fromDraft(draft: DealDraft): FormState {
+  const r = draft.request;
+  const items: Record<string, number> = {};
+  for (const item of r.items ?? []) items[item.code] = item.qty;
+  return {
+    ...emptyForm,
+    object_type: r.object_type ?? emptyForm.object_type,
+    area_m2: r.area_m2 ?? null,
+    region_id: r.region_id ?? null,
+    project_level: r.project_level ?? 'basic',
+    duration_months: r.duration_months ?? null,
+    payment_scheme: r.payment_scheme ?? 'capex',
+    items,
+    investment_project_id: r.investment_project_id ?? null,
+    company_id: r.company_id ?? null,
+  };
+}
+
+function toRequest(form: FormState, suggest: boolean): DealEstimateRequest {
+  return {
+    project_type: 'dispatching',
+    object_type: form.object_type,
+    area_m2: form.area_m2,
+    region_id: form.region_id,
+    project_level: form.project_level,
+    duration_months: form.duration_months,
+    payment_scheme: form.payment_scheme,
+    has_unique_solution: form.has_unique_solution,
+    financing_scheme: form.budget_customer ? 'budget' : null,
+    systems: form.systems.length ? form.systems : null,
+    items: suggest ? [] : Object.entries(form.items).map(([code, qty]) => ({ code, qty })),
+    custom_items: form.custom.filter((c) => c.name && c.qty > 0),
+    investment_project_id: form.investment_project_id,
+    company_id: form.company_id,
+  };
 }

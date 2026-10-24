@@ -1,0 +1,769 @@
+{
+ "estimate_id": 2,
+ "currency": "RUB",
+ "estimate": {
+  "min": "1165990.65",
+  "optimum": "1169656.25",
+  "max": "1247448.43"
+ },
+ "estimator_mode": "hybrid",
+ "confidence": "medium",
+ "data_quality": "sufficient",
+ "comparables": [
+  {
+   "deal_id": 216,
+   "title": "Диспетчеризация: Торговый объект, 4 460 м², Аксай",
+   "contract_value": "1333900.0",
+   "similarity": 0.999,
+   "retro_price_basis": "synthetic",
+   "cost_value": 918940.77,
+   "price_index": 1.4516,
+   "outcome": "lost",
+   "area_m2": 4460.0
+  },
+  {
+   "deal_id": 221,
+   "title": "Диспетчеризация: Торговый объект, 5 040 м², Ростов-на-Дону",
+   "contract_value": "1399400.0",
+   "similarity": 0.985,
+   "retro_price_basis": "synthetic",
+   "cost_value": 1044101.52,
+   "price_index": 1.3403,
+   "outcome": "lost",
+   "area_m2": 5040.0
+  },
+  {
+   "deal_id": 59,
+   "title": "Диспетчеризация: Торговый объект, 5 300 м², Каменск-Шахтинский",
+   "contract_value": "1572700.0",
+   "similarity": 0.978,
+   "retro_price_basis": "synthetic",
+   "cost_value": 1230439.14,
+   "price_index": 1.2782,
+   "outcome": "won",
+   "area_m2": 5300.0
+  },
+  {
+   "deal_id": 259,
+   "title": "Диспетчеризация: Торговый объект, 5 370 м², Батайск",
+   "contract_value": "1727600.0",
+   "similarity": 0.976,
+   "retro_price_basis": "synthetic",
+   "cost_value": 1126321.59,
+   "price_index": 1.5338,
+   "outcome": "lost",
+   "area_m2": 5370.0
+  },
+  {
+   "deal_id": 64,
+   "title": "Диспетчеризация: Торговый объект, 3 760 м², Ростов-на-Дону",
+   "contract_value": "1259400.0",
+   "similarity": 0.975,
+   "retro_price_basis": "synthetic",
+   "cost_value": 899178.66,
+   "price_index": 1.4006,
+   "outcome": "won",
+   "area_m2": 3760.0
+  },
+  {
+   "deal_id": 375,
+   "title": "Диспетчеризация: Торговый объект, 3 130 м², Аксай",
+   "contract_value": "952400.0",
+   "similarity": 0.95,
+   "retro_price_basis": "synthetic",
+   "cost_value": 725898.58,
+   "price_index": 1.312,
+   "outcome": "won",
+   "area_m2": 3130.0
+  },
+  {
+   "deal_id": 385,
+   "title": "Диспетчеризация: Торговый объект, 6 970 м², Азов",
+   "contract_value": "1561300.0",
+   "similarity": 0.94,
+   "retro_price_basis": "synthetic",
+   "cost_value": 1214222.68,
+   "price_index": 1.2858,
+   "outcome": "won",
+   "area_m2": 6970.0
+  },
+  {
+   "deal_id": 330,
+   "title": "Диспетчеризация: Торговый объект, 7 180 м², Шахты",
+   "contract_value": "1512200.0",
+   "similarity": 0.936,
+   "retro_price_basis": "synthetic",
+   "cost_value": 1091103.2,
+   "price_index": 1.3859,
+   "outcome": "won",
+   "area_m2": 7180.0
+  },
+  {
+   "deal_id": 217,
+   "title": "Диспетчеризация: Торговый объект, 4 850 м², Волгодонск",
+   "contract_value": "949100.0",
+   "similarity": 0.93,
+   "retro_price_basis": "synthetic",
+   "cost_value": 697057.5,
+   "price_index": 1.3616,
+   "outcome": "won",
+   "area_m2": 4850.0
+  },
+  {
+   "deal_id": 315,
+   "title": "Диспетчеризация: Торговый объект, 2 690 м², Азов",
+   "contract_value": "1224000.0",
+   "similarity": 0.93,
+   "retro_price_basis": "synthetic",
+   "cost_value": 918187.85,
+   "price_index": 1.3331,
+   "outcome": "won",
+   "area_m2": 2690.0
+  }
+ ],
+ "adjustments": [
+  {
+   "factor": "project_level",
+   "value": 1.3,
+   "note": "уровень проекта «advanced» (кейс)"
+  },
+  {
+   "factor": "regional_coefficient",
+   "value": 1.1,
+   "note": "регион г. Ростов-на-Дону (кейс)"
+  },
+  {
+   "factor": "urgency",
+   "value": 1.0,
+   "note": "срок 3.0 мес. при норме 1.8 мес. (допущение)"
+  },
+  {
+   "factor": "unique_solution",
+   "value": 1.0,
+   "note": "типовое решение (допущение)"
+  },
+  {
+   "factor": "complexity_mode",
+   "value": 1.0,
+   "note": "трактовка сложности: works (допущение)"
+  }
+ ],
+ "breakdown": [
+  {
+   "article": "equipment",
+   "label": "Оборудование",
+   "amount": "574970.0"
+  },
+  {
+   "article": "design",
+   "label": "Проектирование (ПИР)",
+   "amount": "104540.15"
+  },
+  {
+   "article": "commissioning",
+   "label": "Пусконаладка (ПНР)",
+   "amount": "156810.23"
+  },
+  {
+   "article": "supervision",
+   "label": "Шеф-монтаж",
+   "amount": "52270.08"
+  },
+  {
+   "article": "margin",
+   "label": "Маржа",
+   "amount": "281065.8"
+  }
+ ],
+ "price_period": "2026",
+ "model_version": "deal-calculator-1.0",
+ "requires_human_approval": true,
+ "warning": "Цены аналогов синтетические: расчёт демонстрационный",
+ "cost": {
+  "total": 888590.45,
+  "breakdown": [
+   {
+    "article": "equipment",
+    "label": "Оборудование",
+    "amount": 574970.0,
+    "basis": "количество × цена каталога (МОД3_Таб4)"
+   },
+   {
+    "article": "design",
+    "label": "Проектирование (ПИР)",
+    "amount": 104540.15,
+    "basis": "10% от оборудования × сложность × уровень (МОД3_Таб3)"
+   },
+   {
+    "article": "commissioning",
+    "label": "Пусконаладка (ПНР)",
+    "amount": 156810.23,
+    "basis": "15% от оборудования × сложность × уровень (МОД3_Таб3)"
+   },
+   {
+    "article": "supervision",
+    "label": "Шеф-монтаж",
+    "amount": 52270.08,
+    "basis": "5% от оборудования × сложность × уровень (МОД3_Таб3)"
+   }
+  ],
+  "factors": [
+   {
+    "factor": "project_level",
+    "value": 1.3,
+    "note": "уровень проекта «advanced»",
+    "source": "кейс"
+   },
+   {
+    "factor": "regional_coefficient",
+    "value": 1.1,
+    "note": "регион г. Ростов-на-Дону",
+    "source": "кейс"
+   },
+   {
+    "factor": "urgency",
+    "value": 1.0,
+    "note": "срок 3.0 мес. при норме 1.8 мес.",
+    "source": "допущение"
+   },
+   {
+    "factor": "unique_solution",
+    "value": 1.0,
+    "note": "типовое решение",
+    "source": "допущение"
+   },
+   {
+    "factor": "complexity_mode",
+    "value": 1.0,
+    "note": "трактовка сложности: works",
+    "source": "допущение"
+   }
+  ],
+  "lines": [
+   {
+    "code": "el_01",
+    "name": "Смарт-счетчик (3-фазный)",
+    "group": "Электроснабжение",
+    "qty": 11,
+    "unit": "шт.",
+    "unit_price": 8500.0,
+    "amount": 93500.0,
+    "complexity": 1.2
+   },
+   {
+    "code": "el_02",
+    "name": "Датчик качества электроэнергии",
+    "group": "Электроснабжение",
+    "qty": 2,
+    "unit": "шт.",
+    "unit_price": 12000.0,
+    "amount": 24000.0,
+    "complexity": 1.2
+   },
+   {
+    "code": "el_03",
+    "name": "Модуль контроля АВР",
+    "group": "Электроснабжение",
+    "qty": 1,
+    "unit": "шт.",
+    "unit_price": 5500.0,
+    "amount": 5500.0,
+    "complexity": 1.2
+   },
+   {
+    "code": "ht_01",
+    "name": "Тепловычислитель (узел учета)",
+    "group": "Отопление",
+    "qty": 1,
+    "unit": "шт.",
+    "unit_price": 22000.0,
+    "amount": 22000.0,
+    "complexity": 1.4
+   },
+   {
+    "code": "ht_02",
+    "name": "Датчик температуры (погружной)",
+    "group": "Отопление",
+    "qty": 9,
+    "unit": "шт.",
+    "unit_price": 1800.0,
+    "amount": 16200.0,
+    "complexity": 1.4
+   },
+   {
+    "code": "ht_03",
+    "name": "Привод регулирующего клапана",
+    "group": "Отопление",
+    "qty": 3,
+    "unit": "шт.",
+    "unit_price": 9500.0,
+    "amount": 28500.0,
+    "complexity": 1.4
+   },
+   {
+    "code": "ws_01",
+    "name": "Ультразвуковой расходомер",
+    "group": "Водоснабжение",
+    "qty": 3,
+    "unit": "шт.",
+    "unit_price": 14000.0,
+    "amount": 42000.0,
+    "complexity": 1.1
+   },
+   {
+    "code": "ws_02",
+    "name": "Датчик давления (аналоговый)",
+    "group": "Водоснабжение",
+    "qty": 3,
+    "unit": "шт.",
+    "unit_price": 4200.0,
+    "amount": 12600.0,
+    "complexity": 1.1
+   },
+   {
+    "code": "ws_03",
+    "name": "Датчик протечки воды",
+    "group": "Водоснабжение",
+    "qty": 11,
+    "unit": "шт.",
+    "unit_price": 1200.0,
+    "amount": 13200.0,
+    "complexity": 1.1
+   },
+   {
+    "code": "vn_01",
+    "name": "Контроллер ПВУ",
+    "group": "Вентиляция",
+    "qty": 4,
+    "unit": "шт.",
+    "unit_price": 28000.0,
+    "amount": 112000.0,
+    "complexity": 1.6
+   },
+   {
+    "code": "vn_02",
+    "name": "Датчик CO2",
+    "group": "Вентиляция",
+    "qty": 7,
+    "unit": "шт.",
+    "unit_price": 7500.0,
+    "amount": 52500.0,
+    "complexity": 1.6
+   },
+   {
+    "code": "vn_03",
+    "name": "Датчик перепада давления (фильтр)",
+    "group": "Вентиляция",
+    "qty": 4,
+    "unit": "шт.",
+    "unit_price": 3100.0,
+    "amount": 12400.0,
+    "complexity": 1.6
+   },
+   {
+    "code": "kd_01",
+    "name": "Контроллер VRF-системы",
+    "group": "Кондиционирование",
+    "qty": 1,
+    "unit": "шт.",
+    "unit_price": 35000.0,
+    "amount": 35000.0,
+    "complexity": 1.5
+   },
+   {
+    "code": "kd_02",
+    "name": "Датчик температуры/влажности",
+    "group": "Кондиционирование",
+    "qty": 11,
+    "unit": "шт.",
+    "unit_price": 2800.0,
+    "amount": 30800.0,
+    "complexity": 1.5
+   },
+   {
+    "code": "kd_03",
+    "name": "ИК-излучатель (управление сплитом)",
+    "group": "Кондиционирование",
+    "qty": 5,
+    "unit": "шт.",
+    "unit_price": 4500.0,
+    "amount": 22500.0,
+    "complexity": 1.5
+   }
+  ],
+  "points": 76,
+  "norm_months": 1.76,
+  "object_type": "retail",
+  "object_label": "Торговый объект",
+  "area_m2": 4500.0,
+  "complexity_mode": "works",
+  "region_label": "г. Ростов-на-Дону",
+  "systems": [
+   "Вентиляция",
+   "Водоснабжение",
+   "Кондиционирование",
+   "Отопление",
+   "Электроснабжение"
+  ],
+  "win_model": {
+   "type": "multifactor",
+   "model": "LogisticRegression (scikit-learn)",
+   "n_train": 300,
+   "n_test": 100,
+   "auc": 0.799,
+   "auc_baseline": 0.798,
+   "brier": 0.178,
+   "basis": "synthetic",
+   "factors": [
+    {
+     "factor": "price_index",
+     "label": "Наценка",
+     "value": "×1,32",
+     "typical": "×1,37",
+     "delta_pp": 18.3
+    },
+    {
+     "factor": "object_type",
+     "label": "Тип объекта",
+     "value": "торговый объект",
+     "typical": "производство",
+     "delta_pp": -8.1
+    },
+    {
+     "factor": "log_area",
+     "label": "Площадь объекта",
+     "value": "4 500 м²",
+     "typical": "4 700 м²",
+     "delta_pp": 0.1
+    }
+   ]
+  }
+ },
+ "margin": {
+  "min": 23.79,
+  "optimum": 24.03,
+  "max": 28.77
+ },
+ "win_probability": 83.52,
+ "optimum_method": "max_expected_profit",
+ "index_stats": {
+  "q25": 1.3122,
+  "median": 1.3516,
+  "q75": 1.4039,
+  "n": 10
+ },
+ "curve": [
+  {
+   "price": 933019.97,
+   "margin_pct": 4.76,
+   "win_prob": 99.88,
+   "expected_profit": 44375.76
+  },
+  {
+   "price": 945558.62,
+   "margin_pct": 6.02,
+   "win_prob": 99.84,
+   "expected_profit": 56877.91
+  },
+  {
+   "price": 958097.26,
+   "margin_pct": 7.25,
+   "win_prob": 99.79,
+   "expected_profit": 69362.64
+  },
+  {
+   "price": 970635.9,
+   "margin_pct": 8.45,
+   "win_prob": 99.73,
+   "expected_profit": 81822.7
+  },
+  {
+   "price": 983174.54,
+   "margin_pct": 9.62,
+   "win_prob": 99.64,
+   "expected_profit": 94248.02
+  },
+  {
+   "price": 995713.19,
+   "margin_pct": 10.76,
+   "win_prob": 99.54,
+   "expected_profit": 106624.75
+  },
+  {
+   "price": 1008251.83,
+   "margin_pct": 11.87,
+   "win_prob": 99.39,
+   "expected_profit": 118933.81
+  },
+  {
+   "price": 1020790.47,
+   "margin_pct": 12.95,
+   "win_prob": 99.21,
+   "expected_profit": 131149.18
+  },
+  {
+   "price": 1033329.12,
+   "margin_pct": 14.01,
+   "win_prob": 98.96,
+   "expected_profit": 143235.43
+  },
+  {
+   "price": 1045867.76,
+   "margin_pct": 15.04,
+   "win_prob": 98.64,
+   "expected_profit": 155144.67
+  },
+  {
+   "price": 1058406.4,
+   "margin_pct": 16.04,
+   "win_prob": 98.23,
+   "expected_profit": 166812.55
+  },
+  {
+   "price": 1070945.05,
+   "margin_pct": 17.03,
+   "win_prob": 97.7,
+   "expected_profit": 178153.3
+  },
+  {
+   "price": 1083483.69,
+   "margin_pct": 17.99,
+   "win_prob": 97.0,
+   "expected_profit": 189053.69
+  },
+  {
+   "price": 1096022.33,
+   "margin_pct": 18.93,
+   "win_prob": 96.11,
+   "expected_profit": 199366.04
+  },
+  {
+   "price": 1108560.98,
+   "margin_pct": 19.84,
+   "win_prob": 94.97,
+   "expected_profit": 208900.65
+  },
+  {
+   "price": 1121099.62,
+   "margin_pct": 20.74,
+   "win_prob": 93.51,
+   "expected_profit": 217418.65
+  },
+  {
+   "price": 1133638.26,
+   "margin_pct": 21.62,
+   "win_prob": 91.67,
+   "expected_profit": 224626.97
+  },
+  {
+   "price": 1146176.9,
+   "margin_pct": 22.47,
+   "win_prob": 89.36,
+   "expected_profit": 230178.26
+  },
+  {
+   "price": 1158715.55,
+   "margin_pct": 23.31,
+   "win_prob": 86.51,
+   "expected_profit": 233679.78
+  },
+  {
+   "price": 1171254.19,
+   "margin_pct": 24.13,
+   "win_prob": 83.04,
+   "expected_profit": 234716.05
+  },
+  {
+   "price": 1183792.83,
+   "margin_pct": 24.94,
+   "win_prob": 78.89,
+   "expected_profit": 232889.34
+  },
+  {
+   "price": 1196331.48,
+   "margin_pct": 25.72,
+   "win_prob": 74.05,
+   "expected_profit": 227879.3
+  },
+  {
+   "price": 1208870.12,
+   "margin_pct": 26.49,
+   "win_prob": 68.54,
+   "expected_profit": 219515.93
+  },
+  {
+   "price": 1221408.76,
+   "margin_pct": 27.25,
+   "win_prob": 62.45,
+   "expected_profit": 207851.3
+  },
+  {
+   "price": 1233947.41,
+   "margin_pct": 27.99,
+   "win_prob": 55.94,
+   "expected_profit": 193207.37
+  },
+  {
+   "price": 1246486.05,
+   "margin_pct": 28.71,
+   "win_prob": 49.23,
+   "expected_profit": 176176.72
+  },
+  {
+   "price": 1259024.69,
+   "margin_pct": 29.42,
+   "win_prob": 42.54,
+   "expected_profit": 157564.42
+  },
+  {
+   "price": 1271563.33,
+   "margin_pct": 30.12,
+   "win_prob": 36.11,
+   "expected_profit": 138280.33
+  },
+  {
+   "price": 1284101.98,
+   "margin_pct": 30.8,
+   "win_prob": 30.14,
+   "expected_profit": 119211.11
+  },
+  {
+   "price": 1296640.62,
+   "margin_pct": 31.47,
+   "win_prob": 24.78,
+   "expected_profit": 101108.32
+  },
+  {
+   "price": 1309179.26,
+   "margin_pct": 32.13,
+   "win_prob": 20.1,
+   "expected_profit": 84519.24
+  },
+  {
+   "price": 1321717.91,
+   "margin_pct": 32.77,
+   "win_prob": 16.11,
+   "expected_profit": 69768.29
+  },
+  {
+   "price": 1334256.55,
+   "margin_pct": 33.4,
+   "win_prob": 12.79,
+   "expected_profit": 56979.32
+  },
+  {
+   "price": 1346795.19,
+   "margin_pct": 34.02,
+   "win_prob": 10.07,
+   "expected_profit": 46120.99
+  },
+  {
+   "price": 1359333.84,
+   "margin_pct": 34.63,
+   "win_prob": 7.87,
+   "expected_profit": 37058.12
+  },
+  {
+   "price": 1371872.48,
+   "margin_pct": 35.23,
+   "win_prob": 6.12,
+   "expected_profit": 29597.7
+  },
+  {
+   "price": 1384411.12,
+   "margin_pct": 35.81,
+   "win_prob": 4.74,
+   "expected_profit": 23524.18
+  },
+  {
+   "price": 1396949.77,
+   "margin_pct": 36.39,
+   "win_prob": 3.66,
+   "expected_profit": 18623.33
+  },
+  {
+   "price": 1409488.41,
+   "margin_pct": 36.96,
+   "win_prob": 2.82,
+   "expected_profit": 14696.51
+  },
+  {
+   "price": 1422027.05,
+   "margin_pct": 37.51,
+   "win_prob": 2.17,
+   "expected_profit": 11567.72
+  },
+  {
+   "price": 1434565.69,
+   "margin_pct": 38.06,
+   "win_prob": 1.66,
+   "expected_profit": 9085.88
+  }
+ ],
+ "payment_options": [
+  {
+   "scheme": "capex",
+   "label": "Единовременно",
+   "months": 1,
+   "monthly": 1169656.25,
+   "total": 1169656.25,
+   "overpayment": 0.0
+  },
+  {
+   "scheme": "installment",
+   "label": "Рассрочка 12 мес.",
+   "months": 12,
+   "monthly": 108350.53,
+   "total": 1300206.35,
+   "overpayment": 130550.1
+  },
+  {
+   "scheme": "opex",
+   "label": "Сервис 36 мес.",
+   "months": 36,
+   "monthly": 48468.62,
+   "total": 1744870.23,
+   "overpayment": 575213.98,
+   "service_fee": 5000.0
+  }
+ ],
+ "payment_scheme": "capex",
+ "warnings": [
+  "Цены аналогов синтетические: расчёт демонстрационный",
+  "Шанс выиграть — экспертная эвристика на демо-исходах, не доказанная вероятность"
+ ],
+ "approved_price": null,
+ "win_model": {
+  "type": "multifactor",
+  "model": "LogisticRegression (scikit-learn)",
+  "n_train": 300,
+  "n_test": 100,
+  "auc": 0.799,
+  "auc_baseline": 0.798,
+  "brier": 0.178,
+  "basis": "synthetic",
+  "factors": [
+   {
+    "factor": "price_index",
+    "label": "Наценка",
+    "value": "×1,32",
+    "typical": "×1,37",
+    "delta_pp": 18.3
+   },
+   {
+    "factor": "object_type",
+    "label": "Тип объекта",
+    "value": "торговый объект",
+    "typical": "производство",
+    "delta_pp": -8.1
+   },
+   {
+    "factor": "log_area",
+    "label": "Площадь объекта",
+    "value": "4 500 м²",
+    "typical": "4 700 м²",
+    "delta_pp": 0.1
+   }
+  ]
+ }
+}
