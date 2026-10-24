@@ -1,0 +1,29 @@
+{
+  "busy": false,
+  "active_run_id": "",
+  "updated_at": "2026-10-24T07:59:17.684973+00:00",
+  "finalized_run_ids": {
+    "5bed7b20-538a-4915-b4d5-95a86a126230": true,
+    "27a32d70-b1c4-46ef-bdd8-9e87f9d07767": true,
+    "57b24af9-505a-4c98-aa2f-4cca47a800a1": true
+  },
+  "run_seq_meta": {
+    "bc8271e9-d783-4f62-9fa6-07edf2043a61": [
+      0,
+      23
+    ],
+    "2e776698-6adb-494b-a935-266910f85634": [
+      0,
+      114
+    ],
+    "5234dba5-7416-4bed-a424-7b612c9097ed": [
+      0,
+      56
+    ],
+    "57b24af9-505a-4c98-aa2f-4cca47a800a1": [
+      0,
+      714
+    ]
+  },
+  "ui_schema_version": 1
+}
