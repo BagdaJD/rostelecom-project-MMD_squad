@@ -15,7 +15,12 @@ import type {
   WhiteSpace,
 } from '@/types/api';
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1';
+/**
+ * Путь, а не абсолютный адрес: в dev его догоняет прокси из vite.config.ts, в проде —
+ * location /api/ в nginx. Один origin отключает CORS и позволяет работать httpOnly-cookie.
+ * Полный URL задаётся только если API живёт на другом домене (VITE_API_URL).
+ */
+const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
 const TOKEN_KEY = 'rtk.access';
 
 export class ApiError extends Error {
