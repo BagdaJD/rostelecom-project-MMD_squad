@@ -1,0 +1,1474 @@
+{
+  "_meta": {
+    "generated_by": "infra/scripts/make_demo_bundle.py",
+    "seed": 20261024,
+    "notice": "Данные синтетические. Не являются данными ФНС, ЕИС или ПАО «Ростелеком»."
+  },
+  "regions": [
+    {
+      "code": "RU-MOS",
+      "name": "Московская область",
+      "center": [
+        37.62,
+        55.75
+      ]
+    },
+    {
+      "code": "RU-SVE",
+      "name": "Свердловская область",
+      "center": [
+        60.6,
+        56.84
+      ]
+    },
+    {
+      "code": "RU-TYU",
+      "name": "Тюменская область",
+      "center": [
+        65.53,
+        57.15
+      ]
+    },
+    {
+      "code": "RU-KRS",
+      "name": "Краснодарский край",
+      "center": [
+        38.98,
+        45.04
+      ]
+    }
+  ],
+  "industries": [
+    {
+      "code": "TEK",
+      "name": "Нефтегазовый сектор",
+      "group": "ТЭК",
+      "okved": [
+        "06.10",
+        "19.20",
+        "09.10"
+      ]
+    },
+    {
+      "code": "TRADE",
+      "name": "Розничная торговля",
+      "group": "Торговля",
+      "okved": [
+        "47.11",
+        "47.52",
+        "47.91"
+      ]
+    },
+    {
+      "code": "APK",
+      "name": "Пищевая промышленность",
+      "group": "АПК",
+      "okved": [
+        "01.11",
+        "10.80",
+        "10.41"
+      ]
+    },
+    {
+      "code": "IT",
+      "name": "Разработка ПО и данные",
+      "group": "ИТ",
+      "okved": [
+        "62.01",
+        "63.11",
+        "58.29"
+      ]
+    },
+    {
+      "code": "HEALTH",
+      "name": "Медицинские организации",
+      "group": "Здравоохранение",
+      "okved": [
+        "86.10",
+        "86.90"
+      ]
+    },
+    {
+      "code": "TRANSPORT",
+      "name": "Логистика и транспорт",
+      "group": "Транспорт",
+      "okved": [
+        "49.20",
+        "52.24",
+        "52.29"
+      ]
+    }
+  ],
+  "companies": [
+    {
+      "source": "demo",
+      "external_id": "DEMO-0001",
+      "name": "Уралгазстрой MOS",
+      "inn": "7700000016",
+      "ogrn": null,
+      "industry_code": "06.10",
+      "region_code": "RU-MOS",
+      "employee_count": 704,
+      "revenue": {
+        "2023": 589.5,
+        "2024": 601.9,
+        "2025": 640.7
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0002",
+      "name": "Югра-Терминал MOS",
+      "inn": "7700000023",
+      "ogrn": null,
+      "industry_code": "06.10",
+      "region_code": "RU-MOS",
+      "employee_count": 800,
+      "revenue": {
+        "2023": 3295.2,
+        "2024": 3468.9,
+        "2025": 3480.0
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0003",
+      "name": "Магнит-Регион MOS",
+      "inn": "7700000030",
+      "ogrn": null,
+      "industry_code": "47.11",
+      "region_code": "RU-MOS",
+      "employee_count": 815,
+      "revenue": {
+        "2023": 2260.7,
+        "2024": 2325.6,
+        "2025": 2442.5
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0004",
+      "name": "Торговый квартал MOS",
+      "inn": "7700000048",
+      "ogrn": null,
+      "industry_code": "47.11",
+      "region_code": "RU-MOS",
+      "employee_count": 890,
+      "revenue": {
+        "2023": 2198.2,
+        "2024": 2271.5,
+        "2025": 2364.9
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0005",
+      "name": "Масложировой комбинат MOS",
+      "inn": "7700000055",
+      "ogrn": null,
+      "industry_code": "01.11",
+      "region_code": "RU-MOS",
+      "employee_count": 469,
+      "revenue": {
+        "2023": 3547.2,
+        "2024": 3769.8,
+        "2025": 3759.5
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0006",
+      "name": "Агрокомплекс Нива MOS",
+      "inn": "7700000062",
+      "ogrn": null,
+      "industry_code": "01.11",
+      "region_code": "RU-MOS",
+      "employee_count": 554,
+      "revenue": {
+        "2023": 1511.0,
+        "2024": 1553.5,
+        "2025": 1615.1
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0007",
+      "name": "ДатаЛаб MOS",
+      "inn": "7700000070",
+      "ogrn": null,
+      "industry_code": "62.01",
+      "region_code": "RU-MOS",
+      "employee_count": 632,
+      "revenue": {
+        "2023": 1236.3,
+        "2024": 1263.1,
+        "2025": 1346.2
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0008",
+      "name": "Интегратор АИС MOS",
+      "inn": "7700000087",
+      "ogrn": null,
+      "industry_code": "62.01",
+      "region_code": "RU-MOS",
+      "employee_count": 508,
+      "revenue": {
+        "2023": 4126.7,
+        "2024": 4220.8,
+        "2025": 4589.8
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0009",
+      "name": "Дентал-Сервис MOS",
+      "inn": "7700000094",
+      "ogrn": null,
+      "industry_code": "86.10",
+      "region_code": "RU-MOS",
+      "employee_count": 543,
+      "revenue": {
+        "2023": 615.4,
+        "2024": 647.1,
+        "2025": 670.3
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0010",
+      "name": "Клиника Медуница MOS",
+      "inn": "7700000104",
+      "ogrn": null,
+      "industry_code": "86.10",
+      "region_code": "RU-MOS",
+      "employee_count": 717,
+      "revenue": {
+        "2023": 2386.9,
+        "2024": 2493.7,
+        "2025": 2537.3
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0011",
+      "name": "РегионКарго MOS",
+      "inn": "7700000111",
+      "ogrn": null,
+      "industry_code": "49.20",
+      "region_code": "RU-MOS",
+      "employee_count": 42,
+      "revenue": {
+        "2023": 522.1,
+        "2024": 543.2,
+        "2025": 558.7
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0012",
+      "name": "ТрансЛогистик MOS",
+      "inn": "7700000129",
+      "ogrn": null,
+      "industry_code": "49.20",
+      "region_code": "RU-MOS",
+      "employee_count": 575,
+      "revenue": {
+        "2023": 3704.8,
+        "2024": 3811.3,
+        "2025": 3904.4
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0013",
+      "name": "Уралгазстрой SVE",
+      "inn": "6600000130",
+      "ogrn": null,
+      "industry_code": "06.10",
+      "region_code": "RU-SVE",
+      "employee_count": 457,
+      "revenue": {
+        "2023": 1330.2,
+        "2024": 1395.8,
+        "2025": 1458.8
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0014",
+      "name": "Югра-Терминал SVE",
+      "inn": "6600000148",
+      "ogrn": null,
+      "industry_code": "06.10",
+      "region_code": "RU-SVE",
+      "employee_count": 229,
+      "revenue": {
+        "2023": 1465.8,
+        "2024": 1545.5,
+        "2025": 1547.7
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0015",
+      "name": "Торговый квартал SVE",
+      "inn": "6600000155",
+      "ogrn": null,
+      "industry_code": "47.11",
+      "region_code": "RU-SVE",
+      "employee_count": 500,
+      "revenue": {
+        "2023": 3295.4,
+        "2024": 3471.0,
+        "2025": 3691.5
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0016",
+      "name": "Магнит-Регион SVE",
+      "inn": "6600000162",
+      "ogrn": null,
+      "industry_code": "47.11",
+      "region_code": "RU-SVE",
+      "employee_count": 669,
+      "revenue": {
+        "2023": 4199.7,
+        "2024": 4343.7,
+        "2025": 4654.5
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0017",
+      "name": "Молочный комбинат Заря SVE",
+      "inn": "6600000170",
+      "ogrn": null,
+      "industry_code": "01.11",
+      "region_code": "RU-SVE",
+      "employee_count": 734,
+      "revenue": {
+        "2023": 3306.6,
+        "2024": 3462.7,
+        "2025": 3633.1
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0018",
+      "name": "Масложировой комбинат SVE",
+      "inn": "6600000187",
+      "ogrn": null,
+      "industry_code": "01.11",
+      "region_code": "RU-SVE",
+      "employee_count": 111,
+      "revenue": {
+        "2023": 1786.3,
+        "2024": 1840.0,
+        "2025": 1938.3
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0019",
+      "name": "ЦОД-Эксплуатация SVE",
+      "inn": "6600000194",
+      "ogrn": null,
+      "industry_code": "62.01",
+      "region_code": "RU-SVE",
+      "employee_count": 778,
+      "revenue": {
+        "2023": 2360.9,
+        "2024": 2464.1,
+        "2025": 2506.0
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0020",
+      "name": "Интегратор АИС SVE",
+      "inn": "6600000204",
+      "ogrn": null,
+      "industry_code": "62.01",
+      "region_code": "RU-SVE",
+      "employee_count": 432,
+      "revenue": {
+        "2023": 1758.0,
+        "2024": 1827.0,
+        "2025": 1953.6
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0021",
+      "name": "Лаборатория Гелиос SVE",
+      "inn": "6600000211",
+      "ogrn": null,
+      "industry_code": "86.10",
+      "region_code": "RU-SVE",
+      "employee_count": 329,
+      "revenue": {
+        "2023": 1618.9,
+        "2024": 1661.3,
+        "2025": 1785.8
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0022",
+      "name": "Дентал-Сервис SVE",
+      "inn": "6600000229",
+      "ogrn": null,
+      "industry_code": "86.10",
+      "region_code": "RU-SVE",
+      "employee_count": 567,
+      "revenue": {
+        "2023": 1250.0,
+        "2024": 1321.9,
+        "2025": 1374.8
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0023",
+      "name": "ТрансЛогистик SVE",
+      "inn": "6600000236",
+      "ogrn": null,
+      "industry_code": "49.20",
+      "region_code": "RU-SVE",
+      "employee_count": 544,
+      "revenue": {
+        "2023": 584.2,
+        "2024": 608.2,
+        "2025": 614.8
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0024",
+      "name": "Порт-Терминал SVE",
+      "inn": "6600000243",
+      "ogrn": null,
+      "industry_code": "49.20",
+      "region_code": "RU-SVE",
+      "employee_count": 562,
+      "revenue": {
+        "2023": 310.1,
+        "2024": 323.6,
+        "2025": 331.5
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0025",
+      "name": "Сибнефтемаш TYU (филиал)",
+      "inn": "6600000250",
+      "ogrn": null,
+      "industry_code": "06.10",
+      "region_code": "RU-TYU",
+      "employee_count": 149,
+      "revenue": {
+        "2023": 3937.4,
+        "2024": 4109.3,
+        "2025": 4247.5
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0026",
+      "name": "Уралгазстрой TYU (филиал)",
+      "inn": "6600000268",
+      "ogrn": null,
+      "industry_code": "06.10",
+      "region_code": "RU-TYU",
+      "employee_count": 760,
+      "revenue": {
+        "2023": 3079.6,
+        "2024": 3194.3,
+        "2025": 3424.7
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0027",
+      "name": "Продовольственный дом TYU (филиал)",
+      "inn": "6600000275",
+      "ogrn": null,
+      "industry_code": "47.11",
+      "region_code": "RU-TYU",
+      "employee_count": 94,
+      "revenue": {
+        "2023": 429.6,
+        "2024": 441.7,
+        "2025": 470.5
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0028",
+      "name": "Сельпо TYU (филиал)",
+      "inn": "6600000282",
+      "ogrn": null,
+      "industry_code": "47.11",
+      "region_code": "RU-TYU",
+      "employee_count": 494,
+      "revenue": {
+        "2023": 2922.1,
+        "2024": 3078.2,
+        "2025": 3267.0
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0029",
+      "name": "Зерно-Плюс TYU (филиал)",
+      "inn": "6600000290",
+      "ogrn": null,
+      "industry_code": "01.11",
+      "region_code": "RU-TYU",
+      "employee_count": 482,
+      "revenue": {
+        "2023": 2346.2,
+        "2024": 2435.9,
+        "2025": 2646.8
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0030",
+      "name": "Молочный комбинат Заря TYU (филиал)",
+      "inn": "6600000300",
+      "ogrn": null,
+      "industry_code": "01.11",
+      "region_code": "RU-TYU",
+      "employee_count": 374,
+      "revenue": {
+        "2023": 1273.5,
+        "2024": 1313.6,
+        "2025": 1430.3
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0031",
+      "name": "СофтРешения TYU (филиал)",
+      "inn": "6600000317",
+      "ogrn": null,
+      "industry_code": "62.01",
+      "region_code": "RU-TYU",
+      "employee_count": 886,
+      "revenue": {
+        "2023": 2722.2,
+        "2024": 2889.0,
+        "2025": 2939.6
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0032",
+      "name": "Интегратор АИС TYU (филиал)",
+      "inn": "6600000324",
+      "ogrn": null,
+      "industry_code": "62.01",
+      "region_code": "RU-TYU",
+      "employee_count": 722,
+      "revenue": {
+        "2023": 346.0,
+        "2024": 365.4,
+        "2025": 373.9
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0033",
+      "name": "Городская больница №4 TYU (филиал)",
+      "inn": "6600000331",
+      "ogrn": null,
+      "industry_code": "86.10",
+      "region_code": "RU-TYU",
+      "employee_count": 570,
+      "revenue": {
+        "2023": 3676.2,
+        "2024": 3843.3,
+        "2025": 3921.3
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0034",
+      "name": "Лаборатория Гелиос TYU (филиал)",
+      "inn": "6600000349",
+      "ogrn": null,
+      "industry_code": "86.10",
+      "region_code": "RU-TYU",
+      "employee_count": 697,
+      "revenue": {
+        "2023": 927.8,
+        "2024": 956.3,
+        "2025": 986.1
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0035",
+      "name": "Порт-Терминал TYU (филиал)",
+      "inn": "6600000356",
+      "ogrn": null,
+      "industry_code": "49.20",
+      "region_code": "RU-TYU",
+      "employee_count": 277,
+      "revenue": {
+        "2023": 3319.0,
+        "2024": 3517.7,
+        "2025": 3567.1
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0036",
+      "name": "Экспресс-Доставка TYU (филиал)",
+      "inn": "6600000363",
+      "ogrn": null,
+      "industry_code": "49.20",
+      "region_code": "RU-TYU",
+      "employee_count": 50,
+      "revenue": {
+        "2023": 3300.6,
+        "2024": 3425.3,
+        "2025": 3599.9
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0037",
+      "name": "Югра-Терминал KRS (филиал)",
+      "inn": "6600000370",
+      "ogrn": null,
+      "industry_code": "06.10",
+      "region_code": "RU-KRS",
+      "employee_count": 372,
+      "revenue": {
+        "2023": 1193.0,
+        "2024": 1272.0,
+        "2025": 1264.9
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0038",
+      "name": "Уралгазстрой KRS (филиал)",
+      "inn": "6600000388",
+      "ogrn": null,
+      "industry_code": "06.10",
+      "region_code": "RU-KRS",
+      "employee_count": 419,
+      "revenue": {
+        "2023": 2678.6,
+        "2024": 2791.5,
+        "2025": 2942.2
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0039",
+      "name": "Продовольственный дом KRS (филиал)",
+      "inn": "6600000395",
+      "ogrn": null,
+      "industry_code": "47.11",
+      "region_code": "RU-KRS",
+      "employee_count": 186,
+      "revenue": {
+        "2023": 2774.4,
+        "2024": 2882.2,
+        "2025": 2943.9
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0040",
+      "name": "Магнит-Регион KRS (филиал)",
+      "inn": "6600000405",
+      "ogrn": null,
+      "industry_code": "47.11",
+      "region_code": "RU-KRS",
+      "employee_count": 159,
+      "revenue": {
+        "2023": 590.1,
+        "2024": 610.5,
+        "2025": 648.6
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0041",
+      "name": "Молочный комбинат Заря KRS (филиал)",
+      "inn": "6600000412",
+      "ogrn": null,
+      "industry_code": "01.11",
+      "region_code": "RU-KRS",
+      "employee_count": 738,
+      "revenue": {
+        "2023": 458.1,
+        "2024": 488.1,
+        "2025": 494.8
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0042",
+      "name": "Агрокомплекс Нива KRS (филиал)",
+      "inn": "6600000420",
+      "ogrn": null,
+      "industry_code": "01.11",
+      "region_code": "RU-KRS",
+      "employee_count": 365,
+      "revenue": {
+        "2023": 2317.4,
+        "2024": 2484.4,
+        "2025": 2606.9
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0043",
+      "name": "СофтРешения KRS (филиал)",
+      "inn": "6600000437",
+      "ogrn": null,
+      "industry_code": "62.01",
+      "region_code": "RU-KRS",
+      "employee_count": 132,
+      "revenue": {
+        "2023": 1683.7,
+        "2024": 1729.9,
+        "2025": 1887.9
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0044",
+      "name": "ЦОД-Эксплуатация KRS (филиал)",
+      "inn": "6600000444",
+      "ogrn": null,
+      "industry_code": "62.01",
+      "region_code": "RU-KRS",
+      "employee_count": 364,
+      "revenue": {
+        "2023": 1411.7,
+        "2024": 1464.8,
+        "2025": 1556.4
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0045",
+      "name": "Городская больница №4 KRS (филиал)",
+      "inn": "6600000451",
+      "ogrn": null,
+      "industry_code": "86.10",
+      "region_code": "RU-KRS",
+      "employee_count": 551,
+      "revenue": {
+        "2023": 1090.6,
+        "2024": 1165.1,
+        "2025": 1186.9
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0046",
+      "name": "Дентал-Сервис KRS (филиал)",
+      "inn": "6600000469",
+      "ogrn": null,
+      "industry_code": "86.10",
+      "region_code": "RU-KRS",
+      "employee_count": 79,
+      "revenue": {
+        "2023": 3312.7,
+        "2024": 3482.6,
+        "2025": 3647.9
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0047",
+      "name": "РегионКарго KRS (филиал)",
+      "inn": "6600000476",
+      "ogrn": null,
+      "industry_code": "49.20",
+      "region_code": "RU-KRS",
+      "employee_count": 630,
+      "revenue": {
+        "2023": 3463.5,
+        "2024": 3579.6,
+        "2025": 3819.4
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    },
+    {
+      "source": "demo",
+      "external_id": "DEMO-0048",
+      "name": "ТрансЛогистик KRS (филиал)",
+      "inn": "6600000483",
+      "ogrn": null,
+      "industry_code": "49.20",
+      "region_code": "RU-KRS",
+      "employee_count": 723,
+      "revenue": {
+        "2023": 2492.6,
+        "2024": 2585.8,
+        "2025": 2695.5
+      },
+      "source_url": "https://example.com/demo",
+      "license_note": "синтетические данные, созданы для демонстрации"
+    }
+  ],
+  "projects": [
+    {
+      "source": "demo_investregistry",
+      "external_id": "IP-8962",
+      "title": "Строительство теплично-овощного комплекса «Нива-Агро»",
+      "description": "Проектирование тепличного комплекса 24 га с автоматизированной системой управления микроклиматом, диспетчеризацией и каналом связи для передачи данных АСУ ТП.",
+      "stage": "design",
+      "planned_start": "2027-01-18",
+      "planned_end": "2028-10-30",
+      "estimated_budget": 850000000,
+      "region_code": "RU-TYU",
+      "industry_code": "01.11",
+      "confidence": 0.8,
+      "source_url": "https://example.com/invest"
+    },
+    {
+      "source": "demo_investregistry",
+      "external_id": "IP-5968",
+      "title": "Модернизация нефтеперекачивающей станции «Урал-12»",
+      "description": "Модернизация узла учёта и АСУ ТП, организация выделенного канала связи между КПП и ЦДУ, промышленная информационная безопасность.",
+      "stage": "modernization",
+      "planned_start": "2026-10-13",
+      "planned_end": "2028-02-28",
+      "estimated_budget": 849000000,
+      "region_code": "RU-SVE",
+      "industry_code": "06.10",
+      "confidence": 0.8,
+      "source_url": "https://example.com/invest"
+    },
+    {
+      "source": "demo_investregistry",
+      "external_id": "IP-6963",
+      "title": "Реконструкция логистического хаба «Восточный»",
+      "description": "Строительство складского комплекса класса А, видеонаблюдение по периметру, серверная и СХД, каналы передачи данных для весового контроля.",
+      "stage": "construction",
+      "planned_start": "2026-08-15",
+      "planned_end": "2028-12-13",
+      "estimated_budget": 709000000,
+      "region_code": "RU-SVE",
+      "industry_code": "49.20",
+      "confidence": 0.8,
+      "source_url": "https://example.com/invest"
+    },
+    {
+      "source": "demo_investregistry",
+      "external_id": "IP-3838",
+      "title": "Ввод в эксплуатацию многопрофильного медицинского центра",
+      "description": "Медицинская информационная система, защищённый канал доступа к ЕГИСЗ, видеонаблюдение, средства защиты информации и резервирование канала связи.",
+      "stage": "launch",
+      "planned_start": "2027-07-23",
+      "planned_end": "2029-05-06",
+      "estimated_budget": 312000000,
+      "region_code": "RU-MOS",
+      "industry_code": "86.10",
+      "confidence": 0.8,
+      "source_url": "https://example.com/invest"
+    },
+    {
+      "source": "demo_investregistry",
+      "external_id": "IP-7522",
+      "title": "Проектирование сети автоматизированных АЗС",
+      "description": "Диспетчеризация 40 объектов, облачная платформа мониторинга, каналы связи на каждом объекте.",
+      "stage": "design",
+      "planned_start": "2027-05-18",
+      "planned_end": "2029-01-01",
+      "estimated_budget": 88000000,
+      "region_code": "RU-KRS",
+      "industry_code": "06.10",
+      "confidence": 0.8,
+      "source_url": "https://example.com/invest"
+    },
+    {
+      "source": "demo_investregistry",
+      "external_id": "IP-1892",
+      "title": "Строительство распределительного центра розничной сети",
+      "description": "Серверное оборудование, WMS, видеонаблюдение и резервный канал передачи данных.",
+      "stage": "construction",
+      "planned_start": "2026-09-20",
+      "planned_end": "2027-11-08",
+      "estimated_budget": 328000000,
+      "region_code": "RU-KRS",
+      "industry_code": "47.11",
+      "confidence": 0.8,
+      "source_url": "https://example.com/invest"
+    }
+  ],
+  "tenders": [
+    {
+      "source": "demo_eis",
+      "external_id": "0118200001126000145",
+      "title": "Поставка серверного оборудования для Логистического хаба",
+      "description": "Закупка в рамках проекта: equipment_server",
+      "price": 18400000,
+      "publication_date": "2026-09-14",
+      "deadline_date": "2026-10-20",
+      "category": "equipment_server",
+      "source_url": "https://example.com/eis/0118200001126000145",
+      "customer_key": "inn:6600000130",
+      "project_title": "Реконструкция логистического хаба «Восточный»",
+      "link_method": "inn_keyword",
+      "link_confidence": 0.7
+    },
+    {
+      "source": "demo_eis",
+      "external_id": "0118300002226000087",
+      "title": "Работы по монтажу структурированной кабельной сети",
+      "description": "Закупка в рамках проекта: works_cabling",
+      "price": 7250000,
+      "publication_date": "2026-07-08",
+      "deadline_date": "2026-08-05",
+      "category": "works_cabling",
+      "source_url": "https://example.com/eis/0118300002226000087",
+      "customer_key": "inn:6600000250",
+      "project_title": "Строительство теплично-овощного комплекса «Нива-Агро»",
+      "link_method": "inn_keyword",
+      "link_confidence": 0.7
+    },
+    {
+      "source": "demo_eis",
+      "external_id": "0116200003326000203",
+      "title": "Поставка системы видеонаблюдения, 128 камер",
+      "description": "Закупка в рамках проекта: equipment_video",
+      "price": 12900000,
+      "publication_date": "2026-07-23",
+      "deadline_date": "2026-08-29",
+      "category": "equipment_video",
+      "source_url": "https://example.com/eis/0116200003326000203",
+      "customer_key": "inn:6600000130",
+      "project_title": "Реконструкция логистического хаба «Восточный»",
+      "link_method": "inn_keyword",
+      "link_confidence": 0.7
+    },
+    {
+      "source": "demo_eis",
+      "external_id": "0120100004426000011",
+      "title": "Услуги промышленной информационной безопасности",
+      "description": "Закупка в рамках проекта: software_security",
+      "price": 5600000,
+      "publication_date": "2026-07-21",
+      "deadline_date": "2026-09-11",
+      "category": "software_security",
+      "source_url": "https://example.com/eis/0120100004426000011",
+      "customer_key": "inn:6600000130",
+      "project_title": "Модернизация нефтеперекачивающей станции «Урал-12»",
+      "link_method": "inn_keyword",
+      "link_confidence": 0.7
+    },
+    {
+      "source": "demo_eis",
+      "external_id": "0123300005526000042",
+      "title": "Организация защищённого канала связи медицинского центра",
+      "description": "Закупка в рамках проекта: works_cabling",
+      "price": 3150000,
+      "publication_date": "2026-09-02",
+      "deadline_date": "2026-10-01",
+      "category": "works_cabling",
+      "source_url": "https://example.com/eis/0123300005526000042",
+      "customer_key": "inn:7700000016",
+      "project_title": "Ввод в эксплуатацию многопрофильного медицинского центра",
+      "link_method": "inn_keyword",
+      "link_confidence": 0.7
+    },
+    {
+      "source": "demo_eis",
+      "external_id": "0123600006626000099",
+      "title": "Поставка АСУ ТП тепличного комплекса",
+      "description": "Закупка в рамках проекта: equipment_asutp",
+      "price": 24800000,
+      "publication_date": "2026-08-19",
+      "deadline_date": "2026-09-29",
+      "category": "equipment_asutp",
+      "source_url": "https://example.com/eis/0123600006626000099",
+      "customer_key": "inn:6600000250",
+      "project_title": "Строительство теплично-овощного комплекса «Нива-Агро»",
+      "link_method": "inn_keyword",
+      "link_confidence": 0.7
+    }
+  ],
+  "presence": [
+    {
+      "region_code": "RU-MOS",
+      "service_type": "connectivity",
+      "coverage_percent": 62.0,
+      "contracts_count": 34,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-MOS",
+      "service_type": "it_infrastructure",
+      "coverage_percent": 43.4,
+      "contracts_count": 23,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-MOS",
+      "service_type": "video_surveillance",
+      "coverage_percent": 31.0,
+      "contracts_count": 17,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-SVE",
+      "service_type": "connectivity",
+      "coverage_percent": 55.0,
+      "contracts_count": 28,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-SVE",
+      "service_type": "it_infrastructure",
+      "coverage_percent": 38.5,
+      "contracts_count": 19,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-SVE",
+      "service_type": "video_surveillance",
+      "coverage_percent": 27.5,
+      "contracts_count": 14,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-TYU",
+      "service_type": "connectivity",
+      "coverage_percent": 12.0,
+      "contracts_count": 4,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-TYU",
+      "service_type": "it_infrastructure",
+      "coverage_percent": 8.4,
+      "contracts_count": 2,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-TYU",
+      "service_type": "video_surveillance",
+      "coverage_percent": 6.0,
+      "contracts_count": 2,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-KRS",
+      "service_type": "connectivity",
+      "coverage_percent": 17.0,
+      "contracts_count": 7,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-KRS",
+      "service_type": "it_infrastructure",
+      "coverage_percent": 11.9,
+      "contracts_count": 4,
+      "as_of_date": "2026-09-01"
+    },
+    {
+      "region_code": "RU-KRS",
+      "service_type": "video_surveillance",
+      "coverage_percent": 8.5,
+      "contracts_count": 3,
+      "as_of_date": "2026-09-01"
+    }
+  ],
+  "coefficients": [
+    {
+      "region_code": "RU-MOS",
+      "work_type": "works",
+      "coefficient": 1.0,
+      "effective_from": "2026-01-01"
+    },
+    {
+      "region_code": "RU-SVE",
+      "work_type": "works",
+      "coefficient": 1.05,
+      "effective_from": "2026-01-01"
+    },
+    {
+      "region_code": "RU-TYU",
+      "work_type": "works",
+      "coefficient": 1.08,
+      "effective_from": "2026-01-01"
+    },
+    {
+      "region_code": "RU-KRS",
+      "work_type": "works",
+      "coefficient": 1.07,
+      "effective_from": "2026-01-01"
+    }
+  ],
+  "positions": [
+    {
+      "name": "Сервер 2U, 2×Xeon, 256 ГБ",
+      "category": "equipment",
+      "unit": "шт",
+      "price_min": 380000,
+      "price_max": 620000,
+      "price_typical": 480000,
+      "price_period": "2026"
+    },
+    {
+      "name": "СХД 100 ТБ",
+      "category": "equipment",
+      "unit": "шт",
+      "price_min": 1100000,
+      "price_max": 1900000,
+      "price_typical": 1450000,
+      "price_period": "2026"
+    },
+    {
+      "name": "IP-камера 4 Мп уличная",
+      "category": "equipment",
+      "unit": "шт",
+      "price_min": 9500,
+      "price_max": 21000,
+      "price_typical": 14000,
+      "price_period": "2026"
+    },
+    {
+      "name": "Коммутатор уровня ядра",
+      "category": "equipment",
+      "unit": "шт",
+      "price_min": 240000,
+      "price_max": 520000,
+      "price_typical": 360000,
+      "price_period": "2026"
+    },
+    {
+      "name": "Контроллер АСУ ТП (ПЛК)",
+      "category": "equipment",
+      "unit": "шт",
+      "price_min": 145000,
+      "price_max": 390000,
+      "price_typical": 240000,
+      "price_period": "2026"
+    },
+    {
+      "name": "Лицензия гипервизора",
+      "category": "software",
+      "unit": "сокет",
+      "price_min": 22000,
+      "price_max": 48000,
+      "price_typical": 34000,
+      "price_period": "2026"
+    },
+    {
+      "name": "СИЕМ-платформа, подписка",
+      "category": "software",
+      "unit": "год",
+      "price_min": 480000,
+      "price_max": 1200000,
+      "price_typical": 780000,
+      "price_period": "2026"
+    },
+    {
+      "name": "СМР: СКС, за метр рабочего места",
+      "category": "works",
+      "unit": "раб. место",
+      "price_min": 3800,
+      "price_max": 9200,
+      "price_typical": 6100,
+      "price_period": "2026"
+    },
+    {
+      "name": "СМР: прокладка ВОЛС",
+      "category": "works",
+      "unit": "км",
+      "price_min": 145000,
+      "price_max": 380000,
+      "price_typical": 240000,
+      "price_period": "2026"
+    },
+    {
+      "name": "Пусконаладка АСУ ТП",
+      "category": "works",
+      "unit": "объект",
+      "price_min": 320000,
+      "price_max": 890000,
+      "price_typical": 560000,
+      "price_period": "2026"
+    }
+  ],
+  "historical_deals": [
+    {
+      "title": "Канал связи и серверная для склада 42 тыс. м²",
+      "project_type": "connectivity",
+      "scale": "large",
+      "region_code": "RU-SVE",
+      "industry_code": "TRANSPORT",
+      "contract_value": 41500000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2024-04-18",
+      "scope": {
+        "features": [
+          "works_connectivity",
+          "oborudovanie_server"
+        ]
+      }
+    },
+    {
+      "title": "Видеонаблюдение логистического терминала",
+      "project_type": "video_surveillance",
+      "scale": "medium",
+      "region_code": "RU-MOS",
+      "industry_code": "TRANSPORT",
+      "contract_value": 16800000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2024-10-27",
+      "scope": {
+        "features": [
+          "works_video_surveillance",
+          "oborudovanie_server"
+        ]
+      }
+    },
+    {
+      "title": "АСУ ТП молочного комбината",
+      "project_type": "iot_asu_tp",
+      "scale": "medium",
+      "region_code": "RU-TYU",
+      "industry_code": "APK",
+      "contract_value": 33200000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2025-09-12",
+      "scope": {
+        "features": [
+          "works_iot_asu_tp",
+          "oborudovanie_server"
+        ]
+      }
+    },
+    {
+      "title": "Защищённый канал для сети клиник",
+      "project_type": "connectivity",
+      "scale": "medium",
+      "region_code": "RU-MOS",
+      "industry_code": "HEALTH",
+      "contract_value": 12400000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2026-01-31",
+      "scope": {
+        "features": [
+          "works_connectivity",
+          "oborudovanie_server"
+        ]
+      }
+    },
+    {
+      "title": "Серверная и СХД для розничной сети",
+      "project_type": "it_infrastructure",
+      "scale": "large",
+      "region_code": "RU-SVE",
+      "industry_code": "TRADE",
+      "contract_value": 28900000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2025-01-01",
+      "scope": {
+        "features": [
+          "works_it_infrastructure",
+          "oborudovanie_server"
+        ]
+      }
+    },
+    {
+      "title": "Диспетчеризация 35 АЗС",
+      "project_type": "iot_asu_tp",
+      "scale": "small",
+      "region_code": "RU-KRS",
+      "industry_code": "TEK",
+      "contract_value": 9700000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2025-09-04",
+      "scope": {
+        "features": [
+          "works_iot_asu_tp",
+          "oborudovanie_server"
+        ]
+      }
+    },
+    {
+      "title": "Комплексная ИБ для нефтебазы",
+      "project_type": "information_security",
+      "scale": "medium",
+      "region_code": "RU-SVE",
+      "industry_code": "TEK",
+      "contract_value": 14300000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2025-09-15",
+      "scope": {
+        "features": [
+          "works_information_security",
+          "oborudovanie_server"
+        ]
+      }
+    },
+    {
+      "title": "Облачная платформа мониторинга для агрохолдинга",
+      "project_type": "it_infrastructure",
+      "scale": "small",
+      "region_code": "RU-TYU",
+      "industry_code": "APK",
+      "contract_value": 8100000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2024-04-19",
+      "scope": {
+        "features": [
+          "works_it_infrastructure",
+          "oborudovanie_server"
+        ]
+      }
+    },
+    {
+      "title": "Канал связи и Wi-Fi для ТРК",
+      "project_type": "connectivity",
+      "scale": "small",
+      "region_code": "RU-KRS",
+      "industry_code": "TRADE",
+      "contract_value": 6400000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2025-07-13",
+      "scope": {
+        "features": [
+          "works_connectivity",
+          "oborudovanie_server"
+        ]
+      }
+    },
+    {
+      "title": "ЦОД для региональной сети клиник",
+      "project_type": "it_infrastructure",
+      "scale": "large",
+      "region_code": "RU-MOS",
+      "industry_code": "HEALTH",
+      "contract_value": 52000000,
+      "retro_price_basis": "synthetic",
+      "financing_scheme": "own",
+      "closed_at": "2024-09-14",
+      "scope": {
+        "features": [
+          "works_it_infrastructure",
+          "oborudovanie_server"
+        ]
+      }
+    }
+  ]
+}
