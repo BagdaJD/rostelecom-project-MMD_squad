@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/api/client';
 import { EmptyState, ErrorState, Loading, QualityBadge } from '@/components/states';
+import { SubscriptionsPanel } from '@/features/investments/SubscriptionsPanel';
 import { needLabel, stageLabel } from '@/types/api';
 
 /**
@@ -51,6 +52,8 @@ export function NavigatorPage() {
         </div>
       </section>
 
+      <SubscriptionsPanel module="investments" filters={{ stage: stage || null }} />
+
       <section className="card">
         <h2>Таймлайн инвестсобытий</h2>
         {timeline.isPending && <Loading label="Строим таймлайн" />}
@@ -60,7 +63,7 @@ export function NavigatorPage() {
         )}
         <ul className="explanation">
           {(timeline.data ?? []).map((point) => (
-            <li key={`${point.period}-${point.region_id}`}>
+            <li key={`${point.period}-${point.region_id}-${point.industry_id}`}>
               <strong>{point.period}</strong> · событий: {point.events_count}{' '}
               {point.project_ids.map((id) => (
                 <button
@@ -79,6 +82,16 @@ export function NavigatorPage() {
 
       {projects.isPending && <Loading label="Загружаем проекты" />}
       {projects.error && <ErrorState error={projects.error} onRetry={() => projects.refetch()} />}
+      {projects.data && visible.length === 0 && (
+        <EmptyState
+          title={selected === null ? 'Проектов в срезе нет' : 'Проект не попадает в текущий фильтр'}
+          hint={
+            selected === null
+              ? 'Ослабьте фильтр стадии'
+              : 'Снимите фильтр стадии — выбранный проект в неё не входит'
+          }
+        />
+      )}
 
       {visible.map((project) => (
         <article className="card" key={project.id}>
