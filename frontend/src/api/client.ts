@@ -37,25 +37,129 @@ export function setToken(token: string | null): void {
   else sessionStorage.removeItem(TOKEN_KEY);
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const headers = new Headers(init.headers);
+/** Подписка на «сессия истекла»: приложение само уходит на экран входа и показывает причину. */
+type SessionExpiredListener = (reason: string) => void;
+
+const sessionExpiredListeners = new Set<SessionExpiredListener>();
+
+export function onSessionExpired(listener: SessionExpiredListener): () => void {
+  sessionExpiredListeners.add(listener);
+  return () => {
+    sessionExpiredListeners.delete(listener);
+  };
+}
+
+function notifySessionExpired(reason: string): void {
+  for (const listener of sessionExpiredListeners) listener(reason);
+}
+
+const STATUS_TEXT: Record<number, string> = {
+  400: 'Запрос содержит ошибку',
+  403: 'Недостаточно прав для этого действия',
+  404: 'Данные не найдены',
+  409: 'Запись уже изменена, обновите страницу',
+  422: 'Проверьте параметры запроса',
+  429: 'Слишком много попыток, попробуйте позже',
+  500: 'Сервер не справился с запросом',
+  502: 'Сервер недоступен',
+  503: 'Сервис временно недоступен',
+};
+
+const LOCATION_PREFIXES = new Set(['body', 'query', 'path', 'header', 'cookies']);
+
+/** Нарушение валидации FastAPI: {"loc": ["body", "project_type"], "msg": "field required"}. */
+function describeIssue(issue: unknown): string {
+  if (typeof issue === 'string') return issue;
+  if (!issue || typeof issue !== 'object') return '';
+  const { loc, msg } = issue as { loc?: unknown; msg?: unknown };
+  const parts = Array.isArray(loc) ? loc.map(String) : [];
+  if (LOCATION_PREFIXES.has(parts[0] ?? '')) parts.shift();
+  const field = parts.join('.');
+  const text = typeof msg === 'string' ? msg : '';
+  if (field && text) return `${field}: ${text}`;
+  return field || text;
+}
+
+/**
+ * FastAPI отвечает ошибкой телом JSON: detail строкой у HTTPException и массивом
+ * нарушений у 422. Сырой JSON или HTML прокси в интерфейсе показывать нельзя:
+ * оставляем одну читаемую строку, а если в теле ничего нет — подпись статуса.
+ */
+function readErrorMessage(status: number, body: string): string {
+  const text = body.trim();
+  if (!text) return STATUS_TEXT[status] ?? `Ошибка запроса (${status})`;
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    return text.startsWith('<') ? (STATUS_TEXT[status] ?? 'Сервис ответил некорректно') : text;
+  }
+
+  const detail = (payload as { detail?: unknown } | null)?.detail;
+  if (typeof detail === 'string' && detail.trim()) return detail.trim();
+  if (Array.isArray(detail)) {
+    const lines = detail.map(describeIssue).filter(Boolean);
+    if (lines.length) return lines.join('; ');
+  }
+  return STATUS_TEXT[status] ?? `Ошибка запроса (${status})`;
+}
+
+/**
+ * 401 на проверке учётных данных («неверный пароль») и 401 на защищённом маршруте
+ * («сессия истекла») — разные случаи: второй гасит токен и уводит на экран входа.
+ */
+async function toApiError(response: Response, credentialCheck: boolean): Promise<ApiError> {
+  const message = readErrorMessage(response.status, await response.text());
+  if (response.status !== 401 || credentialCheck) return new ApiError(response.status, message);
+
+  const reason = getToken()
+    ? 'Срок сессии истёк: войдите заново'
+    : 'Вход не выполнен: авторизуйтесь, чтобы продолжить';
+  setToken(null);
+  notifySessionExpired(reason);
+  return new ApiError(401, reason);
+}
+
+type RequestOptions = RequestInit & {
+  /** true для /auth/login и /auth/2fa/verify: их 401 — это неверные данные, а не протухшая сессия. */
+  credentialCheck?: boolean;
+};
+
+async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
+  const { credentialCheck = false, ...fetchInit } = init;
+  const headers = new Headers(fetchInit.headers);
   headers.set('Accept', 'application/json');
-  if (init.body) headers.set('Content-Type', 'application/json');
+  if (fetchInit.body) headers.set('Content-Type', 'application/json');
   const token = getToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const response = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  const response = await fetch(`${BASE_URL}${path}`, { ...fetchInit, headers });
 
-  if (response.status === 401) {
-    setToken(null);
-    throw new ApiError(401, 'Требуется повторный вход');
-  }
-  if (!response.ok) {
-    const text = await response.text();
-    throw new ApiError(response.status, text || response.statusText);
-  }
+  if (!response.ok) throw await toApiError(response, credentialCheck);
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+
+  // Прокси или каптив-портал может вернуть 200 с HTML: JSON.parse упал бы SyntaxError в UI.
+  const text = await response.text();
+  if (!text.trim()) return undefined as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new ApiError(response.status, 'Сервер вернул ответ неверного формата');
+  }
+}
+
+/** Тот же разбор ошибок, но ответ — файл (CSV, DOCX), а не JSON. */
+async function requestBlob(path: string, init: RequestOptions = {}): Promise<Blob> {
+  const { credentialCheck = false, ...fetchInit } = init;
+  const headers = new Headers(fetchInit.headers);
+  if (fetchInit.body) headers.set('Content-Type', 'application/json');
+  const token = getToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const response = await fetch(`${BASE_URL}${path}`, { ...fetchInit, headers });
+  if (!response.ok) throw await toApiError(response, credentialCheck);
+  return response.blob();
 }
 
 function query(params: Record<string, string | number | boolean | null | undefined>): string {
@@ -72,13 +176,14 @@ export const api = {
   login: (login: string, password: string) =>
     request<{ mfa_required: boolean; partial_token: string | null; access_token: string | null }>(
       '/auth/login',
-      { method: 'POST', body: JSON.stringify({ login, password }) },
+      { method: 'POST', body: JSON.stringify({ login, password }), credentialCheck: true },
     ),
 
   verify2fa: (partial_token: string, code: string) =>
     request<{ access_token: string; refresh_token: string }>('/auth/2fa/verify', {
       method: 'POST',
       body: JSON.stringify({ partial_token, code }),
+      credentialCheck: true,
     }),
 
   me: () => request<{ id: number; login: string; role: string; mfa_enabled: boolean }>('/auth/me'),
@@ -122,31 +227,19 @@ export const api = {
     }),
 
   /** CSV отдаётся файлом: возвращаем Blob и сохраняем через ссылку. */
-  exportCsv: async (module: string, filters: Record<string, unknown>, mode: 'general' | 'crm') => {
-    const token = getToken();
-    const response = await fetch(`${BASE_URL}/exports/csv`, {
+  exportCsv: (module: string, filters: Record<string, unknown>, mode: 'general' | 'crm') =>
+    requestBlob('/exports/csv', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
       body: JSON.stringify({ module, filters, mode }),
-    });
-    if (!response.ok) throw new ApiError(response.status, await response.text());
-    return response.blob();
-  },
+    }),
+
   /** DOCX КП: сначала создаём документ, затем скачиваем его как файл. */
   exportProposal: async (estimateId: number) => {
     // estimate_id — query-параметр (так его читает FastAPI-хэндлер без тела запроса).
     await request<{ file_ref: string; status: string }>(`/exports/proposal?estimate_id=${estimateId}`, {
       method: 'POST',
     });
-    const token = getToken();
-    const response = await fetch(`${BASE_URL}/exports/proposal/${estimateId}/download`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!response.ok) throw new ApiError(response.status, await response.text());
-    return response.blob();
+    return requestBlob(`/exports/proposal/${estimateId}/download`);
   },
 };
 

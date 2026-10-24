@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { api, downloadBlob } from '@/api/client';
@@ -9,13 +10,32 @@ import type { Company } from '@/types/api';
 
 type Filters = { region_id: number | null; industry_group: string | null };
 
+function readFilters(params: URLSearchParams): Filters {
+  const raw = Number(params.get('region_id'));
+  return {
+    region_id: Number.isInteger(raw) && raw > 0 ? raw : null,
+    industry_group: params.get('industry_group') || null,
+  };
+}
+
 /**
  * Радар присутствия: таблица и объяснение «белых пятен» синхронизированы с фильтрами.
  * Карточный слой MapLibre подключается в `features/radar/MapView` — карта и таблица
  * читают один и тот же запрос, чтобы не расходиться (ТЗ 11.3).
  */
 export function RadarPage() {
-  const [filters, setFilters] = useState<Filters>({ region_id: null, industry_group: null });
+  const [params, setParams] = useSearchParams();
+  const filters = readFilters(params);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  // Фильтры живут в URL: ссылку на срез можно переслать коллеге, а «назад» работает.
+  function patchFilters(patch: Partial<Filters>) {
+    const next = { ...filters, ...patch };
+    const search = new URLSearchParams();
+    if (next.region_id !== null) search.set('region_id', String(next.region_id));
+    if (next.industry_group) search.set('industry_group', next.industry_group);
+    setParams(search, { replace: true });
+  }
 
   const cells = useQuery({
     queryKey: ['heatmap', filters],
@@ -35,8 +55,13 @@ export function RadarPage() {
   );
 
   async function exportCsv() {
-    const blob = await api.exportCsv('companies', { region_id: filters.region_id }, 'general');
-    downloadBlob(blob, 'companies.csv');
+    setExportError(null);
+    try {
+      const blob = await api.exportCsv('companies', { region_id: filters.region_id }, 'general');
+      downloadBlob(blob, 'companies.csv');
+    } catch (exc) {
+      setExportError(exc instanceof Error ? exc.message : 'Экспорт не выполнен');
+    }
   }
 
   return (
@@ -49,7 +74,7 @@ export function RadarPage() {
             <select
               value={filters.region_id ?? ''}
               onChange={(event) =>
-                setFilters({ ...filters, region_id: event.target.value ? Number(event.target.value) : null })
+                patchFilters({ region_id: event.target.value ? Number(event.target.value) : null })
               }
             >
               <option value="">Все регионы</option>
@@ -65,13 +90,18 @@ export function RadarPage() {
             <input
               placeholder="ТЭК, Торговля, АПК…"
               value={filters.industry_group ?? ''}
-              onChange={(event) => setFilters({ ...filters, industry_group: event.target.value || null })}
+              onChange={(event) => patchFilters({ industry_group: event.target.value || null })}
             />
           </label>
           <button type="button" onClick={exportCsv}>
             Экспорт CSV
           </button>
         </div>
+        {exportError && (
+          <p className="warning" role="alert">
+            {exportError}
+          </p>
+        )}
         <p className="muted">
           Фильтры сохраняются в URL-состояании страницы; карта и таблица читают один запрос.
         </p>
@@ -85,7 +115,7 @@ export function RadarPage() {
           <h2>Карта потенциала</h2>
           <MapView
             cells={cells.data ?? []}
-            onSelectRegion={(regionId) => setFilters({ ...filters, region_id: regionId })}
+            onSelectRegion={(regionId) => patchFilters({ region_id: regionId })}
           />
           <p className="muted">
             Цвет — потенциал среза, радиус — присутствие: чем больше точка при ярком цвете, тем

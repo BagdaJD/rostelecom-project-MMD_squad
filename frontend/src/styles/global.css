@@ -143,6 +143,11 @@ th {
   color: var(--text-muted);
 }
 
+/* Широкая таблица не должна порождать горизонтальный скролл всей страницы (ТЗ 14). */
+.table-scroll {
+  overflow-x: auto;
+}
+
 .form-row {
   display: flex;
   gap: 8px;
@@ -155,6 +160,19 @@ label {
   gap: 4px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/*
+ * Внутри карточки блоки идут плотной колонкой, а у label, button и .form-row маргинов
+ * по умолчанию нет: подпись следующего поля липла к полю предыдущего, а кнопка — к полям.
+ */
+.card > label + label,
+.card > .form-row + .form-row,
+.card > .form-row + label,
+.card > label + button,
+.card > .form-row + button,
+.card > p + button {
+  margin-top: 12px;
 }
 
 input,
@@ -178,6 +196,29 @@ button {
 button:disabled {
   opacity: 0.6;
   cursor: progress;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+button:active:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+/* ТЗ 11.1: управление с клавиатуры — у фокуса должен быть видимый индикатор. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+/* Кнопка в цветной шапке иначе сливается с фоном. */
+.app-header button {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.65);
 }
 
 /* Мобильный адаптив: смартфон — целевое устройство (ТЗ 11.2). */

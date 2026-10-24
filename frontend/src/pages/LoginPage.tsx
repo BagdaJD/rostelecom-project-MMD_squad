@@ -11,7 +11,13 @@ const loginSchema = z.object({
 
 type FormValues = z.infer<typeof loginSchema>;
 
-export function LoginPage() {
+export function LoginPage({
+  notice,
+  onDismissNotice,
+}: {
+  notice?: string | null;
+  onDismissNotice?: () => void;
+} = {}) {
   const [partialToken, setPartialToken] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -20,10 +26,21 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    setError: setFieldError,
     formState: { errors },
   } = useForm<FormValues>({ mode: 'onSubmit' });
 
   async function onLogin(values: FormValues) {
+    onDismissNotice?.();
+    // Правила живут в zod-схеме: прогоняем её на отправке, иначе сообщения не показываются.
+    const parsed = loginSchema.safeParse(values);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        if (issue.path[0] === 'login') setFieldError('login', { message: issue.message });
+        if (issue.path[0] === 'password') setFieldError('password', { message: issue.message });
+      }
+      return;
+    }
     setPending(true);
     setError(null);
     try {
@@ -61,6 +78,11 @@ export function LoginPage() {
 
   return (
     <main className="app-body" style={{ maxWidth: 460, margin: '0 auto' }}>
+      {notice && (
+        <div className="warning" role="alert">
+          {notice}
+        </div>
+      )}
       <form className="card" onSubmit={handleSubmit(onLogin)} aria-busy={pending}>
         <h2>Вход в систему</h2>
         <p className="muted">

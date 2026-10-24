@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 
+import 'maplibre-gl/dist/maplibre-gl.css';
+
 import { palette } from '@/styles/tokens';
 import type { HeatCell } from '@/types/api';
 
@@ -8,16 +10,48 @@ type Props = {
   onSelectRegion?: (regionId: number) => void;
 };
 
+type MapHandle = {
+  remove: () => void;
+  on: (type: string, handler: (...args: never[]) => void) => void;
+  once: (type: string, handler: () => void) => void;
+};
+
+function toFeatureCollection(cells: HeatCell[]) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: cells.map((cell) => ({
+      type: 'Feature' as const,
+      // Центр региона: реальные полигоны приходят из PostGIS (mv_region_density).
+      geometry: { type: 'Point' as const, coordinates: [cell.longitude ?? 61, cell.latitude ?? 57] },
+      properties: {
+        region_id: cell.region_id,
+        region_name: cell.region_name,
+        potential: cell.potential_score,
+        presence: cell.presence_score,
+      },
+    })),
+  };
+}
+
 /**
  * Картографический слой «Радара присутствия».
  *
  * Источник тайлов задаётся переменной окружения: публичные тайлы не используются в
  * демо без проверки условий использования. Если тайлов нет — рисуем только аггрегаты
  * (кружки по центру региона), карта при этом остаётся читаемой.
+ *
+ * Карта создаётся один раз на монтирование: фильтры обновляют данные источника,
+ * а не пересоздают canvas (иначе карта мигает при каждом клике по фильтру).
  */
 export function MapView({ cells, onSelectRegion }: Props) {
   const holder = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<unknown>(null);
+  const sourceRef = useRef<{ setData: (data: unknown) => void } | undefined>(undefined);
+  // Колбэк и данные читаются из ref, чтобы перерисовку родителя не тянуть в зависимости эффекта.
+  const cellsRef = useRef(cells);
+  const selectRef = useRef(onSelectRegion);
+  cellsRef.current = cells;
+  selectRef.current = onSelectRegion;
 
   useEffect(() => {
     let cancelled = false;
@@ -45,23 +79,9 @@ export function MapView({ cells, onSelectRegion }: Props) {
       mapRef.current = map;
 
       map.on('load', () => {
-        map.addSource('heat', {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: cells.map((cell) => ({
-              type: 'Feature',
-              // Центр региона: реальные полигоны приходят из PostGIS (mv_region_density).
-              geometry: { type: 'Point', coordinates: [cell.longitude ?? 61, cell.latitude ?? 57] },
-              properties: {
-                region_id: cell.region_id,
-                region_name: cell.region_name,
-                potential: cell.potential_score,
-                presence: cell.presence_score,
-              },
-            })),
-          },
-        });
+        if (cancelled) return;
+        map.addSource('heat', { type: 'geojson', data: toFeatureCollection(cellsRef.current) });
+        sourceRef.current = map.getSource('heat') as { setData: (data: unknown) => void } | undefined;
 
         map.addLayer({
           id: 'heat-circles',
@@ -90,7 +110,7 @@ export function MapView({ cells, onSelectRegion }: Props) {
         map.on('click', 'heat-circles', (event) => {
           const feature = event.features?.[0];
           const regionId = feature?.properties?.region_id;
-          if (typeof regionId === 'number') onSelectRegion?.(regionId);
+          if (typeof regionId === 'number') selectRef.current?.(regionId);
         });
       });
     }
@@ -98,9 +118,16 @@ export function MapView({ cells, onSelectRegion }: Props) {
     void render();
     return () => {
       cancelled = true;
-      (mapRef.current as { remove?: () => void } | null)?.remove?.();
+      sourceRef.current = undefined;
+      (mapRef.current as MapHandle | null)?.remove();
+      mapRef.current = null;
     };
-  }, [cells, onSelectRegion]);
+  }, []);
+
+  // Фильтры меняются чаще, чем карта: обновляем только данные источника.
+  useEffect(() => {
+    sourceRef.current?.setData(toFeatureCollection(cells));
+  }, [cells]);
 
   return (
     <div
