@@ -103,6 +103,19 @@ describe('сценарий data', () => {
     expect(card.provenance[0].source).toBeTruthy();
   });
 
+  it('разные компании отдают свои карточки, а не одну и ту же (регрессия)', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const active = await (await call('/companies/101')).json();
+    const prospect = await (await call('/companies/102')).json();
+    expect(active.name).toBe('Уралгазстрой MOS');
+    expect(active.client_status).toBe('active');
+    expect(active.presence[0].region_id).toBe(1);
+    expect(prospect.name).toBe('Нива-Агро ТЮ');
+    expect(prospect.client_status).toBe('prospect');
+  });
+
   it('карточка проекта отдаёт окно контакта и связанные закупки', async () => {
     enableMocks('?mock=1');
     installMocks();

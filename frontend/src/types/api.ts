@@ -147,6 +147,17 @@ export type ProjectCard = {
   source_url: string | null;
   contact_window: string | null;
   tenders: TenderBrief[];
+  /** Вехи проекта из GET /investments/{id} в форме будущего контракта (этап B). */
+  milestones?: ProjectMilestone[];
+};
+
+/** Веха/стадия проекта с датами и источником (ТЗ 7: стадии/вехи проекта). */
+export type ProjectMilestone = {
+  id?: number;
+  title: string;
+  date: string | null;
+  status: string;
+  source_url: string | null;
 };
 
 /**

@@ -5,12 +5,18 @@
 
 import type {
   Company,
+  CompanyCard,
   DashboardSummary,
   DealEstimate,
   DealEstimateRequest,
   HeatCell,
+  IndustryOption,
   InvestmentProject,
   Need,
+  NotificationItem,
+  PositionPrice,
+  ProjectCard,
+  RegionOption,
   TimelinePoint,
   WhiteSpace,
 } from '@/types/api';
@@ -202,6 +208,18 @@ export const api = {
     min_revenue?: number | null;
     limit?: number;
   }) => request<Company[]>(`/companies${query({ ...filters })}`),
+
+  companyCard: (id: number) => request<CompanyCard>(`/companies/${id}`),
+
+  projectCard: (id: number) => request<ProjectCard>(`/investments/${id}`),
+
+  positions: () => request<PositionPrice[]>('/positions/prices'),
+
+  regions: () => request<RegionOption[]>('/regions'),
+
+  industries: () => request<IndustryOption[]>('/industries'),
+
+  notifications: () => request<NotificationItem[]>('/notifications'),
 
   heatmap: (filters: { region_id?: number | null; industry_group?: string | null }) =>
     request<HeatCell[]>(`/radar/heatmap${query({ ...filters })}`),

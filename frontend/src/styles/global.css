@@ -242,3 +242,177 @@ select:focus-visible {
     overflow-x: auto;
   }
 }
+
+/* Этап B: квадрант «потенциал × присутствие». */
+.quadrant-wrap {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 260px;
+}
+
+.quadrant-chart {
+  position: relative;
+  padding: 24px 12px 12px 24px;
+}
+
+.quadrant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 260px;
+}
+
+.quadrant-cell {
+  border: none;
+  border-radius: 0;
+  background: var(--surface-alt);
+  color: var(--text-primary);
+  text-align: left;
+  padding: 12px;
+  cursor: pointer;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.quadrant-cell--white {
+  background: #fdf3e3;
+}
+.quadrant-cell--strong {
+  background: #e7f2fb;
+}
+.quadrant-cell--stable {
+  background: #eaf6ec;
+}
+.quadrant-cell--weak {
+  background: #f0f2f5;
+}
+
+.quadrant-cell-title {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.quadrant-cell-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.quadrant-points {
+  position: absolute;
+  inset: 24px 12px 12px 24px;
+  pointer-events: none;
+}
+
+.quadrant-point {
+  position: absolute;
+  transform: translate(-50%, 50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quadrant-point--white {
+  background: #b26a00;
+}
+.quadrant-point--strong {
+  background: #0050a0;
+}
+.quadrant-point--stable {
+  background: #0e7c3f;
+}
+.quadrant-point--weak {
+  background: #5a6472;
+}
+
+.quadrant-point--selected {
+  outline: 3px solid #b3261e;
+  outline-offset: 2px;
+}
+
+.quadrant-axis {
+  position: absolute;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.quadrant-axis--x {
+  bottom: -6px;
+  left: 24px;
+}
+
+.quadrant-axis--y {
+  top: 4px;
+  left: 2px;
+}
+
+.quadrant-legend {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.quadrant-legend-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.quadrant-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.quadrant-chip--white {
+  background: #b26a00;
+}
+.quadrant-chip--strong {
+  background: #0050a0;
+}
+.quadrant-chip--stable {
+  background: #0e7c3f;
+}
+.quadrant-chip--weak {
+  background: #5a6472;
+}
+
+/* Компактная таблица карточек: подписи в th не «жирные» по умолчанию. */
+table.compact th {
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Вехи и метрики: аккуратная горизонтальная линия с датой. */
+.explanation li {
+  margin-bottom: 6px;
+}
+
+@media (max-width: 768px) {
+  .quadrant-wrap {
+    grid-template-columns: 1fr;
+  }
+  .quadrant-chart {
+    padding: 20px 8px 8px 20px;
+  }
+  .quadrant-points {
+    inset: 20px 8px 8px 20px;
+  }
+}

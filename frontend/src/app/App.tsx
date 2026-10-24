@@ -7,6 +7,7 @@ import { RadarPage } from '@/pages/RadarPage';
 import { NavigatorPage } from '@/pages/NavigatorPage';
 import { CalculatorPage } from '@/pages/CalculatorPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { CompanyCardPage } from '@/pages/CompanyCardPage';
 import { getToken, onSessionExpired, setToken } from '@/api/client';
 import '../styles/global.css';
 
@@ -32,6 +33,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/radar" element={<RadarPage />} />
+        <Route path="/companies/:id" element={<CompanyCardPage />} />
         <Route path="/navigator" element={<NavigatorPage />} />
         <Route path="/calculator" element={<CalculatorPage />} />
         {/* Неизвестный путь иначе рендерил пустой экран без навигации. */}

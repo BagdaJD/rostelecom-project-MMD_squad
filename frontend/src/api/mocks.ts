@@ -133,42 +133,85 @@ const COMPANIES: Company[] = [
 ];
 
 /**
- * ЗАГЛУШКА под ещё не реализованный GET /companies/{id}: карточка с provenance (ТЗ 2, 11.3).
+ * Карточки компаний по идентификатору: действующий (101) и потенциальный (102) клиент.
  * value: null у profit — пропуск, а не ноль: UI обязан показать плашку, а не 0 (ТЗ 6.8).
  */
-const COMPANY_CARD: CompanyCard = {
-  ...COMPANIES[1]!,
-  ogrn: '1127200000044',
-  employee_count: 410,
-  metrics: [
-    { metric_code: 'revenue', period_year: 2023, value: '589.50', unit: 'RUB mln', source_id: 900, fetched_at: '2026-01-12T08:30:00Z' },
-    { metric_code: 'revenue', period_year: 2024, value: '601.90', unit: 'RUB mln', source_id: 900, fetched_at: '2026-01-12T08:30:00Z' },
-    { metric_code: 'revenue', period_year: 2025, value: '812.30', unit: 'RUB mln', source_id: 900, fetched_at: '2026-10-01T08:30:00Z' },
-    { metric_code: 'profit', period_year: 2025, value: null, unit: 'RUB mln', source_id: 900, fetched_at: '2026-10-01T08:30:00Z' },
-  ],
-  presence: [
-    {
-      region_id: 3,
-      municipality: 'г. Тюмень',
-      service_type: 'connectivity',
-      coverage_percent: '12.00',
-      contracts_count: 1,
-      as_of_date: '2026-09-01',
-      is_synthetic: true,
-      source_id: null,
-    },
-  ],
-  provenance: [
-    {
-      source: 'demo_investregistry',
-      external_id: 'DEMO-0044',
-      fetched_at: '2026-10-01T08:30:00Z',
-      license_note: 'синтетические данные, созданы для демонстрации',
-      source_url: 'https://example.com/demo',
-    },
-  ],
-  demand_signals: ['Инвестиционный проект на стадии проектирования', 'Рост выручки 18.9 % за год'],
+const COMPANY_DETAILS: Record<
+  number,
+  Pick<CompanyCard, 'ogrn' | 'employee_count' | 'metrics' | 'presence' | 'provenance' | 'demand_signals'>
+> = {
+  101: {
+    ogrn: '1127700000016',
+    employee_count: 218,
+    metrics: [
+      { metric_code: 'revenue', period_year: 2023, value: '510.20', unit: 'RUB mln', source_id: 900, fetched_at: '2026-01-12T08:30:00Z' },
+      { metric_code: 'revenue', period_year: 2024, value: '560.10', unit: 'RUB mln', source_id: 900, fetched_at: '2026-01-12T08:30:00Z' },
+      { metric_code: 'revenue', period_year: 2025, value: '640.70', unit: 'RUB mln', source_id: 900, fetched_at: '2026-10-01T08:30:00Z' },
+      { metric_code: 'profit', period_year: 2025, value: null, unit: 'RUB mln', source_id: 900, fetched_at: '2026-10-01T08:30:00Z' },
+    ],
+    presence: [
+      {
+        region_id: 1,
+        municipality: 'г. Москва',
+        service_type: 'connectivity',
+        coverage_percent: '64.00',
+        contracts_count: 12,
+        as_of_date: '2026-09-01',
+        is_synthetic: false,
+        source_id: 901,
+      },
+    ],
+    provenance: [
+      {
+        source: 'demo_investregistry',
+        external_id: 'DEMO-0016',
+        fetched_at: '2026-10-01T08:30:00Z',
+        license_note: 'синтетические данные, созданы для демонстрации',
+        source_url: 'https://example.com/demo',
+      },
+    ],
+    demand_signals: ['Действующий клиент: выполненные контракты в регионе', 'Рост выручки 6.4 % за год'],
+  },
+  102: {
+    ogrn: '1127200000044',
+    employee_count: 410,
+    metrics: [
+      { metric_code: 'revenue', period_year: 2023, value: '589.50', unit: 'RUB mln', source_id: 900, fetched_at: '2026-01-12T08:30:00Z' },
+      { metric_code: 'revenue', period_year: 2024, value: '601.90', unit: 'RUB mln', source_id: 900, fetched_at: '2026-01-12T08:30:00Z' },
+      { metric_code: 'revenue', period_year: 2025, value: '812.30', unit: 'RUB mln', source_id: 900, fetched_at: '2026-10-01T08:30:00Z' },
+      { metric_code: 'profit', period_year: 2025, value: null, unit: 'RUB mln', source_id: 900, fetched_at: '2026-10-01T08:30:00Z' },
+    ],
+    presence: [
+      {
+        region_id: 3,
+        municipality: 'г. Тюмень',
+        service_type: 'connectivity',
+        coverage_percent: '12.00',
+        contracts_count: 1,
+        as_of_date: '2026-09-01',
+        is_synthetic: true,
+        source_id: null,
+      },
+    ],
+    provenance: [
+      {
+        source: 'demo_investregistry',
+        external_id: 'DEMO-0044',
+        fetched_at: '2026-10-01T08:30:00Z',
+        license_note: 'синтетические данные, созданы для демонстрации',
+        source_url: 'https://example.com/demo',
+      },
+    ],
+    demand_signals: ['Инвестиционный проект на стадии проектирования', 'Рост выручки 18.9 % за год'],
+  },
 };
+
+/** Карточка компании: базовая запись + детали, чтобы клик по 101 не показывал 102. */
+function companyCard(id: number): CompanyCard {
+  const company = COMPANIES.find((item) => item.id === id) ?? COMPANIES[1]!;
+  const details = COMPANY_DETAILS[company.id] ?? COMPANY_DETAILS[102]!;
+  return { ...company, ...details, id: company.id };
+}
 
 const PROJECTS: InvestmentProject[] = [
   {
@@ -207,6 +250,10 @@ const PROJECT_CARD: ProjectCard = {
       deadline_date: '2026-10-20',
       source_url: 'https://example.com/eis/0118200001126000145',
     },
+  ],
+  milestones: [
+    { title: 'Проектирование', date: '2026-10-01', status: 'done', source_url: 'https://example.com/invest' },
+    { title: 'Модернизация', date: '2027-03-01', status: 'planned', source_url: 'https://example.com/invest' },
   ],
 };
 
@@ -306,7 +353,7 @@ const DEFINITIONS: Definition[] = [
       return region ? COMPANIES.filter((c) => String(c.region_id) === region) : COMPANIES;
     },
   },
-  { pattern: /^\/companies\/(\d+)$/, get: (match) => ({ ...COMPANY_CARD, id: Number(match[1]) }) },
+  { pattern: /^\/companies\/(\d+)$/, get: (match) => companyCard(Number(match[1])) },
   {
     pattern: /^\/radar\/heatmap$/,
     get: (_match, search) => {
