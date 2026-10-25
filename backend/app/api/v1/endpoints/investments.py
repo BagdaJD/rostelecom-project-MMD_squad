@@ -128,6 +128,7 @@ def needs(project_id: int, session: DbSession, user: CurrentUser) -> list[NeedOu
             evidence=r.evidence,
             rule_id=r.rule_id,
             model_version=r.model_version,
+            **(r.details_json or {}),
         )
         for r in rows
     ]

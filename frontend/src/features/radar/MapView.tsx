@@ -23,7 +23,7 @@ export type MapPoint = {
   /** 0..100: цвет точки (потенциал или активность). */
   colorValue: number;
   /** 0..100: размер точки (прямой: больше значение — крупнее точка). */
-  radiusValue: number;
+  radiusValue: number | null;
 };
 
 type Props = {
@@ -42,18 +42,29 @@ type MapHandle = {
 function toFeatureCollection(points: MapPoint[], selectedRegion: number | null) {
   return {
     type: 'FeatureCollection' as const,
-    features: points.map((point) => ({
-      type: 'Feature' as const,
-      // Центр региона: реальные полигоны приходят из PostGIS (mv_region_density).
-      geometry: { type: 'Point' as const, coordinates: [point.longitude ?? 61, point.latitude ?? 57] },
-      properties: {
-        region_id: point.region_id,
-        region_name: point.region_name,
-        color: point.colorValue,
-        radius: point.radiusValue,
-        selected: selectedRegion === point.region_id ? 1 : 0,
-      },
-    })),
+    features: points.flatMap((point) => {
+      if (
+        point.longitude == null ||
+        point.latitude == null ||
+        !Number.isFinite(point.longitude) ||
+        !Number.isFinite(point.latitude)
+      ) {
+        return [];
+      }
+      return [
+        {
+          type: 'Feature' as const,
+          geometry: { type: 'Point' as const, coordinates: [point.longitude, point.latitude] },
+          properties: {
+            region_id: point.region_id,
+            region_name: point.region_name,
+            color: point.colorValue,
+            radius: point.radiusValue ?? -1,
+            selected: selectedRegion === point.region_id ? 1 : 0,
+          },
+        },
+      ];
+    }),
   };
 }
 
@@ -115,7 +126,12 @@ export function MapView({ points, selectedRegion = null, onSelectRegion, ariaLab
               100,
               palette.brandPrimary,
             ],
-            'circle-radius': ['interpolate', ['linear'], ['get', 'radius'], 0, 6, 100, 14],
+            'circle-radius': [
+              'case',
+              ['<', ['get', 'radius'], 0],
+              8,
+              ['interpolate', ['linear'], ['get', 'radius'], 0, 6, 100, 14],
+            ],
             'circle-opacity': 0.85,
             'circle-stroke-width': [
               'case',

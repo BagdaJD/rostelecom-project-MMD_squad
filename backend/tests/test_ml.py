@@ -19,9 +19,15 @@ from ml.scoring import (
 
 def test_score_potential_is_bounded_and_explained():
     strong = PotentialInput(
-        revenue_sum=1000, revenue_sum_max=1000, growth_share=0.25, companies_count=50,
-        companies_count_max=50, active_projects=10, active_projects_max=10,
-        open_tenders=5, open_tenders_max=5,
+        revenue_sum=1000,
+        revenue_sum_max=1000,
+        growth_share=0.25,
+        companies_count=50,
+        companies_count_max=50,
+        active_projects=10,
+        active_projects_max=10,
+        open_tenders=5,
+        open_tenders_max=5,
     )
     weak = PotentialInput()
     top = score_potential(strong)
@@ -45,10 +51,12 @@ def test_white_space_rule_uses_quartiles():
     p_cut = quartile_cut(values, 0.75)
     presence_cut = quartile_cut(values, 0.25)
     assert p_cut > presence_cut
-    assert is_white_space(potential=p_cut, presence=presence_cut, p_cut=p_cut,
-                          presence_cut=presence_cut)
-    assert not is_white_space(potential=p_cut - 1, presence=presence_cut, p_cut=p_cut,
-                              presence_cut=presence_cut)
+    assert is_white_space(
+        potential=p_cut, presence=presence_cut, p_cut=p_cut, presence_cut=presence_cut
+    )
+    assert not is_white_space(
+        potential=p_cut - 1, presence=presence_cut, p_cut=p_cut, presence_cut=presence_cut
+    )
     assert not is_white_space(potential=100, presence=100, p_cut=p_cut, presence_cut=presence_cut)
 
 
@@ -73,7 +81,9 @@ def test_classify_need_finds_evidence(title, description, expected):
     top = next(p for p in predictions if p.category == expected)
     # Доказательство обязательно: без фрагмента текста вывод необъясним.
     assert top.evidence and len(top.evidence) > 3
-    assert 0 < top.probability <= 0.9
+    assert top.probability is None  # Правило не оценивает вероятность покупки.
+    assert top.evidence_type == "explicit"
+    assert top.evidence in title + "\n" + description
     assert top.rule_id.startswith("rule:")
 
 
@@ -95,25 +105,52 @@ def test_contact_window_covers_all_stages():
 
 def _pool() -> list[Analog]:
     return [
-        Analog(1, "Канал связи для склада", 40_000_000, "connectivity", "large", 10,
-               "contract", ("works_cabling", "oborudovanie_server")),
-        Analog(2, "Канал связи для офиса", 8_000_000, "connectivity", "small", 10,
-               "synthetic", ("works_cabling",)),
-        Analog(3, "ЦОД для клиники", 52_000_000, "it_infrastructure", "large", 20,
-               "contract", ("oborudovanie_server",)),
+        Analog(
+            1,
+            "Канал связи для склада",
+            40_000_000,
+            "connectivity",
+            "large",
+            10,
+            "contract",
+            ("works_cabling", "oborudovanie_server"),
+        ),
+        Analog(
+            2,
+            "Канал связи для офиса",
+            8_000_000,
+            "connectivity",
+            "small",
+            10,
+            "synthetic",
+            ("works_cabling",),
+        ),
+        Analog(
+            3,
+            "ЦОД для клиники",
+            52_000_000,
+            "it_infrastructure",
+            "large",
+            20,
+            "contract",
+            ("oborudovanie_server",),
+        ),
     ]
 
 
 def test_estimate_prefers_similar_analog():
-    query = EstimateInput(project_type="connectivity", scale="large", region_id=10,
-                          works=["works_cabling"], equipment=["oborudovanie_server"])
+    query = EstimateInput(
+        project_type="connectivity",
+        scale="large",
+        region_id=10,
+        works=["works_cabling"],
+        equipment=["oborudovanie_server"],
+    )
     result = estimate_deal(query, _pool(), top_k=3)
 
     assert result.price_min < result.price_optimum < result.price_max
     assert result.comparables[0]["deal_id"] == 1
-    assert result.comparables[0]["similarity"] == max(
-        c["similarity"] for c in result.comparables
-    )
+    assert result.comparables[0]["similarity"] == max(c["similarity"] for c in result.comparables)
     # Среди аналогов есть контрактные цены → ложной тревоги про синтетику быть не должно.
     assert result.data_quality == "sufficient"
 
@@ -121,13 +158,34 @@ def test_estimate_prefers_similar_analog():
 def test_estimate_warns_when_all_analogs_synthetic():
     """Демо-набор целиком синтетический: пользователь обязан видеть предупреждение."""
     pool = [
-        Analog(1, "Канал связи для склада", 40_000_000, "connectivity", "large", 10,
-               "synthetic", ("works_cabling", "oborudovanie_server")),
-        Analog(2, "Канал связи для офиса", 8_000_000, "connectivity", "large", 10,
-               "synthetic", ("works_cabling", "oborudovanie_server")),
+        Analog(
+            1,
+            "Канал связи для склада",
+            40_000_000,
+            "connectivity",
+            "large",
+            10,
+            "synthetic",
+            ("works_cabling", "oborudovanie_server"),
+        ),
+        Analog(
+            2,
+            "Канал связи для офиса",
+            8_000_000,
+            "connectivity",
+            "large",
+            10,
+            "synthetic",
+            ("works_cabling", "oborudovanie_server"),
+        ),
     ]
-    query = EstimateInput(project_type="connectivity", scale="large", region_id=10,
-                          works=["works_cabling"], equipment=["oborudovanie_server"])
+    query = EstimateInput(
+        project_type="connectivity",
+        scale="large",
+        region_id=10,
+        works=["works_cabling"],
+        equipment=["oborudovanie_server"],
+    )
     result = estimate_deal(query, pool, top_k=3)
     assert result.warning and "синтетич" in result.warning.lower()
 
@@ -141,10 +199,16 @@ def test_estimate_warns_on_weak_similarity():
 
 def test_estimate_regional_coefficient_moves_price():
     pool = _pool()
-    base = EstimateInput(project_type="connectivity", scale="large", region_id=10,
-                         works=["works_cabling"])
-    far = EstimateInput(project_type="connectivity", scale="large", region_id=10,
-                        works=["works_cabling"], regional_coefficient=1.15)
+    base = EstimateInput(
+        project_type="connectivity", scale="large", region_id=10, works=["works_cabling"]
+    )
+    far = EstimateInput(
+        project_type="connectivity",
+        scale="large",
+        region_id=10,
+        works=["works_cabling"],
+        regional_coefficient=1.15,
+    )
     assert estimate_deal(far, pool).price_optimum > estimate_deal(base, pool).price_optimum
 
 

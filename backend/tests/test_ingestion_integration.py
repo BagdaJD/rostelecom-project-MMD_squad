@@ -15,27 +15,19 @@ from pathlib import Path
 import pytest
 from sqlalchemy import func, select
 
-from app.db.session import SessionLocal
 from app.models import Company, CompanyMetric, InvestmentProject, SourceRecord
 from ingestion.loader import load_bundle, read_bundle
+from tests.postgres_support import isolated_session
 
 BUNDLE = Path(__file__).resolve().parents[2] / "data" / "seed" / "demo_bundle.json"
 
 
-def _db_available() -> bool:
-    try:
-        with SessionLocal() as session:
-            session.execute(select(func.count(Company.id)))
-        return True
-    except Exception:
-        if os.environ.get("REQUIRE_INTEGRATION") == "1":
-            raise
-        return False
-
-
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(not _db_available(), reason="нужен PostgreSQL/PostGIS (make up)"),
+    pytest.mark.skipif(
+        not os.environ.get("MMD_TEST_DATABASE_URL"),
+        reason="нужна явно выделенная PostgreSQL/PostGIS с marker",
+    ),
 ]
 
 
@@ -46,7 +38,7 @@ def bundle() -> dict:
 
 
 def test_bundle_loads_and_is_idempotent(bundle: dict) -> None:
-    with SessionLocal() as session:
+    with isolated_session() as session:
         first = load_bundle(session, bundle)
         session.commit()
         companies_after_first = session.scalar(select(func.count(Company.id)))
@@ -64,7 +56,7 @@ def test_bundle_loads_and_is_idempotent(bundle: dict) -> None:
 
 def test_every_fact_has_source_and_date(bundle: dict) -> None:
     """Требование «у каждой записи есть источник и дата» проверяется данными, а не словами."""
-    with SessionLocal() as session:
+    with isolated_session() as session:
         load_bundle(session, bundle)
         session.commit()
 
@@ -85,7 +77,7 @@ def test_every_fact_has_source_and_date(bundle: dict) -> None:
 
 
 def test_missing_values_are_not_replaced_with_zero(bundle: dict) -> None:
-    with SessionLocal() as session:
+    with isolated_session() as session:
         load_bundle(session, bundle)
         session.commit()
         negative = session.scalar(
@@ -98,7 +90,7 @@ def test_missing_values_are_not_replaced_with_zero(bundle: dict) -> None:
 def test_tender_links_record_their_method(bundle: dict) -> None:
     from app.models import ProjectTender
 
-    with SessionLocal() as session:
+    with isolated_session() as session:
         load_bundle(session, bundle)
         session.commit()
         rows = session.execute(select(ProjectTender.link_method, ProjectTender.confidence)).all()

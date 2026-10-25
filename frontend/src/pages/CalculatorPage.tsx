@@ -49,7 +49,7 @@ export function CalculatorPage() {
   });
 
   const csv = useMutation({
-    mutationFn: (estimateId: number) => api.exportCsv('deals', { estimate_id: estimateId }, 'general'),
+    mutationFn: (estimateId: number) => api.estimateCsv(estimateId),
     onSuccess: (blob) => {
       setCsvError(null);
       downloadBlob(blob, `deal-estimate-${result?.estimate_id ?? 'result'}.csv`);

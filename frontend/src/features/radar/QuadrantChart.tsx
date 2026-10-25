@@ -79,7 +79,13 @@ type Props = {
 };
 
 export function QuadrantChart({ cells, selected, threshold = 50, onSelect, onSelectCell }: Props) {
-  const quadrantCells = cells.map((cell) => ({ cell, q: quadrantOf(cell.potential_score, cell.presence_score, threshold) }));
+  const measuredCells = cells.filter(
+    (cell): cell is HeatCell & { presence_score: number } => cell.presence_score !== null,
+  );
+  const quadrantCells = measuredCells.map((cell) => ({
+    cell,
+    q: quadrantOf(cell.potential_score, cell.presence_score, threshold),
+  }));
 
   function zoneTitle(q: Quadrant): string {
     const item = QUADRANTS.find((entry) => entry.id === q);
@@ -136,6 +142,11 @@ export function QuadrantChart({ cells, selected, threshold = 50, onSelect, onSel
         </div>
       </div>
 
+      {measuredCells.length < cells.length && (
+        <p className="muted">
+          Ячейки без данных о присутствии не распределены по квадрантам.
+        </p>
+      )}
       <div className="quadrant-legend" role="list" aria-label="Легенда статусов квадранта">
         {QUADRANTS.map((q) => (
           <div className="quadrant-legend-item" role="listitem" key={q.id}>

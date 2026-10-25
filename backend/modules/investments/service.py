@@ -19,6 +19,7 @@ from app.models import (
 )
 from app.schemas import ProjectOut, TimelinePointOut
 from ml.needs import classify_need
+from ml.storage import replace_needs
 
 STAGES = ("design", "modernization", "construction", "launch", "completed", "unknown")
 
@@ -199,20 +200,7 @@ def refresh_needs(
 ) -> list[ProjectNeed]:
     """Правила возвращают доказательство из описания — требование объяснимости (ТЗ 8.2)."""
     predictions = classify_need(project.title, project.description)
-    session.query(ProjectNeed).filter(ProjectNeed.project_id == project.id).delete()
-    created = []
-    for pred in predictions:
-        need = ProjectNeed(
-            project_id=project.id,
-            need_category=pred.category,
-            probability=pred.probability,
-            evidence=pred.evidence,
-            rule_id=pred.rule_id,
-            model_version=model_version,
-        )
-        session.add(need)
-        created.append(need)
-    return created
+    return replace_needs(session, project.id, predictions)
 
 
 def matches_subscription(subscription_filters: dict, project: InvestmentProject) -> bool:

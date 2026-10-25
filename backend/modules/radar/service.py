@@ -14,6 +14,7 @@ from app.models import (
     Industry,
     InvestmentProject,
     Region,
+    ScoringSnapshot,
     Tender,
 )
 from app.schemas import CompanyOut, HeatCellOut, WhiteSpaceOut
@@ -118,16 +119,33 @@ def list_companies(
     if min_growth is not None:
         statement = statement.where(data.c.revenue_yoy >= min_growth)
     rows = session.execute(statement.order_by(Company.name, Company.id).limit(limit).offset(offset))
+    companies = list(rows)
+    latest_score_ids = (
+        select(func.max(ScoringSnapshot.id))
+        .where(ScoringSnapshot.subject_type == "company")
+        .group_by(ScoringSnapshot.subject_id)
+    )
+    scores = {
+        subject_id: score
+        for subject_id, score in session.execute(
+            select(ScoringSnapshot.subject_id, ScoringSnapshot.score).where(
+                ScoringSnapshot.subject_type == "company",
+                ScoringSnapshot.id.in_(latest_score_ids),
+                ScoringSnapshot.subject_id.in_([company.id for company, *_ in companies]),
+            )
+        ).all()
+    }
     return [
         CompanyOut.model_validate(company).model_copy(
             update={
+                "score": scores.get(company.id),
                 "revenue_latest": revenue,
                 "revenue_year": year,
                 "revenue_yoy": round(float(growth), 1) if growth is not None else None,
                 "revenue_is_synthetic": bool(synthetic),
             }
         )
-        for company, revenue, year, growth, synthetic in rows
+        for company, revenue, year, growth, synthetic in companies
     ]
 
 
@@ -261,6 +279,24 @@ def _cells(
     if open_tenders is not None and level == "region":
         tenders = {(rid, None, group): count for (rid, group), count in open_tenders.items()}
     presence = _presence(session, service_type)
+    territory_scores = {}
+    region_ids = {s["region_id"] for s in slices}
+    if region_ids and report_year is None and service_type is None:
+        snapshots = session.scalars(
+            select(ScoringSnapshot)
+            .where(
+                ScoringSnapshot.subject_type == "region",
+                ScoringSnapshot.subject_id.in_(region_ids),
+            )
+            .order_by(ScoringSnapshot.calculated_at.desc(), ScoringSnapshot.id.desc())
+        )
+        for snapshot in snapshots:
+            payload = snapshot.factors_json[0] if snapshot.factors_json else {}
+            industry = payload.get("industry") if isinstance(payload, dict) else None
+            if industry is not None:
+                territory_scores.setdefault(
+                    (snapshot.subject_id, industry), snapshot.score
+                )
     revenue_max = max(
         (float(s["revenue_sum"]) for s in slices if s["revenue_sum"] is not None), default=0
     )
@@ -283,6 +319,7 @@ def _cells(
                 open_tenders_max=max(tenders.values(), default=0),
             )
         )
+        stored_score = territory_scores.get((s["region_id"], s["industry_group"]))
         covered = presence.get((s["region_id"], s["municipality"]))
         synthetic = bool(s["synthetic_count"]) or bool(covered and covered[2])
         complete = (
@@ -303,7 +340,7 @@ def _cells(
                 revenue_companies=s["revenue_companies"],
                 growth_companies=s["growth_companies"],
                 growth_share=round(growth, 3) if growth is not None else None,
-                potential_score=potential.score,
+                potential_score=stored_score if stored_score is not None else potential.score,
                 presence_score=covered[0] if covered else None,
                 longitude=s["longitude"] if level == "region" else None,
                 latitude=s["latitude"] if level == "region" else None,
