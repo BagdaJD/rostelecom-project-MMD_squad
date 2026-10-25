@@ -43,3 +43,15 @@ export function formatDate(value: string | null | undefined): string {
   const date = new Date(value.length === 10 ? `${value}T00:00:00` : value);
   return Number.isNaN(date.getTime()) ? value : shortDate.format(date);
 }
+
+/** Ссылки приходят из внешних реестров: в href нельзя отдавать javascript:/data:. */
+export function safeExternalUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol === 'http:' || url.protocol === 'https:') return url.toString();
+  } catch {
+    return null;
+  }
+  return null;
+}

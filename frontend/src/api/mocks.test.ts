@@ -7,7 +7,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installMocks, isMockMode } from '@/api/mocks';
-import type { Company, HeatCell, ProjectCard, WhiteSpace } from '@/types/api';
+import type { Company, HeatCell, ProjectCard, TimelinePoint, WhiteSpace } from '@/types/api';
 
 const realFetch = globalThis.fetch;
 
@@ -113,6 +113,36 @@ describe('сценарий data', () => {
     expect(spaces[0]?.potential_score).toBeGreaterThan(spaces[0]?.presence_score ?? 0);
   });
 
+  it('белые пятна и таймлайн фильтруются по региону, как и остальные срезы', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const spaces = (await (await call('/radar/white-spaces?region_id=3')).json()) as WhiteSpace[];
+    expect(spaces).toHaveLength(1);
+    expect(spaces[0]?.region_id).toBe(3);
+
+    const other = (await (await call('/radar/white-spaces?region_id=2')).json()) as WhiteSpace[];
+    expect(other).toHaveLength(0);
+
+    const timeline = (await (await call('/investments/timeline?region_id=3')).json()) as TimelinePoint[];
+    expect(timeline).toHaveLength(1);
+    expect(timeline[0]?.region_id).toBe(3);
+  });
+
+  it('refresh до логина возвращает 401, после 2FA — токен (имитация httpOnly-куки)', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const before = await call('/auth/refresh', { method: 'POST' });
+    expect(before.status).toBe(401);
+
+    // Успешный 2FA ставит «cookie» в мок-хранилище.
+    await call('/auth/2fa/verify', { method: 'POST', body: '{}' });
+    const after = await call('/auth/refresh', { method: 'POST' });
+    expect(after.status).toBe(200);
+    expect(((await after.json()) as { access_token: string }).access_token).toBeTruthy();
+  });
+
   it('карточка компании содержит временной ряд с пропуском (null, не 0)', async () => {
     enableMocks('?mock=1');
     installMocks();
@@ -134,6 +164,19 @@ describe('сценарий data', () => {
     expect(active.presence[0].region_id).toBe(1);
     expect(prospect.name).toBe('Нива-Агро ТЮ');
     expect(prospect.client_status).toBe('prospect');
+  });
+
+  it('проекты фильтруются по стадии и региону (срез навигатора)', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const projects = (await (
+      await call('/investments?stage=design&region_id=3')
+    ).json()) as { id: number; region_id: number; stage: string }[];
+
+    expect(projects).toHaveLength(1);
+    expect(projects[0]?.id).toBe(201);
+    expect(projects[0]?.region_id).toBe(3);
   });
 
   it('карточка проекта отдаёт окно контакта и связанные закупки', async () => {

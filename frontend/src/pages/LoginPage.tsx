@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { api, setToken } from '@/api/client';
+import { api } from '@/api/client';
 import { isMockMode } from '@/api/mocks';
 
 const loginSchema = z.object({
@@ -51,8 +51,9 @@ export function LoginPage({
         return;
       }
       if (result.access_token) {
-        setToken(result.access_token);
-        window.location.assign('/');
+        // setToken и уведомление App делает клиент (api.login): без window.location,
+        // чтобы SPA-состояние и демо-режим не терялись.
+        return;
       }
     } catch (exc) {
       setError(exc instanceof Error ? exc.message : 'Не удалось войти');
@@ -68,8 +69,8 @@ export function LoginPage({
     setError(null);
     try {
       const tokens = await api.verify2fa(partialToken, code);
-      setToken(tokens.access_token);
-      window.location.assign('/');
+      // setToken + уведомление App делает клиент: перезагрузка не нужна.
+      void tokens;
     } catch (exc) {
       setError(exc instanceof Error ? exc.message : 'Неверный код');
     } finally {
