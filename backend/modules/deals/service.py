@@ -51,7 +51,9 @@ def _pool(session: Session, limit: int = 200) -> list[Analog]:
     ]
 
 
-def estimate(session: Session, payload: DealEstimateRequest, author_id: int | None) -> DealEstimateResponse:
+def estimate(
+    session: Session, payload: DealEstimateRequest, author_id: int | None
+) -> DealEstimateResponse:
     query = EstimateInput(
         project_type=payload.project_type,
         scale=payload.scale,
@@ -127,8 +129,11 @@ def _breakdown(optimum: float, features: set[str]) -> dict[str, float]:
         has_equipment = any(f.startswith(("oborudovanie", "equipment")) for f in features)
         has_software = any(f.startswith(("po", "software")) for f in features)
         if has_equipment or has_software:
-            shares = {"works": 0.5, "equipment": 0.28 if has_equipment else 0.0,
-                      "software": 0.22 if has_software else 0.0}
+            shares = {
+                "works": 0.5,
+                "equipment": 0.28 if has_equipment else 0.0,
+                "software": 0.22 if has_software else 0.0,
+            }
             rest = 1 - sum(shares.values())
             shares["works"] += rest
     return {article: round(optimum * share, 2) for article, share in shares.items() if share > 0}

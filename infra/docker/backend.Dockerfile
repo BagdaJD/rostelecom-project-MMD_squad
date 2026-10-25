@@ -8,13 +8,12 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq5 curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend/pyproject.toml /srv/backend/pyproject.toml
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -e .
-
 COPY backend /srv/backend
+ARG INSTALL_DEV=false
+RUN if [ "$INSTALL_DEV" = "true" ]; then pip install --no-cache-dir -c constraints.txt -e '.[dev]'; \
+    else pip install --no-cache-dir -c constraints.txt -e .; fi
 
-# Не root: требование ИБ к контейнеризуемым сервисам.
-RUN useradd -m app && chown -R app /srv/backend
+RUN useradd -m app && mkdir -p /srv/backend/exports && chown -R app /srv/backend
 USER app
 
 EXPOSE 8000

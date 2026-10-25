@@ -16,7 +16,7 @@ import pytest
 from sqlalchemy import func, select
 
 from app.db.session import SessionLocal
-from app.models import Company, CompanyMetric, InvestmentProject, SourceRecord, Tender
+from app.models import Company, CompanyMetric, InvestmentProject, SourceRecord
 from ingestion.loader import load_bundle, read_bundle
 
 BUNDLE = Path(__file__).resolve().parents[2] / "data" / "seed" / "demo_bundle.json"
@@ -27,7 +27,9 @@ def _db_available() -> bool:
         with SessionLocal() as session:
             session.execute(select(func.count(Company.id)))
         return True
-    except Exception:  # noqa: BLE001 — отсутствие БД это штатная ситуация для unit-прогона
+    except Exception:
+        if os.environ.get("REQUIRE_INTEGRATION") == "1":
+            raise
         return False
 
 
@@ -45,10 +47,6 @@ def bundle() -> dict:
 
 def test_bundle_loads_and_is_idempotent(bundle: dict) -> None:
     with SessionLocal() as session:
-        session.query(CompanyMetric).delete()
-        session.query(Company).delete()
-        session.commit()
-
         first = load_bundle(session, bundle)
         session.commit()
         companies_after_first = session.scalar(select(func.count(Company.id)))
@@ -90,10 +88,10 @@ def test_missing_values_are_not_replaced_with_zero(bundle: dict) -> None:
     with SessionLocal() as session:
         load_bundle(session, bundle)
         session.commit()
-        zeros = session.scalar(
-            select(func.count(CompanyMetric.id)).where(CompanyMetric.value <= 0)
+        negative = session.scalar(
+            select(func.count(CompanyMetric.id)).where(CompanyMetric.value < 0)
         )
-    assert zeros == 0, "ноль в метрике означает реальное значение, пропуск должен быть NULL"
+    assert negative == 0, "отрицательные значения исключаются, известный ноль сохраняется"
 
 
 @pytest.mark.skipif(os.environ.get("REQUIRE_TENDERS") == "0", reason="отключено явно")

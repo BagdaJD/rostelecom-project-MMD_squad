@@ -1,0 +1,17 @@
+.git
+.doaid
+**/.venv
+**/.venv*
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.ruff_cache
+**/*.egg-info
+frontend/node_modules
+frontend/dist
+.env
+**/.env
+**/.env.local
+.idea
+backend/exports
+exports

@@ -1,3 +1,5 @@
+name: telecom-project
+
 services:
   postgres:
     image: postgis/postgis:16-3.4
@@ -7,7 +9,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-rtk}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../infra/scripts/init-db.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+      - ../scripts/init-db.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rtk} -d ${POSTGRES_DB:-rtk}"]
       interval: 5s
@@ -25,48 +27,71 @@ services:
       timeout: 3s
       retries: 10
 
-  backend:
+  init:
     build:
-      context: ..
+      context: ../..
       dockerfile: infra/docker/backend.Dockerfile
-    env_file: ../.env
+    image: telecom-backend:dev
+    env_file: ../../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-rtk}:${POSTGRES_PASSWORD:-rtk}@postgres:5432/${POSTGRES_DB:-rtk}
+      REDIS_URL: redis://redis:6379/0
+    command: ["sh", "-c", "alembic upgrade head && python -m app.cli bootstrap-data && python -m modules.deal_calculator.seed && python -m app.cli refresh-views"]
+    volumes:
+      - ../../data:/srv/data:ro
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  backend:
+    image: telecom-backend:dev
+    pull_policy: never
+    env_file: ../../.env
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-rtk}:${POSTGRES_PASSWORD:-rtk}@postgres:5432/${POSTGRES_DB:-rtk}
       REDIS_URL: redis://redis:6379/0
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     volumes:
-      - ../backend:/srv/backend
+      - ../../data:/srv/data:ro
       - exports:/srv/backend/exports
     depends_on:
       postgres: {condition: service_healthy}
       redis: {condition: service_healthy}
+      init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/api/v1/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
     ports:
       - "8000:8000"
 
   worker:
-    build:
-      context: ..
-      dockerfile: infra/docker/backend.Dockerfile
-    env_file: ../.env
+    image: telecom-backend:dev
+    pull_policy: never
+    env_file: ../../.env
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-rtk}:${POSTGRES_PASSWORD:-rtk}@postgres:5432/${POSTGRES_DB:-rtk}
       REDIS_URL: redis://redis:6379/0
     command: ["python", "-m", "app.workers.main"]
     volumes:
-      - ../backend:/srv/backend
+      - ../../data:/srv/data:ro
       - exports:/srv/backend/exports
     depends_on:
       postgres: {condition: service_healthy}
       redis: {condition: service_healthy}
+      init: {condition: service_completed_successfully}
 
   frontend:
+    profiles: ["web"]
     image: node:22-alpine
     working_dir: /srv/frontend
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     environment:
       VITE_API_URL: http://localhost:8000/api/v1
+      VITE_API_PROXY_TARGET: http://backend:8000
     volumes:
-      - ../frontend:/srv/frontend
+      - ../../frontend:/srv/frontend
       - node_modules:/srv/frontend/node_modules
     ports:
       - "5173:5173"
