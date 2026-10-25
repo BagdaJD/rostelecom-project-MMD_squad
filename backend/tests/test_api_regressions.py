@@ -90,6 +90,53 @@ def test_estimate_survives_request_and_can_generate_proposal(api_client):
     assert any("Оценка стоимости" in paragraph.text for paragraph in document.paragraphs)
 
 
+def _add_analog(engine) -> None:
+    # С аналогом в базе расчёт доходит до коэффициента срочности (там и был KeyError).
+    with Session(engine) as session:
+        session.add(
+            HistoricalDeal(
+                title="Аналог", project_type="connectivity", scale="medium",
+                contract_value=1_000_000,
+            )
+        )
+        session.commit()
+
+
+def test_estimate_rejects_unknown_urgency(api_client):
+    client, engine, _, _ = api_client
+    _add_analog(engine)
+    response = client.post(
+        "/api/v1/deals/estimate",
+        json={"project_type": "connectivity", "scale": "medium", "urgency": "срочно"},
+    )
+    assert response.status_code == 422, response.text
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"project_type": "connectivity", "scale": "огромный"},
+        {"project_type": "", "scale": "medium"},
+    ],
+    ids=["unknown-scale", "empty-project-type"],
+)
+def test_estimate_rejects_invalid_fields(api_client, payload):
+    client, _, _, _ = api_client
+    response = client.post("/api/v1/deals/estimate", json=payload)
+    assert response.status_code == 422, response.text
+
+
+def test_estimate_accepts_valid_urgency_with_analogs(api_client):
+    client, engine, _, _ = api_client
+    _add_analog(engine)
+    response = client.post(
+        "/api/v1/deals/estimate",
+        json={"project_type": "connectivity", "scale": "medium", "urgency": "critical"},
+    )
+    assert response.status_code == 200, response.text
+    assert float(response.json()["estimate"]["optimum"]) > 0
+
+
 def test_notifications_have_timestamp_and_remain_user_scoped(api_client):
     client, engine, user_id, other_id = api_client
     with Session(engine) as session:
