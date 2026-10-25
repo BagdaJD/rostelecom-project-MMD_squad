@@ -17,10 +17,32 @@ from app.models import (
     ProjectTender,
     Tender,
 )
-from app.schemas import TimelinePointOut
+from app.schemas import ProjectOut, TimelinePointOut
 from ml.needs import classify_need
+from ml.storage import replace_needs
 
-STAGES = ("design", "modernization", "construction", "launch", "completed")
+STAGES = ("design", "modernization", "construction", "launch", "completed", "unknown")
+
+
+def project_view(project: InvestmentProject) -> ProjectOut:
+    return ProjectOut(
+        id=project.id,
+        title=project.title,
+        stage=project.stage,
+        planned_start=project.planned_start if project.start_precision == "day" else None,
+        estimated_budget=project.estimated_budget,
+        region_id=project.region_id,
+        industry_id=project.industry_id,
+        initiator_company_id=project.initiator_company_id,
+        source_url=project.source_url,
+        municipality=project.municipality,
+        planned_start_year=project.planned_start.year if project.planned_start else None,
+        planned_end_year=project.planned_end.year if project.planned_end else None,
+        start_precision=project.start_precision,
+        end_precision=project.end_precision,
+        stage_method=project.stage_method,
+        is_synthetic=project.is_synthetic,
+    )
 
 
 def list_projects(
@@ -32,6 +54,8 @@ def list_projects(
     initiator_company_id: int | None = None,
     limit: int = 50,
     offset: int = 0,
+    municipality: str | None = None,
+    q: str | None = None,
 ) -> list[InvestmentProject]:
     stmt = select(InvestmentProject)
     if stage:
@@ -42,9 +66,15 @@ def list_projects(
         stmt = stmt.where(InvestmentProject.region_id == region_id)
     if initiator_company_id:
         stmt = stmt.where(InvestmentProject.initiator_company_id == initiator_company_id)
+    if municipality:
+        stmt = stmt.where(InvestmentProject.municipality == municipality)
+    if q:
+        stmt = stmt.where(InvestmentProject.title.icontains(q.strip(), autoescape=True))
     return list(
         session.scalars(
-            stmt.order_by(InvestmentProject.planned_start.desc().nullslast()).limit(limit).offset(offset)
+            stmt.order_by(InvestmentProject.planned_start.desc().nullslast(), InvestmentProject.id)
+            .limit(limit)
+            .offset(offset)
         )
     )
 
@@ -67,25 +97,46 @@ def timeline(
     region_id: int | None = None,
     industry_id: int | None = None,
     period: str = "month",
+    municipality: str | None = None,
+    _bypass_cache: bool = False,
 ) -> list[TimelinePointOut]:
     """Агрегат таймлайна: точка знает проекты, поэтому клик подсвечивает объекты на карте."""
     if period not in ("month", "quarter", "year"):
         period = "month"
+    if not _bypass_cache and municipality is None:
+        from modules.readmodels.service import get_snapshot
+
+        cached = get_snapshot(session, "timeline", period)
+        if cached is not None:
+            return [
+                TimelinePointOut.model_validate(row)
+                for row in cached
+                if (region_id is None or row["region_id"] == region_id)
+                and (industry_id is None or row["industry_id"] == industry_id)
+            ]
 
     rows = session.execute(
-        select(InvestmentEvent.event_date, InvestmentEvent.region_id,
-               InvestmentEvent.industry_id, InvestmentEvent.project_id)
+        select(
+            InvestmentEvent.event_date,
+            InvestmentEvent.region_id,
+            InvestmentEvent.industry_id,
+            InvestmentEvent.project_id,
+            InvestmentEvent.date_precision,
+        )
+        .join(InvestmentProject, InvestmentEvent.project_id == InvestmentProject.id)
         .where(InvestmentEvent.event_date.is_not(None))
+        .where(InvestmentProject.municipality == municipality if municipality else True)
         .order_by(InvestmentEvent.event_date)
     ).all()
 
-    buckets: dict[tuple[str, int | None, int | None], list[int | None]] = defaultdict(list)
-    for event_date, rid, iid, pid in rows:
+    buckets: dict[tuple[str, int | None, int | None, str], list[int | None]] = defaultdict(list)
+    for event_date, rid, iid, pid, precision in rows:
         if region_id and rid != region_id:
             continue
         if industry_id and iid != industry_id:
             continue
-        buckets[(_period_label(event_date, period), rid, iid)].append(pid)
+        actual_period = "year" if precision == "year" or period == "year" else period
+        buckets[(_period_label(event_date, actual_period), rid, iid, actual_period)].append(pid)
 
     return [
         TimelinePointOut(
@@ -94,8 +145,12 @@ def timeline(
             industry_id=key[2],
             events_count=len(items),
             project_ids=sorted({p for p in items if p is not None}),
+            date_precision=key[3],
         )
-        for key, items in sorted(buckets.items())
+        for key, items in sorted(
+            buckets.items(),
+            key=lambda item: (item[0][0], item[0][1] or 0, item[0][2] or 0, item[0][3]),
+        )
     ]
 
 
@@ -110,8 +165,11 @@ def _period_label(value: date, period: str) -> str:
 def active_projects_by_slice(session: Session) -> dict[tuple[int, str], int]:
     """Счётчики активных проектов для скоринга: (region_id, industry_group) → количество."""
     rows = session.execute(
-        select(InvestmentProject.region_id, InvestmentProject.industry_id,
-               func.count(InvestmentProject.id))
+        select(
+            InvestmentProject.region_id,
+            InvestmentProject.industry_id,
+            func.count(InvestmentProject.id),
+        )
         .where(InvestmentProject.stage.in_(("design", "modernization", "construction")))
         .group_by(InvestmentProject.region_id, InvestmentProject.industry_id)
     ).all()
@@ -131,29 +189,18 @@ def open_tenders_by_slice(session: Session) -> dict[tuple[int, str], int]:
         select(Company.region_id, Industry.group, func.count(Tender.id))
         .join(Tender, Tender.customer_company_id == Company.id)
         .join(Industry, Company.industry_id == Industry.id)
-        .where(Tender.deadline_date >= date.today())
+        .where(Tender.deadline_date >= date.today(), Tender.status == "published")
         .group_by(Company.region_id, Industry.group)
     ).all()
     return {(rid, group): count for rid, group, count in rows if rid and group}
 
 
-def refresh_needs(session: Session, project: InvestmentProject, model_version: str) -> list[ProjectNeed]:
+def refresh_needs(
+    session: Session, project: InvestmentProject, model_version: str
+) -> list[ProjectNeed]:
     """Правила возвращают доказательство из описания — требование объяснимости (ТЗ 8.2)."""
     predictions = classify_need(project.title, project.description)
-    session.query(ProjectNeed).filter(ProjectNeed.project_id == project.id).delete()
-    created = []
-    for pred in predictions:
-        need = ProjectNeed(
-            project_id=project.id,
-            need_category=pred.category,
-            probability=pred.probability,
-            evidence=pred.evidence,
-            rule_id=pred.rule_id,
-            model_version=model_version,
-        )
-        session.add(need)
-        created.append(need)
-    return created
+    return replace_needs(session, project.id, predictions)
 
 
 def matches_subscription(subscription_filters: dict, project: InvestmentProject) -> bool:

@@ -8,17 +8,17 @@ from __future__ import annotations
 
 import csv
 import io
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.models import Deal, DealEstimate, Industry, ProposalExport, Region
+from app.models import Company, Deal, DealEstimate, Industry, ProposalExport, Region, SourceRecord
+from modules.investments import service as investments
 from modules.radar import service as radar
 
-# Маппинг задокументирован в docs/export-mapping.md — его требует критерий «Экспорт».
 CSV_HEADERS = {
     "companies": {
         "id": "Идентификатор",
@@ -27,11 +27,39 @@ CSV_HEADERS = {
         "client_status": "Статус клиента",
         "industry": "Отрасль",
         "region": "Регион",
+        "region_code": "Код региона",
         "revenue_latest": "Выручка, млн руб",
         "revenue_year": "Год выручки",
         "revenue_yoy": "Динамика выручки, %",
         "source_note": "Источник и дата",
+        "source_url": "Ссылка на источник",
+        "is_synthetic": "Синтетическая компания",
+        "revenue_is_synthetic": "Синтетическая финансовая опора",
     }
+}
+CSV_HEADERS["investments"] = {
+    "id": "Идентификатор",
+    "name": "Название проекта",
+    "inn": "ИНН инициатора",
+    "company": "Инициатор",
+    "stage": "Стадия",
+    "stage_method": "Основание стадии",
+    "region": "Регион",
+    "region_code": "Код региона",
+    "municipality": "Муниципалитет",
+    "industry": "Отрасль",
+    "start": "Начало",
+    "end": "Плановый ввод",
+    "budget_rub": "Бюджет, руб.",
+    "source_note": "Источник и дата",
+    "source_url": "Ссылка на источник",
+    "is_synthetic": "Синтетический проект",
+}
+CSV_HEADERS["deal_estimate"] = {
+    "section": "Раздел",
+    "name": "Показатель",
+    "value": "Значение",
+    "note": "Пояснение",
 }
 CRM_COLUMNS = ("externalId", "name", "inn", "industry", "region", "phone", "website")
 
@@ -40,17 +68,32 @@ def _status_label(status: str) -> str:
     return {"active": "действующий", "prospect": "потенциальный"}.get(status, "не определён")
 
 
-def companies_rows(session: Session, filters: dict) -> list[dict]:
-    companies = radar.list_companies(
-        session,
-        region_id=filters.get("region_id"),
-        industry_id=filters.get("industry_id"),
-        client_status=filters.get("client_status"),
-        min_revenue=filters.get("min_revenue"),
-        limit=filters.get("limit", 5000),
-    )
+def companies_rows(session: Session, filters: dict, *, limit=5000, offset=0) -> list[dict]:
+    allowed = {
+        "region_id",
+        "industry_id",
+        "industry_group",
+        "client_status",
+        "min_revenue",
+        "min_growth",
+        "municipality",
+        "q",
+        "report_year",
+    }
+    if set(filters) - allowed:
+        raise ValueError("Неподдерживаемые фильтры экспорта компаний")
+    companies = radar.list_companies(session, **filters, limit=limit, offset=offset)
     industries = dict(session.execute(select(Industry.id, Industry.name)).all())
     regions = dict(session.execute(select(Region.id, Region.name)).all())
+    codes = dict(session.execute(select(Region.id, Region.code)).all())
+    sources = {
+        source.id: source
+        for source in session.scalars(
+            select(SourceRecord).where(
+                SourceRecord.id.in_([c.source_id for c in companies if c.source_id])
+            )
+        )
+    }
     rows = []
     for c in companies:
         rows.append(
@@ -61,30 +104,118 @@ def companies_rows(session: Session, filters: dict) -> list[dict]:
                 "client_status": _status_label(c.client_status),
                 "industry": industries.get(c.industry_id or -1, ""),
                 "region": regions.get(c.region_id or -1, ""),
+                "region_code": codes.get(c.region_id or -1, ""),
                 "revenue_latest": c.revenue_latest if c.revenue_latest is not None else "",
                 "revenue_year": c.revenue_year or "",
                 "revenue_yoy": c.revenue_yoy if c.revenue_yoy is not None else "",
-                # Пропуск остаётся пропуском: ноль вместо «нет данных» запрещён (ТЗ 6.8).
-                "source_note": "демо-набор data/seed" if c.revenue_latest is None else "демо-набор data/seed",
+                "is_synthetic": c.is_synthetic,
+                "revenue_is_synthetic": c.revenue_is_synthetic,
+                "source_note": _source_note(sources.get(c.source_id)),
+                "source_url": (sources[c.source_id].raw_payload or {}).get("source_url", "")
+                if c.source_id in sources
+                else "",
             }
         )
     return rows
 
 
-def to_csv(rows: list[dict], module: str, mode: str = "general") -> bytes:
+def _source_note(source: SourceRecord | None) -> str:
+    if source is None:
+        return ""
+    from modules.radar.companies import provenance
+
+    meta = provenance(source)
+    return " | ".join(
+        str(value)
+        for value in (
+            meta.source,
+            meta.fetched_at.isoformat(),
+            meta.source_file,
+            meta.sheet,
+            meta.row,
+        )
+        if value is not None
+    )
+
+
+def investment_rows(session: Session, filters: dict, *, limit=5000, offset=0) -> list[dict]:
+    allowed = {"region_id", "industry_id", "stage", "initiator_company_id", "municipality", "q"}
+    if set(filters) - allowed:
+        raise ValueError("Неподдерживаемые фильтры экспорта инвестпроектов")
+    projects = investments.list_projects(session, **filters, limit=limit, offset=offset)
+    companies = {
+        c.id: c
+        for c in session.scalars(
+            select(Company).where(
+                Company.id.in_([p.initiator_company_id for p in projects if p.initiator_company_id])
+            )
+        )
+    }
+    regions = {r.id: r for r in session.scalars(select(Region))}
+    industries = dict(session.execute(select(Industry.id, Industry.name)).all())
+    sources = {
+        s.id: s
+        for s in session.scalars(
+            select(SourceRecord).where(
+                SourceRecord.id.in_([p.source_id for p in projects if p.source_id])
+            )
+        )
+    }
+    rows = []
+    for p in projects:
+        company = companies.get(p.initiator_company_id)
+        region = regions.get(p.region_id)
+        rows.append(
+            {
+                "id": p.id,
+                "name": p.title,
+                "company": company.name if company else "",
+                "inn": company.inn if company and company.inn else "",
+                "stage": p.stage,
+                "stage_method": p.stage_method,
+                "is_synthetic": p.is_synthetic,
+                "industry": industries.get(p.industry_id, ""),
+                "region": region.name if region else "",
+                "region_code": region.code if region else "",
+                "municipality": p.municipality or "",
+                "budget_rub": p.estimated_budget,
+                "start": _date_label(p.planned_start, p.start_precision),
+                "end": _date_label(p.planned_end, p.end_precision),
+                "source_note": _source_note(sources.get(p.source_id)),
+                "source_url": p.source_url or "",
+            }
+        )
+    return rows
+
+
+def _date_label(value, precision):
+    if value is None:
+        return ""
+    return str(value.year) if precision == "year" else value.isoformat()
+
+
+def _csv_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@")):
+        return "'" + value
+    return value
+
+
+def write_csv(buffer, rows, module: str, mode: str = "general", *, header=True):
     headers = CSV_HEADERS.get(module, {})
-    buffer = io.StringIO()
     if mode == "crm":
         writer = csv.DictWriter(buffer, fieldnames=list(CRM_COLUMNS), quoting=csv.QUOTE_MINIMAL)
-        writer.writeheader()
+        if header:
+            writer.writeheader()
         for row in rows:
             writer.writerow(
                 {
                     "externalId": row.get("id", ""),
-                    "name": row.get("name", ""),
-                    "inn": row.get("inn", ""),
-                    "industry": row.get("industry", ""),
-                    "region": row.get("region", ""),
+                    "name": _csv_value(row.get("name", "")),
+                    "inn": _csv_value(row.get("inn", "")),
+                    "industry": _csv_value(row.get("industry", "")),
+                    "region": _csv_value(row.get("region", "")),
                     "phone": "",
                     "website": "",
                 }
@@ -92,11 +223,63 @@ def to_csv(rows: list[dict], module: str, mode: str = "general") -> bytes:
     else:
         keys = list(headers) if headers else list(rows[0] if rows else [])
         writer = csv.writer(buffer, quoting=csv.QUOTE_MINIMAL)
-        writer.writerow([headers.get(k, k) for k in keys])
+        if header:
+            writer.writerow([headers.get(k, k) for k in keys])
         for row in rows:
-            writer.writerow([row.get(k, "") for k in keys])
-    # BOM обязателен, иначе Excel открывает кириллицу кракозябрами.
+            writer.writerow([_csv_value(row.get(k, "")) for k in keys])
+
+
+def to_csv(rows: list[dict], module: str, mode: str = "general") -> bytes:
+    buffer = io.StringIO()
+    write_csv(buffer, rows, module, mode)
     return b"\xef\xbb\xbf" + buffer.getvalue().encode("utf-8")
+
+
+def deal_estimate_rows(session: Session, estimate_id: int) -> list[dict]:
+    """CSV старого расчёта (/deals/estimate): вилка, поправки и аналоги одной таблицей."""
+    estimate = session.get(DealEstimate, estimate_id)
+    if estimate is None:
+        raise ValueError("Оценка не найдена")
+    rows = [
+        {
+            "section": "Расчёт",
+            "name": "Метод",
+            "value": estimate.estimator_mode,
+            "note": f"качество данных: {estimate.data_quality}; модель {estimate.model_version}",
+        },
+        *(
+            {"section": "Вилка", "name": label, "value": value, "note": "руб."}
+            for label, value in (
+                ("Минимум", estimate.price_min),
+                ("Оптимум", estimate.price_optimum),
+                ("Максимум", estimate.price_max),
+            )
+        ),
+    ]
+    if estimate.price_period:
+        rows.append({"section": "Расчёт", "name": "Период цен", "value": estimate.price_period})
+    for adjustment in estimate.adjustments_json or []:
+        rows.append(
+            {
+                "section": "Поправка",
+                "name": adjustment.get("factor"),
+                "value": adjustment.get("value"),
+                "note": adjustment.get("note"),
+            }
+        )
+    for comparable in estimate.comparables_json or []:
+        rows.append(
+            {
+                "section": "Аналог",
+                "name": comparable.get("title"),
+                "value": comparable.get("contract_value"),
+                "note": (
+                    f"сходство {comparable.get('similarity')}; "
+                    f"основание цены: {comparable.get('retro_price_basis')}"
+                ),
+            }
+        )
+    return rows
 
 
 def build_proposal_docx(session: Session, estimate_id: int, author_id: int | None) -> str:
@@ -111,7 +294,7 @@ def build_proposal_docx(session: Session, estimate_id: int, author_id: int | Non
     doc = Document()
     doc.add_heading("Коммерческое предложение (черновик)", level=1)
     doc.add_paragraph(
-        f"Сформировано: {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC · "
+        f"Сформировано: {datetime.now(UTC):%Y-%m-%d %H:%M} UTC · "
         f"версия модели: {estimate.model_version}"
     )
 
@@ -159,11 +342,13 @@ def build_proposal_docx(session: Session, estimate_id: int, author_id: int | Non
 
     out_dir = Path(get_settings().export_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     path = out_dir / f"proposal-{estimate_id}-{stamp}.docx"
     doc.save(path)
 
     session.add(
-        ProposalExport(deal_estimate_id=estimate_id, format="docx", file_ref=str(path), created_by=author_id)
+        ProposalExport(
+            deal_estimate_id=estimate_id, format="docx", file_ref=str(path), created_by=author_id
+        )
     )
     return str(path)

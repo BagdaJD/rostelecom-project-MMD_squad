@@ -1,4 +1,3 @@
-# --- Python ---
 __pycache__/
 *.py[cod]
 .venv*/
@@ -8,21 +7,20 @@ venv/
 .ruff_cache/
 *.egg-info/
 
-# --- Node ---
 node_modules/
+.npm-cache/
 frontend/dist/
 .vite/
 npm-debug.log*
 
-# --- Секреты и локальное состояние ---
 .env
 .env.local
 *.pem
-exports/
+/exports/
+/backend/exports/
 backend/ml/artifacts/*
 !backend/ml/artifacts/.gitkeep
 
-# --- Инструменты и ОС ---
 .doaid/
 .DS_Store
 .idea/

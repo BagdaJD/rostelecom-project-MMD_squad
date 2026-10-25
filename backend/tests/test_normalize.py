@@ -24,11 +24,13 @@ def test_normalize_name_keeps_meaningful_words():
 
 
 def test_inn_validation():
-    assert is_valid_inn("7710137066")  # действующая контрольная сумма
+    assert is_valid_inn("7710137066")
     assert not is_valid_inn("7710137067")
     assert not is_valid_inn("771013706")
     assert not is_valid_inn(None)
     assert not is_valid_inn("не номер")
+    assert is_valid_inn("500100732259")
+    assert not is_valid_inn("500100732250")
 
 
 def _record(**kwargs) -> RawCompany:
@@ -51,7 +53,7 @@ def test_name_match_requires_region_and_is_not_confident():
     with_region = match_key(_record(name="ООО «Ромашка»", region_code="RU-TYU"))
     assert with_region.method == "name_region"
     assert with_region.confidence < 1.0
-    # Одно и то же название в одном регионе даёт одинаковый ключ → дедупликация работает.
+
     again = match_key(_record(name="Ромашка", region_code="RU-TYU"))
     assert again.company_key == with_region.company_key
 
@@ -61,9 +63,9 @@ def test_invalid_inn_falls_back_to_name_region():
     assert decision.method == "name_region"
 
 
-def test_clean_revenue_drops_zero_and_negative():
+def test_clean_revenue_preserves_known_zero_and_drops_negative():
     cleaned = clean_revenue({2023: 100.0, 2024: 0.0, 2025: -5.0, 2026: None})
-    assert cleaned == {2023: 100.0}
+    assert cleaned == {2023: 100.0, 2024: 0.0}
     assert clean_revenue(None) == {}
 
 

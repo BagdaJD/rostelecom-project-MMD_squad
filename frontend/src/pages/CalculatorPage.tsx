@@ -4,7 +4,9 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { api, downloadBlob } from '@/api/client';
-import { ErrorState, QualityBadge, Warning } from '@/components/states';
+import { DataGap, ErrorState, QualityBadge, Warning } from '@/components/states';
+import { useGlobalRegion } from '@/components/GlobalFilter';
+import { formatMoney } from '@/lib/format';
 import type { DealEstimate } from '@/types/api';
 
 const schema = z.object({
@@ -34,32 +36,60 @@ export function CalculatorPage() {
   const [error, setError] = useState<Error | null>(null);
   const [pending, setPending] = useState(false);
   const [docxError, setDocxError] = useState<string | null>(null);
+  const [csvError, setCsvError] = useState<string | null>(null);
+  const globalRegion = useGlobalRegion();
 
   const docx = useMutation({
     mutationFn: (estimateId: number) => api.exportProposal(estimateId),
-    onSuccess: (blob) => downloadBlob(blob, 'commercial-proposal.docx'),
+    onSuccess: (blob) => {
+      setDocxError(null);
+      downloadBlob(blob, 'commercial-proposal.docx');
+    },
     onError: (exc: Error) => setDocxError(exc.message),
+  });
+
+  const csv = useMutation({
+    mutationFn: (estimateId: number) => api.estimateCsv(estimateId),
+    onSuccess: (blob) => {
+      setCsvError(null);
+      downloadBlob(blob, `deal-estimate-${result?.estimate_id ?? 'result'}.csv`);
+    },
+    onError: (exc: Error) => setCsvError(exc.message),
   });
 
   const {
     register,
     handleSubmit,
+    setError: setFieldError,
     formState: { errors },
   } = useForm<FormValues>({ defaultValues: { urgency: 'normal' } });
 
   async function onSubmit(values: FormValues) {
+    // Схема zod описывает обязательные поля: без явного прогона ошибки не появятся в форме.
+    const parsed = schema.safeParse(values);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        if (issue.path[0] === 'project_type') setFieldError('project_type', { message: issue.message });
+        if (issue.path[0] === 'scale') setFieldError('scale', { message: issue.message });
+      }
+      return;
+    }
+    const data = parsed.data;
     setPending(true);
     setError(null);
+    // Новая оценка — новая попытка выгрузки: старая ошибка скачивания не должна висеть.
+    setDocxError(null);
     try {
       setResult(
         await api.estimateDeal({
-          project_type: values.project_type,
-          scale: values.scale,
-          works: splitList(values.works),
-          equipment: splitList(values.equipment),
-          software: splitList(values.software),
-          urgency: values.urgency,
-          has_unique_solution: Boolean(values.has_unique_solution),
+          project_type: data.project_type,
+          scale: data.scale,
+          region_id: globalRegion,
+          works: splitList(data.works),
+          equipment: splitList(data.equipment),
+          software: splitList(data.software),
+          urgency: data.urgency,
+          has_unique_solution: Boolean(data.has_unique_solution),
         }),
       );
     } catch (exc) {
@@ -131,15 +161,15 @@ export function CalculatorPage() {
           <h2>Ценовая вилка</h2>
           <div className="grid">
             <div>
-              <div className="metric">{Number(result.estimate.min).toLocaleString('ru-RU')} ₽</div>
+              <div className="metric">{formatMoney(result.estimate.min)}</div>
               <div className="muted">Минимум</div>
             </div>
             <div>
-              <div className="metric">{Number(result.estimate.optimum).toLocaleString('ru-RU')} ₽</div>
+              <div className="metric">{formatMoney(result.estimate.optimum)}</div>
               <div className="muted">Оптимум</div>
             </div>
             <div>
-              <div className="metric">{Number(result.estimate.max).toLocaleString('ru-RU')} ₽</div>
+              <div className="metric">{formatMoney(result.estimate.max)}</div>
               <div className="muted">Максимум</div>
             </div>
           </div>
@@ -147,7 +177,7 @@ export function CalculatorPage() {
           <p>
             <QualityBadge quality={result.data_quality} /> метод: {result.estimator_mode} · модель{' '}
             {result.model_version}
-            {result.price_period ? ` · цены периода ${result.price_period}` : ''}
+            {result.price_period ? ` · цены периода ${result.price_period}` : <DataGap what="Период цен" />}
           </p>
 
           {result.warning && <Warning>{result.warning}</Warning>}
@@ -156,8 +186,8 @@ export function CalculatorPage() {
           <ul className="explanation">
             {result.comparables.map((item) => (
               <li key={item.deal_id}>
-                {item.title} — {Number(item.contract_value).toLocaleString('ru-RU')} ₽ · сходство{' '}
-                {item.similarity} · цена: {item.retro_price_basis}
+                {item.title} — {formatMoney(item.contract_value)} · сходство{' '}
+                {item.similarity} · цена: {item.retro_price_basis || <DataGap what="Основа цены" />}
               </li>
             ))}
             {result.comparables.length === 0 && <li>Аналоги не подобраны</li>}
@@ -170,15 +200,17 @@ export function CalculatorPage() {
                 {adj.factor}: {adj.value}
               </li>
             ))}
+            {result.adjustments.length === 0 && <li>Поправки не применялись</li>}
           </ul>
 
           <h3>Разбивка по статьям</h3>
           <ul className="explanation">
             {result.breakdown.map((row) => (
               <li key={row.article}>
-                {row.article}: {Number(row.amount).toLocaleString('ru-RU')} ₽
+                {row.article}: {row.amount ? formatMoney(row.amount) : <DataGap what="Сумма" />}
               </li>
             ))}
+            {result.breakdown.length === 0 && <li>Разбивка не рассчитана</li>}
           </ul>
 
           <Warning>
@@ -186,6 +218,7 @@ export function CalculatorPage() {
             стоимостную экспертизу.
           </Warning>
 
+          <div className="form-row" style={{ marginTop: 16 }}>
           <button
             type="button"
             disabled={docx.isPending}
@@ -193,9 +226,22 @@ export function CalculatorPage() {
           >
             {docx.isPending ? 'Готовим документ…' : 'Скачать КП (DOCX)'}
           </button>
+          <button
+            type="button"
+            disabled={csv.isPending}
+            onClick={() => result && csv.mutate(result.estimate_id)}
+          >
+            {csv.isPending ? 'Готовим CSV…' : 'Выгрузить вилку и аналоги (CSV)'}
+          </button>
+        </div>
           {docxError && (
             <p className="warning" role="alert">
               {docxError}
+            </p>
+          )}
+          {csvError && (
+            <p className="warning" role="alert">
+              {csvError}
             </p>
           )}
         </section>

@@ -30,6 +30,12 @@ body {
   min-height: 100vh;
 }
 
+.login-boot {
+  min-height: 100vh;
+  align-content: center;
+  justify-items: center;
+}
+
 .app-header {
   display: flex;
   gap: 16px;
@@ -136,11 +142,47 @@ th {
   font-size: 13px;
 }
 
+/* Демо-режим: синтетические данные помечаются всегда, а не только на карточках (ТЗ 6.8). */
+.demo-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--status-prospect);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.demo-badge--card {
+  display: block;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 400;
+  margin: 0 0 8px;
+}
+
 .explanation {
   margin: 0;
   padding-left: 18px;
   font-size: 13px;
   color: var(--text-muted);
+}
+
+/* Пропуск в источнике: не «0» и не «—», а честная плашка (ТЗ 6.8). */
+.data-gap {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f0f2f5;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* Широкая таблица не должна порождать горизонтальный скролл всей страницы (ТЗ 14). */
+.table-scroll {
+  overflow-x: auto;
 }
 
 .form-row {
@@ -155,6 +197,19 @@ label {
   gap: 4px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/*
+ * Внутри карточки блоки идут плотной колонкой, а у label, button и .form-row маргинов
+ * по умолчанию нет: подпись следующего поля липла к полю предыдущего, а кнопка — к полям.
+ */
+.card > label + label,
+.card > .form-row + .form-row,
+.card > .form-row + label,
+.card > label + button,
+.card > .form-row + button,
+.card > p + button {
+  margin-top: 12px;
 }
 
 input,
@@ -180,6 +235,122 @@ button:disabled {
   cursor: progress;
 }
 
+button:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+button:active:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+/* ТЗ 11.1: управление с клавиатуры — у фокуса должен быть видимый индикатор. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+/* ТЗ 11.1: hover / active / disabled для кнопок. */
+button {
+  transition: filter 0.12s ease;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+button:active:not(:disabled) {
+  filter: brightness(0.88);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Глобальный фильтр региона в шапке (ТЗ 11.1). */
+.global-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.global-filter select {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.6);
+  min-width: 180px;
+}
+
+.user-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Таблица с сортировкой и пагинацией (ТЗ 11.1). */
+.data-table table {
+  margin-bottom: 8px;
+}
+
+.sort-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sort-button:hover:not(:disabled) {
+  filter: none;
+  text-decoration: underline;
+}
+
+.sort-mark {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.pagination button {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Кнопка в цветной шапке иначе сливается с фоном. */
+.app-header button {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.65);
+}
+
+/* Горизонтальный скролл не должен возникать у всей страницы (ТЗ 14). */
+html,
+body {
+  overflow-x: hidden;
+}
+
+.app-header > * {
+  min-width: 0;
+}
+
 /* Мобильный адаптив: смартфон — целевое устройство (ТЗ 11.2). */
 @media (max-width: 768px) {
   .app-body {
@@ -188,6 +359,7 @@ button:disabled {
   .app-header {
     flex-wrap: wrap;
     padding: 8px 12px;
+    row-gap: 8px;
   }
   .app-header nav {
     gap: 10px;
@@ -196,8 +368,200 @@ button:disabled {
   table {
     font-size: 12px;
   }
+  .global-filter {
+    order: 5;
+    width: 100%;
+  }
+  .global-filter select {
+    flex: 1;
+    min-width: 0;
+  }
   /* Горизонтальный скролл таблицы лучше обрезки, но карточки — ещё лучше. */
   .table-scroll {
     overflow-x: auto;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .app-header strong {
+    font-size: 16px;
+  }
+  .app-header nav a {
+    font-size: 12px;
+  }
+}
+
+/* Этап B: квадрант «потенциал × присутствие». */
+.quadrant-wrap {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 260px;
+}
+
+.quadrant-chart {
+  position: relative;
+  padding: 24px 12px 12px 24px;
+}
+
+.quadrant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 260px;
+}
+
+.quadrant-cell {
+  border: none;
+  border-radius: 0;
+  background: var(--surface-alt);
+  color: var(--text-primary);
+  text-align: left;
+  padding: 12px;
+  cursor: pointer;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.quadrant-cell--white {
+  background: #fdf3e3;
+}
+.quadrant-cell--strong {
+  background: #e7f2fb;
+}
+.quadrant-cell--stable {
+  background: #eaf6ec;
+}
+.quadrant-cell--weak {
+  background: #f0f2f5;
+}
+
+.quadrant-cell-title {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.quadrant-cell-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.quadrant-points {
+  position: absolute;
+  inset: 24px 12px 12px 24px;
+  pointer-events: none;
+}
+
+.quadrant-point {
+  position: absolute;
+  transform: translate(-50%, 50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quadrant-point--white {
+  background: #b26a00;
+}
+.quadrant-point--strong {
+  background: #0050a0;
+}
+.quadrant-point--stable {
+  background: #0e7c3f;
+}
+.quadrant-point--weak {
+  background: #5a6472;
+}
+
+.quadrant-point--selected {
+  outline: 3px solid #b3261e;
+  outline-offset: 2px;
+}
+
+.quadrant-axis {
+  position: absolute;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.quadrant-axis--x {
+  bottom: -6px;
+  left: 24px;
+}
+
+.quadrant-axis--y {
+  top: 4px;
+  left: 2px;
+}
+
+.quadrant-legend {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.quadrant-legend-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.quadrant-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.quadrant-chip--white {
+  background: #b26a00;
+}
+.quadrant-chip--strong {
+  background: #0050a0;
+}
+.quadrant-chip--stable {
+  background: #0e7c3f;
+}
+.quadrant-chip--weak {
+  background: #5a6472;
+}
+
+/* Компактная таблица карточек: подписи в th не «жирные» по умолчанию. */
+table.compact th {
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Вехи и метрики: аккуратная горизонтальная линия с датой. */
+.explanation li {
+  margin-bottom: 6px;
+}
+
+@media (max-width: 768px) {
+  .quadrant-wrap {
+    grid-template-columns: 1fr;
+  }
+  .quadrant-chart {
+    padding: 20px 8px 8px 20px;
+  }
+  .quadrant-points {
+    inset: 20px 8px 8px 20px;
   }
 }

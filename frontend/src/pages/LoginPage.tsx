@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { api, setToken } from '@/api/client';
+import { api } from '@/api/client';
+import { isMockMode } from '@/api/mocks';
 
 const loginSchema = z.object({
   login: z.string().min(2, 'Укажите логин или e-mail'),
@@ -11,8 +12,15 @@ const loginSchema = z.object({
 
 type FormValues = z.infer<typeof loginSchema>;
 
-export function LoginPage() {
+export function LoginPage({
+  notice,
+  onDismissNotice,
+}: {
+  notice?: string | null;
+  onDismissNotice?: () => void;
+} = {}) {
   const [partialToken, setPartialToken] = useState<string | null>(null);
+  const [setupUri, setSetupUri] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -20,22 +28,35 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    setError: setFieldError,
     formState: { errors },
   } = useForm<FormValues>({ mode: 'onSubmit' });
 
   async function onLogin(values: FormValues) {
+    onDismissNotice?.();
+    // Правила живут в zod-схеме: прогоняем её на отправке, иначе сообщения не показываются.
+    const parsed = loginSchema.safeParse(values);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        if (issue.path[0] === 'login') setFieldError('login', { message: issue.message });
+        if (issue.path[0] === 'password') setFieldError('password', { message: issue.message });
+      }
+      return;
+    }
     setPending(true);
     setError(null);
+    setSetupUri(null);
     try {
       const result = await api.login(values.login, values.password);
       if (result.mfa_required && result.partial_token) {
+        if (result.mfa_setup_required) {
+          const setup = await api.setup2fa(result.partial_token);
+          setSetupUri(setup.otpauth_hint);
+        }
         setPartialToken(result.partial_token);
         return;
       }
-      if (result.access_token) {
-        setToken(result.access_token);
-        window.location.assign('/');
-      }
+      setError('Сервер не вернул challenge для второго фактора');
     } catch (exc) {
       setError(exc instanceof Error ? exc.message : 'Не удалось войти');
     } finally {
@@ -50,8 +71,8 @@ export function LoginPage() {
     setError(null);
     try {
       const tokens = await api.verify2fa(partialToken, code);
-      setToken(tokens.access_token);
-      window.location.assign('/');
+      // setToken + уведомление App делает клиент: перезагрузка не нужна.
+      void tokens;
     } catch (exc) {
       setError(exc instanceof Error ? exc.message : 'Неверный код');
     } finally {
@@ -61,6 +82,17 @@ export function LoginPage() {
 
   return (
     <main className="app-body" style={{ maxWidth: 460, margin: '0 auto' }}>
+      {isMockMode() && (
+        <div className="demo-badge demo-badge--card" role="note">
+          Демо-режим: данные синтетические, сервер — мок. Вход с любыми логином и паролем
+          (минимум 8 символов), код 2FA — любые 6 цифр.
+        </div>
+      )}
+      {notice && (
+        <div className="warning" role="alert">
+          {notice}
+        </div>
+      )}
       <form className="card" onSubmit={handleSubmit(onLogin)} aria-busy={pending}>
         <h2>Вход в систему</h2>
         <p className="muted">
@@ -90,6 +122,13 @@ export function LoginPage() {
       {partialToken && (
         <form className="card" onSubmit={onCode}>
           <h2>Подтверждение второго фактора</h2>
+          {setupUri && (
+            <p className="muted" role="note">
+              Добавьте этот ключ в приложение-аутентификатор, затем введите одноразовый код:
+              <br />
+              <code>{setupUri}</code>
+            </p>
+          )}
           <label>
             Одноразовый код
             <input

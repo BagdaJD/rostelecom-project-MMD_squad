@@ -9,7 +9,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from statistics import median
 
-# Региональные коэффициенты условны и подлежат замене корпоративной справочной базой.
 URGENCY_COEFFICIENT = {"normal": 1.0, "high": 1.05, "critical": 1.12}
 UNIQUE_SOLUTION_COEFFICIENT = 1.08
 
@@ -66,7 +65,9 @@ def similarity(query: EstimateInput, analog: Analog) -> float:
     return round(min(score, 1.0), 3)
 
 
-def select_analogs(query: EstimateInput, pool: list[Analog], top_k: int = 5) -> list[tuple[Analog, float]]:
+def select_analogs(
+    query: EstimateInput, pool: list[Analog], top_k: int = 5
+) -> list[tuple[Analog, float]]:
     ranked = sorted(((a, similarity(query, a)) for a in pool), key=lambda x: -x[1])
     return [(a, s) for a, s in ranked[:top_k] if s > 0]
 
@@ -75,8 +76,12 @@ def estimate_deal(query: EstimateInput, pool: list[Analog], top_k: int = 5) -> E
     chosen = select_analogs(query, pool, top_k)
     if not chosen:
         return EstimateResult(
-            price_min=0, price_optimum=0, price_max=0,
-            comparables=[], adjustments=[], data_quality="insufficient",
+            price_min=0,
+            price_optimum=0,
+            price_max=0,
+            comparables=[],
+            adjustments=[],
+            data_quality="insufficient",
             warning="Похожие проекты не найдены: диапазон не рассчитан, нужна ручная оценка",
         )
 
@@ -92,7 +97,6 @@ def estimate_deal(query: EstimateInput, pool: list[Analog], top_k: int = 5) -> E
     for adj in adjustments:
         coefficient *= float(adj["value"])
 
-    # Разброс зависит от разброса аналогов: устойчивее произвольных ±25 %.
     spread = 0.25
     if len(values) >= 3 and optimum > 0:
         spread = min(max((max(values) - min(values)) / optimum / 2, 0.12), 0.45)

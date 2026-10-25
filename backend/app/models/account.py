@@ -6,6 +6,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     DateTime,
     ForeignKey,
@@ -13,6 +14,7 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -26,7 +28,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     login: Mapped[str] = mapped_column(String(64), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    # admin | analyst | manager — проверка прав на сервере (ТЗ 13).
+
     role: Mapped[str] = mapped_column(String(16), default="manager")
     totp_secret_encrypted: Mapped[str | None] = mapped_column(Text)
     totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -35,17 +37,22 @@ class User(Base):
     failed_login_count: Mapped[int] = mapped_column(default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    auth_version: Mapped[int] = mapped_column(default=0, server_default=text("0"))
+    totp_last_counter: Mapped[int | None] = mapped_column(BigInteger)
 
 
 class RefreshToken(Base):
     __tablename__ = "refresh_token"
 
-    jti: Mapped[str] = mapped_column(String(36), primary_key=True)
+    jti: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id"), index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ip: Mapped[str | None] = mapped_column(String(64))
     user_agent: Mapped[str | None] = mapped_column(String(512))
+    auth_version: Mapped[int] = mapped_column(default=0, server_default=text("0"))
+    csrf_hash: Mapped[str | None] = mapped_column(String(64))
+    family_id: Mapped[str | None] = mapped_column(String(36), index=True)
 
 
 class PartialAuth(Base):
@@ -57,6 +64,9 @@ class PartialAuth(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id"), index=True)
     scope: Mapped[str] = mapped_column(String(32), default="mfa_pending")
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    auth_version: Mapped[int] = mapped_column(default=0, server_default=text("0"))
+    failed_attempts: Mapped[int] = mapped_column(default=0, server_default=text("0"))
+    secret_encrypted: Mapped[str | None] = mapped_column(Text)
 
 
 class SavedFilter(Base):
@@ -75,10 +85,12 @@ class Subscription(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id"), index=True)
-    module: Mapped[str] = mapped_column(String(32))  # tenders | investments
+    module: Mapped[str] = mapped_column(String(32))
     filters_json: Mapped[dict] = mapped_column(JSON, default=dict)
     notify_frequency: Mapped[str] = mapped_column(String(16), default="daily")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_dispatch_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Notification(Base):
@@ -93,7 +105,11 @@ class Notification(Base):
     payload_json: Mapped[dict] = mapped_column(JSON, default=dict)
     related_object: Mapped[str | None] = mapped_column(String(128))
     dedup_key: Mapped[str] = mapped_column(String(128), index=True)
+    delivery_key: Mapped[str | None] = mapped_column(String(64), unique=True)
     channel: Mapped[str] = mapped_column(String(16), default="in_app")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
@@ -109,7 +125,7 @@ class SourceRecord(Base):
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     raw_payload: Mapped[dict | None] = mapped_column(JSON)
     payload_hash: Mapped[str | None] = mapped_column(String(64), index=True)
-    # pending | processed | skipped | error
+
     processing_status: Mapped[str] = mapped_column(String(16), default="pending")
     error: Mapped[str | None] = mapped_column(Text)
     license_note: Mapped[str | None] = mapped_column(Text)
@@ -137,11 +153,11 @@ class ScoringSnapshot(Base):
     __tablename__ = "scoring_snapshot"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    subject_type: Mapped[str] = mapped_column(String(16))  # company | region
+    subject_type: Mapped[str] = mapped_column(String(16))
     subject_id: Mapped[int] = mapped_column(index=True)
-    score: Mapped[float] = mapped_column()
+    score: Mapped[float | None] = mapped_column()
     factors_json: Mapped[list] = mapped_column(JSON, default=list)
-    # heuristic | trained — обязателен в ответе API (ТЗ 8).
+
     scoring_mode: Mapped[str] = mapped_column(String(16), default="heuristic")
     model_version: Mapped[str] = mapped_column(String(48))
     calculated_at: Mapped[datetime] = mapped_column(

@@ -1,0 +1,347 @@
+/** Мок-слой: он заменяет бэкенд в разработке, поэтому должен вести себя как контракт.
+ *
+ * Проверяем то, на чём обычно расходятся мок и API: коды ответов, форма ошибки,
+ * пустые выборки, файловые ответы и включение только по явному флагу.
+ */
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { installMocks, isMockMode } from '@/api/mocks';
+import type { Company, HeatCell, ProjectCard, TimelinePoint, WhiteSpace } from '@/types/api';
+
+const realFetch = globalThis.fetch;
+
+/** Минимальный sessionStorage: мок хранит в нём выбранный сценарий между загрузками. */
+const storage = new Map<string, string>();
+
+function enableMocks(query: string): void {
+  vi.stubGlobal('location', { search: query });
+  vi.stubGlobal('sessionStorage', {
+    getItem: (key: string) => storage.get(key) ?? null,
+    setItem: (key: string, value: string) => storage.set(key, value),
+    removeItem: (key: string) => storage.delete(key),
+  });
+  storage.clear();
+  globalThis.fetch = realFetch;
+}
+
+async function call(path: string, init?: RequestInit): Promise<Response> {
+  return globalThis.fetch(`http://mock.local/api/v1${path}`, init);
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  globalThis.fetch = realFetch;
+});
+
+describe('включение мока', () => {
+  it('без флага не подменяет fetch', () => {
+    enableMocks('');
+    const before = globalThis.fetch;
+    expect(installMocks()).toBeNull();
+    expect(globalThis.fetch).toBe(before);
+  });
+
+  it('включается параметром ?mock и сообщает сценарий', () => {
+    enableMocks('?mock=1');
+    expect(installMocks()).toBe('data');
+  });
+
+  it('переживает переход после входа: ?mock теряется, а мок обязан остаться', () => {
+    enableMocks('?mock=1&scenario=empty');
+    expect(installMocks()).toBe('empty');
+
+    // Вход делает window.location.assign('/') — адрес приходит без параметров.
+    vi.stubGlobal('location', { search: '' });
+    expect(installMocks()).toBe('empty');
+  });
+
+  it('?mock=0 выключает мок и забывает сценарий', () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    vi.stubGlobal('location', { search: '?mock=0' });
+    expect(installMocks()).toBeNull();
+    expect(storage.size).toBe(0);
+  });
+
+  it('неизвестный сценарий сводится к данным, а не к падению', () => {
+    enableMocks('?mock=1&scenario=whatever');
+    expect(installMocks()).toBe('data');
+  });
+
+  it('isMockMode: включён при ?mock и после перехода, выключен без мока', () => {
+    enableMocks('?mock=1');
+    installMocks();
+    expect(isMockMode()).toBe(true);
+
+    // После входа параметр теряется, но флаг живёт в sessionStorage — индикатор остаётся.
+    vi.stubGlobal('location', { search: '' });
+    expect(isMockMode()).toBe(true);
+
+    enableMocks('');
+    expect(isMockMode()).toBe(false);
+  });
+
+  it('isMockMode: ?mock=0 выключает индикатор', () => {
+    enableMocks('?mock=1');
+    installMocks();
+    vi.stubGlobal('location', { search: '?mock=0' });
+    expect(isMockMode()).toBe(false);
+  });
+});
+
+describe('сценарий data', () => {
+  it('отдаёт тепловую карту и фильтрует по региону', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const all = (await (await call('/radar/heatmap')).json()) as HeatCell[];
+    const onlyTyumen = (await (await call('/radar/heatmap?region_id=3')).json()) as HeatCell[];
+
+    expect(all.length).toBeGreaterThan(1);
+    expect(onlyTyumen).toHaveLength(1);
+    expect(onlyTyumen[0]?.region_name).toBe('Тюменская область');
+  });
+
+  it('белое пятно объясняется метриками, а не цветом', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const spaces = (await (await call('/radar/white-spaces')).json()) as WhiteSpace[];
+    expect(spaces[0]?.explanation.length).toBeGreaterThanOrEqual(3);
+    expect(spaces[0]?.potential_score).toBeGreaterThan(spaces[0]?.presence_score ?? 0);
+  });
+
+  it('белые пятна и таймлайн фильтруются по региону, как и остальные срезы', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const spaces = (await (await call('/radar/white-spaces?region_id=3')).json()) as WhiteSpace[];
+    expect(spaces).toHaveLength(1);
+    expect(spaces[0]?.region_id).toBe(3);
+
+    const other = (await (await call('/radar/white-spaces?region_id=2')).json()) as WhiteSpace[];
+    expect(other).toHaveLength(0);
+
+    const timeline = (await (await call('/investments/timeline?region_id=3')).json()) as TimelinePoint[];
+    expect(timeline).toHaveLength(1);
+    expect(timeline[0]?.region_id).toBe(3);
+  });
+
+  it('refresh до логина возвращает 401, после 2FA — токен (имитация httpOnly-куки)', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const before = await call('/auth/refresh', { method: 'POST' });
+    expect(before.status).toBe(401);
+
+    // Успешный 2FA ставит «cookie» в мок-хранилище.
+    await call('/auth/2fa/verify', { method: 'POST', body: '{}' });
+    const after = await call('/auth/refresh', { method: 'POST' });
+    expect(after.status).toBe(200);
+    expect(((await after.json()) as { access_token: string }).access_token).toBeTruthy();
+  });
+
+  it('карточка компании содержит временной ряд с пропуском (null, не 0)', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const card = await (await call('/companies/102')).json();
+    const profit = card.metrics.find((m: { metric_code: string }) => m.metric_code === 'profit');
+    expect(profit.value).toBeNull();
+    expect(card.provenance[0].source).toBeTruthy();
+  });
+
+  it('разные компании отдают свои карточки, а не одну и ту же (регрессия)', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const active = await (await call('/companies/101')).json();
+    const prospect = await (await call('/companies/102')).json();
+    expect(active.name).toBe('Уралгазстрой MOS');
+    expect(active.client_status).toBe('active');
+    expect(active.presence[0].region_id).toBe(1);
+    expect(prospect.name).toBe('Нива-Агро ТЮ');
+    expect(prospect.client_status).toBe('prospect');
+  });
+
+  it('проекты фильтруются по стадии и региону (срез навигатора)', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const projects = (await (
+      await call('/investments?stage=design&region_id=3')
+    ).json()) as { id: number; region_id: number; stage: string }[];
+
+    expect(projects).toHaveLength(1);
+    expect(projects[0]?.id).toBe(201);
+    expect(projects[0]?.region_id).toBe(3);
+  });
+
+  it('карточка проекта отдаёт окно контакта и связанные закупки', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const card = (await (await call('/investments/201')).json()) as ProjectCard;
+    expect(card.contact_window).toBe('6–12 мес. до старта');
+    expect(card.tenders[0]?.deadline_date).toBe('2026-10-20');
+  });
+
+  it('список компаний фильтруется по региону', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const rows = (await (await call('/companies?region_id=3')).json()) as Company[];
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.client_status).toBe('prospect');
+  });
+
+  it('CSV начинается с BOM и содержит идентификаторы (ТЗ 12)', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/exports/csv', { method: 'POST', body: '{}' });
+    // text() по спеке отбрасывает BOM при декодировании, поэтому смотрим байты: именно
+    // они уйдут в скачанный файл, и именно их проверяет Excel/табличный редактор.
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    expect([bytes[0], bytes[1], bytes[2]]).toEqual([0xef, 0xbb, 0xbf]);
+
+    const text = await new Response(bytes.slice(3)).text();
+    expect(text.split('\r\n')[0]).toContain('ИНН');
+    expect(text.split('\r\n')[1]).toContain('7700000016');
+  });
+
+  it('экспорт компаний уважает текущий фильтр региона и квадранта', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'companies', filters: { region_id: 3, quadrant: 'white' } }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    const lines = text.split('\r\n');
+    expect(lines[0]).toContain('ИНН');
+    // Тюменская область — единственная компания в этом срезе.
+    expect(lines[1]).toContain('7200000044');
+    expect(lines).toHaveLength(2);
+  });
+
+  it('CRM-режим отдаёт документированный маппинг колонок rt_*', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'companies', filters: {}, mode: 'crm' }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    expect(text.split('\r\n')[0]).toContain('rt_inn');
+    expect(text.split('\r\n')[0]).toContain('rt_source_url');
+  });
+
+  it('экспорт инвестиций выгружает проекты и тендеры выбранного проекта', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'investments', filters: { project_id: 201 } }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    const lines = text.split('\r\n');
+    expect(lines[0]).toContain('Стадия');
+    expect(lines[1]).toContain('201');
+    expect(text).toContain('Тендеры проекта');
+    expect(text).toContain('Дедлайн');
+  });
+
+  it('CSV калькулятора содержит вилку, аналоги и разбивку', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'deals', filters: { estimate_id: 5501 } }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    expect(text).toContain('Оптимум');
+    expect(text).toContain('1650000.00');
+    expect(text).toContain('Аналоги');
+    expect(text).toContain('Поправки');
+    expect(text).toContain('Разбивка по статьям');
+  });
+
+  it('пустой сценарий не выдумывает строки данных', async () => {
+    enableMocks('?mock=1&scenario=empty');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'investments', filters: {} }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    const lines = text.split('\r\n').filter(Boolean);
+    expect(lines).toHaveLength(1);
+  });
+
+  it('пустой сценарий не выдумывает и компании — только заголовки', async () => {
+    enableMocks('?mock=1&scenario=empty');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'companies', filters: {} }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    const lines = text.split('\r\n').filter(Boolean);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('ИНН');
+  });
+
+  it('DOCX создаётся первым запросом и скачивается вторым', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const created = await (await call('/exports/proposal?estimate_id=1', { method: 'POST' })).json();
+    const file = await call('/exports/proposal/1/download');
+
+    expect(created.status).toBe('created');
+    expect(file.headers.get('Content-Type')).toContain('wordprocessingml');
+  });
+
+  it('неизвестный маршрут отвечает 404 с detail, а не пустотой', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/audit');
+    expect(response.status).toBe(404);
+    expect((await response.json()).detail).toContain('/audit');
+  });
+});
+
+describe('сценарии состояний', () => {
+  it('empty отдаёт пустые выборки: экран пустых данных проверяем без бэкенда', async () => {
+    enableMocks('?mock=1&scenario=empty');
+    installMocks();
+
+    expect(await (await call('/radar/white-spaces')).json()).toEqual([]);
+    expect((await (await call('/dashboard/summary')).json()).companies).toBe(0);
+  });
+
+  it('error отдаёт 500 с текстом в detail: экран ошибки проверяем без бэкенда', async () => {
+    enableMocks('?mock=1&scenario=error');
+    installMocks();
+
+    const response = await call('/companies');
+    expect(response.status).toBe(500);
+    expect((await response.json()).detail).toBeTruthy();
+  });
+});

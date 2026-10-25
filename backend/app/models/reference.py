@@ -7,6 +7,8 @@ from decimal import Decimal
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
+    JSON,
+    Boolean,
     Date,
     DateTime,
     ForeignKey,
@@ -16,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,7 +33,7 @@ class Region(Base):
     code: Mapped[str] = mapped_column(String(32), unique=True)
     parent_id: Mapped[int | None] = mapped_column(ForeignKey("region.id"))
     geometry: Mapped[str | None] = mapped_column(Geometry("MULTIPOLYGON", srid=4326))
-    # Центр агрегата для карты: полигоны есть не у всех наборов, а точку показать надо.
+
     center_lon: Mapped[float | None] = mapped_column(Numeric(9, 6))
     center_lat: Mapped[float | None] = mapped_column(Numeric(9, 6))
 
@@ -41,7 +44,7 @@ class Industry(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(32), unique=True)
     name: Mapped[str] = mapped_column(String(255))
-    # Бизнес-отрасль из кейса: ТЭК, торговля, АПК и т. д.
+
     group: Mapped[str] = mapped_column(String(64), index=True)
 
 
@@ -74,12 +77,18 @@ class Company(Base):
     name: Mapped[str] = mapped_column(String(512), index=True)
     name_normalized: Mapped[str] = mapped_column(String(512), index=True)
     inn: Mapped[str | None] = mapped_column(String(12), index=True)
-    ogrn: Mapped[str | None] = mapped_column(String(15))
+    ogrn: Mapped[str | None] = mapped_column(String(15), index=True)
     industry_id: Mapped[int | None] = mapped_column(ForeignKey("industry.id"))
     region_id: Mapped[int | None] = mapped_column(ForeignKey("region.id"), index=True)
     coordinates = mapped_column(Geometry("POINT", srid=4326))
     employee_count: Mapped[int | None] = mapped_column(Integer)
-    # active | prospect | unknown — выводится правилом, не моделью (ТЗ 7).
+    municipality: Mapped[str | None] = mapped_column(String(255), index=True)
+    city: Mapped[str | None] = mapped_column(String(255))
+    settlement: Mapped[str | None] = mapped_column(String(255))
+    source_id: Mapped[int | None] = mapped_column(ForeignKey("source_record.id"))
+    is_synthetic: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    attributes_json: Mapped[dict | None] = mapped_column(JSON)
+
     client_status: Mapped[str] = mapped_column(String(16), default="unknown", index=True)
     first_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -103,7 +112,7 @@ class CompanyMetric(Base):
     company_id: Mapped[int] = mapped_column(ForeignKey("company.id"), index=True)
     metric_code: Mapped[str] = mapped_column(String(32))
     period_year: Mapped[int] = mapped_column(Integer)
-    # NULL означает «нет данных»; ноль — это значение, а не пропуск.
+
     value: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     unit: Mapped[str] = mapped_column(String(16), default="RUB mln")
     source_id: Mapped[int] = mapped_column(ForeignKey("source_record.id"))
@@ -128,7 +137,7 @@ class CompanyMatch(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("company.id"), index=True)
-    source_record_id: Mapped[int] = mapped_column(ForeignKey("source_record.id"))
+    source_record_id: Mapped[int] = mapped_column(ForeignKey("source_record.id"), index=True)
     match_method: Mapped[str] = mapped_column(String(24))  # inn | ogrn | name_region
     confidence: Mapped[Decimal] = mapped_column(Numeric(4, 3))
 
@@ -152,6 +161,7 @@ class MarketEntrySignal(Base):
     """Вход федеральных и кросс-региональных игроков — требование кейса."""
 
     __tablename__ = "market_entry_signal"
+    event_key: Mapped[str | None] = mapped_column(String(64), unique=True)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("company.id"), index=True)

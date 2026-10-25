@@ -10,6 +10,14 @@ from app.models.account import (
     Subscription,
     User,
 )
+from app.models.background import (
+    BackgroundTask,
+    DataRevision,
+    DomainEvent,
+    ModelArtifact,
+    NotificationReceipt,
+    ReadModelSnapshot,
+)
 from app.models.deal import (
     Deal,
     DealBreakdown,
@@ -41,6 +49,12 @@ from app.models.reference import (
 )
 
 __all__ = [
+    "BackgroundTask",
+    "DataRevision",
+    "DomainEvent",
+    "ModelArtifact",
+    "NotificationReceipt",
+    "ReadModelSnapshot",
     "AuditLog",
     "Base",
     "Company",

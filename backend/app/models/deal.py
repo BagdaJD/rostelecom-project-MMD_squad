@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import JSON, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import JSON, Date, DateTime, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -24,7 +24,7 @@ class HistoricalDeal(Base):
     started_at: Mapped[date | None] = mapped_column(Date)
     closed_at: Mapped[date | None] = mapped_column(Date)
     contract_value: Mapped[Decimal] = mapped_column(Numeric(18, 2))
-    # contract | estimate | synthetic — откуда взята цена, влияет на доверие к оценке.
+
     retro_price_basis: Mapped[str] = mapped_column(String(16), default="synthetic")
     financing_scheme: Mapped[str | None] = mapped_column(String(64))
     source_id: Mapped[int | None] = mapped_column(ForeignKey("source_record.id"))
@@ -37,7 +37,7 @@ class PositionPrice(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), index=True)
-    category: Mapped[str] = mapped_column(String(32))  # equipment | software | works
+    category: Mapped[str] = mapped_column(String(32))
     unit: Mapped[str] = mapped_column(String(32))
     price_min: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
     price_max: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
@@ -80,9 +80,9 @@ class DealEstimate(Base):
     comparables_json: Mapped[list] = mapped_column(JSON, default=list)
     adjustments_json: Mapped[list] = mapped_column(JSON, default=list)
     price_period: Mapped[str | None] = mapped_column(String(32))
-    # insufficient | limited | sufficient
+
     data_quality: Mapped[str] = mapped_column(String(16), default="limited")
-    # analogs | trained | rule_based — честная маркировка метода (ТЗ 8).
+
     estimator_mode: Mapped[str] = mapped_column(String(16), default="analogs")
     model_version: Mapped[str] = mapped_column(String(48))
     requires_human_approval: Mapped[bool] = mapped_column(default=True)
@@ -94,7 +94,7 @@ class DealBreakdown(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     deal_estimate_id: Mapped[int] = mapped_column(ForeignKey("deal_estimate.id"), index=True)
-    article: Mapped[str] = mapped_column(String(48))  # works | equipment | software | other
+    article: Mapped[str] = mapped_column(String(48))
     amount: Mapped[Decimal] = mapped_column(Numeric(18, 2))
     basis: Mapped[str | None] = mapped_column(String(255))
 

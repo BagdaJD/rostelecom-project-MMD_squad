@@ -38,7 +38,11 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
 
 /** Частичные данные показываем плашкой, а не нулём: пропуск ≠ 0 (ТЗ 6.8). */
 export function DataGap({ what }: { what: string }) {
-  return <span className="muted">{what}: нет данных в источнике</span>;
+  return (
+    <span className="data-gap" title={`${what}: нет данных в источнике`}>
+      {what}: нет данных
+    </span>
+  );
 }
 
 export function Warning({ children }: { children: ReactNode }) {
