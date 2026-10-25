@@ -1,6 +1,7 @@
 """HTTP regressions on portable tables; these do not replace PostGIS integration tests."""
 
 import io
+import json
 
 import pytest
 from docx import Document
@@ -25,6 +26,9 @@ from app.models import (
     RefreshToken,
     User,
 )
+from modules.deal_calculator.seed import DEFAULT_BUNDLE, create_tables
+from modules.deal_calculator.seed import load_bundle as load_calculator_bundle
+from modules.deals.service import FALLBACK_MODE
 
 
 @pytest.fixture
@@ -135,6 +139,59 @@ def test_estimate_accepts_valid_urgency_with_analogs(api_client):
     )
     assert response.status_code == 200, response.text
     assert float(response.json()["estimate"]["optimum"]) > 0
+
+
+def _seed_calculator(engine) -> None:
+    """Таблицы и данные кейса нового калькулятора — для запасного расчёта без аналогов."""
+    create_tables(engine)
+    with Session(engine) as session:
+        load_calculator_bundle(session, json.loads(DEFAULT_BUNDLE.read_text(encoding="utf-8")))
+        session.commit()
+
+
+def _estimate(client, **fields):
+    payload = {"project_type": "connectivity", "scale": "medium", **fields}
+    response = client.post("/api/v1/deals/estimate", json=payload)
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_estimate_without_analogs_uses_calculator_fallback(api_client):
+    # Раньше без исторических аналогов вилка была 0 / 0 / 0 (задача 1).
+    client, engine, _, _ = api_client
+    _seed_calculator(engine)
+    body = _estimate(client)
+    assert body["estimator_mode"] == FALLBACK_MODE
+    assert 0 < float(body["estimate"]["min"]) <= float(body["estimate"]["optimum"])
+    assert float(body["estimate"]["optimum"]) <= float(body["estimate"]["max"])
+    assert "5 000 м²" in body["warning"] and "ручная проверка" in body["warning"]
+    assert any(a["factor"] == "assumed_area_m2" for a in body["adjustments"])
+
+    critical = _estimate(client, urgency="critical")
+    ratio = float(critical["estimate"]["optimum"]) / float(body["estimate"]["optimum"])
+    assert ratio == pytest.approx(1.12, rel=1e-3), "срочность учитывается и в запасном расчёте"
+
+
+def test_estimate_with_analogs_does_not_use_fallback(api_client):
+    client, engine, _, _ = api_client
+    _seed_calculator(engine)
+    _add_analog(engine)
+    body = _estimate(client)
+    assert body["estimator_mode"] == "analogs"
+    assert not (body["warning"] or "").startswith("Аналогов нет")
+
+
+def test_fallback_estimate_still_produces_docx(api_client):
+    client, engine, _, _ = api_client
+    _seed_calculator(engine)
+    estimate_id = _estimate(client)["estimate_id"]
+    created = client.post("/api/v1/exports/proposal", params={"estimate_id": estimate_id})
+    assert created.status_code == 200, created.text
+    downloaded = client.get(f"/api/v1/exports/proposal/{estimate_id}/download")
+    assert downloaded.status_code == 200
+    text = "\n".join(p.text for p in Document(io.BytesIO(downloaded.content)).paragraphs)
+    assert "assumed_area_m2: 5000" in text, "допущение видно в КП"
+    assert "Минимум: 0 руб." not in text
 
 
 def test_notifications_have_timestamp_and_remain_user_scoped(api_client):

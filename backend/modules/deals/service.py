@@ -5,6 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -13,13 +14,28 @@ from app.models import (
     DealEstimate,
     HistoricalDeal,
     PositionPrice,
+    Region,
     RegionalCoefficient,
 )
 from app.schemas import Adjustment, ComparableOut, DealEstimateRequest, DealEstimateResponse
-from ml.deal_estimator import Analog, EstimateInput, estimate_deal
+from ml.deal_estimator import (
+    URGENCY_COEFFICIENT,
+    Analog,
+    EstimateInput,
+    EstimateResult,
+    estimate_deal,
+)
+from modules.deal_calculator import service as calculator
+from modules.deal_calculator.models import CalcRegion
+from modules.deal_calculator.schemas import EstimateRequest as CalculatorRequest
 
 MODEL_VERSION = "deal-estimator-0.1"
 ARTICLE_WEIGHTS = {"works": 0.55, "equipment": 0.30, "software": 0.15}
+
+# Запасной расчёт, когда аналогов нет: старая форма не знает площади объекта, а новому
+# калькулятору без неё нечего считать. Допущения согласованы с командой (задача 1).
+FALLBACK_AREA_M2 = {"small": 1_000.0, "medium": 5_000.0, "large": 20_000.0}
+FALLBACK_MODE = "fallback_dispatching_norms"
 
 
 def _regional_coefficient(session: Session, region_id: int | None) -> float:
@@ -67,6 +83,12 @@ def estimate(
         regional_coefficient=_regional_coefficient(session, payload.region_id),
     )
     result = estimate_deal(query, _pool(session))
+    model_version = MODEL_VERSION
+    fallback_breakdown: dict[str, float] | None = None
+    if not result.comparables:
+        fallback = _dispatching_fallback(session, payload, author_id)
+        if fallback is not None:
+            result, fallback_breakdown, model_version = fallback
 
     wanted = set(payload.works) | set(payload.equipment) | set(payload.software)
     price_period = _period_label(session)
@@ -85,12 +107,15 @@ def estimate(
         data_quality=result.data_quality,
         estimator_mode=result.estimator_mode,
         price_period=price_period,
-        model_version=MODEL_VERSION,
+        model_version=model_version,
     )
     session.add(estimate_row)
     session.flush()
 
-    breakdown = _breakdown(result.price_optimum, wanted)
+    if fallback_breakdown is not None:
+        breakdown = fallback_breakdown
+    else:
+        breakdown = _breakdown(result.price_optimum, wanted)
     for article, amount in breakdown.items():
         session.add(
             DealBreakdown(
@@ -115,9 +140,95 @@ def estimate(
         adjustments=[Adjustment(**a) for a in result.adjustments],
         breakdown=[{"article": k, "amount": Decimal(str(v))} for k, v in breakdown.items()],
         price_period=price_period,
-        model_version=MODEL_VERSION,
+        model_version=model_version,
         warning=result.warning,
     )
+
+
+def _dispatching_fallback(
+    session: Session, payload: DealEstimateRequest, author_id: int | None
+) -> tuple[EstimateResult, dict[str, float], str] | None:
+    """Аналогов нет — оценка новым калькулятором по нормативам диспетчеризации здания.
+
+    Вместо вилки 0 / 0 / 0 пользователь видит ориентир и явное предупреждение о допущениях.
+    None — посчитать не удалось (нет данных калькулятора): остаётся прежний пустой ответ.
+    """
+    area = FALLBACK_AREA_M2[payload.scale]
+    region_code = (
+        session.scalar(select(Region.code).where(Region.id == payload.region_id))
+        if payload.region_id
+        else None
+    )
+    try:
+        # Регионы калькулятора — своя таблица; совпадение только по коду субъекта.
+        calc_region_id = (
+            session.scalar(select(CalcRegion.id).where(CalcRegion.code == region_code))
+            if region_code
+            else None
+        )
+        response = calculator.estimate(
+            session,
+            CalculatorRequest(
+                area_m2=area,
+                region_id=calc_region_id,
+                has_unique_solution=payload.has_unique_solution,
+                financing_scheme=payload.financing_scheme,
+            ),
+            author_id,
+        )
+    except SQLAlchemyError:
+        session.rollback()  # таблицы калькулятора не созданы
+        return None
+    if not response.estimate.get("optimum"):
+        return None
+
+    # У нового калькулятора нет срочности: применяем тот же коэффициент, что и по аналогам.
+    k_urgency = URGENCY_COEFFICIENT[payload.urgency]
+    prices = [float(response.estimate[key]) * k_urgency for key in ("min", "optimum", "max")]
+    area_label = f"{area:,.0f}".replace(",", " ")
+    region_note = (
+        ""
+        if calc_region_id
+        else "; региональный коэффициент 1,0 — регион вне справочника калькулятора"
+    )
+    warning = (
+        f"Аналогов нет: оценка по нормативам диспетчеризации инженерных систем здания, "
+        f"площадь принята {area_label} м² по масштабу «{payload.scale}»{region_note}. "
+        f"Для типа проекта «{payload.project_type}» требуется ручная проверка"
+    )
+    adjustments = [
+        {
+            "factor": "assumed_area_m2",
+            "value": area,
+            "note": f"площадь по масштабу «{payload.scale}» — допущение запасного расчёта",
+        },
+        *({"factor": a.factor, "value": a.value, "note": a.note} for a in response.adjustments),
+    ]
+    if k_urgency != 1.0:
+        adjustments.append({"factor": "urgency", "value": k_urgency})
+    result = EstimateResult(
+        price_min=round(prices[0], 2),
+        price_optimum=round(prices[1], 2),
+        price_max=round(prices[2], 2),
+        comparables=[
+            {
+                "deal_id": c.deal_id,
+                "title": c.title,
+                "contract_value": float(c.contract_value),
+                "similarity": c.similarity,
+                "retro_price_basis": c.retro_price_basis,
+            }
+            for c in response.comparables
+        ],
+        adjustments=adjustments,
+        data_quality=response.data_quality,
+        estimator_mode=FALLBACK_MODE,
+        warning=warning,
+    )
+    breakdown = {
+        row["article"]: round(float(row["amount"]) * k_urgency, 2) for row in response.breakdown
+    }
+    return result, breakdown, response.model_version
 
 
 def _breakdown(optimum: float, features: set[str]) -> dict[str, float]:
