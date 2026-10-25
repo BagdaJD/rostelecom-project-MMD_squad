@@ -31,6 +31,8 @@ import type {
 export type MockScenario = 'data' | 'empty' | 'error';
 
 const MOCK_KEY = 'rtk.mock';
+/** Имитация httpOnly refresh-куки: не сам токен, а признак «сессия есть» (ТЗ 13). */
+const REFRESH_FLAG = 'rtk.mockHasSession';
 
 type Definition = {
   pattern: RegExp;
@@ -330,13 +332,25 @@ const NOTIFICATIONS: NotificationItem[] = [
 const DEFINITIONS: Definition[] = [
   {
     pattern: /^\/auth\/login$/,
-    get: () => ({ mfa_required: true, partial_token: 'mock-partial-token', access_token: null }),
+    get: () => {
+      // В проде refresh-кука ставится при успешном логине — здесь имитируем флагом.
+      globalThis.sessionStorage?.setItem(REFRESH_FLAG, '1');
+      return { mfa_required: true, partial_token: 'mock-partial-token', access_token: null };
+    },
   },
   {
     pattern: /^\/auth\/2fa\/verify$/,
-    get: () => ({ access_token: 'mock-access-token', refresh_token: 'mock-refresh-token', token_type: 'bearer' }),
+    get: () => {
+      globalThis.sessionStorage?.setItem(REFRESH_FLAG, '1');
+      return { access_token: 'mock-access-token', refresh_token: 'mock-refresh-token', token_type: 'bearer' };
+    },
   },
   { pattern: /^\/auth\/me$/, get: () => ({ id: 1, login: 'analyst', role: 'analyst', mfa_enabled: true }) },
+  {
+    pattern: /^\/auth\/refresh$/,
+    get: () => ({ access_token: 'mock-access-token-refreshed', refresh_token: 'mock-refresh-token', token_type: 'bearer' }),
+  },
+  { pattern: /^\/auth\/logout$/, get: () => ({ status: 'ok' }) },
   {
     pattern: /^\/dashboard\/summary$/,
     get: (): DashboardSummary => ({
@@ -366,15 +380,30 @@ const DEFINITIONS: Definition[] = [
       );
     },
   },
-  { pattern: /^\/radar\/white-spaces$/, get: () => WHITE_SPACES },
-  { pattern: /^\/investments\/timeline$/, get: () => TIMELINE },
+  { pattern: /^\/radar\/white-spaces$/, get: (_match, search) => {
+    const region = search.get('region_id');
+    const group = search.get('industry_group');
+    return WHITE_SPACES.filter(
+      (space) =>
+        (!region || String(space.region_id) === region) &&
+        (!group || space.industry_group.toLowerCase().includes(group.toLowerCase())),
+    );
+  } },
+  { pattern: /^\/investments\/timeline$/, get: (_match, search) => {
+    const region = search.get('region_id');
+    return region ? TIMELINE.filter((point) => String(point.region_id) === region) : TIMELINE;
+  } },
   { pattern: /^\/investments\/(\d+)\/needs$/, get: () => NEEDS },
   { pattern: /^\/investments\/(\d+)$/, get: (match) => ({ ...PROJECT_CARD, id: Number(match[1]) }) },
   {
     pattern: /^\/investments$/,
     get: (_match, search) => {
       const stage = search.get('stage');
-      return stage ? PROJECTS.filter((p) => p.stage === stage) : PROJECTS;
+      const region = search.get('region_id');
+      return PROJECTS.filter(
+        (project) =>
+          (!stage || project.stage === stage) && (!region || String(project.region_id) === region),
+      );
     },
   },
   { pattern: /^\/deals\/estimate$/, get: () => ESTIMATE },
@@ -450,7 +479,13 @@ function filteredCompanies(filters: ExportFilters, empty: boolean): Company[] {
     }
     if (quadrant) {
       const cell = HEATMAP.find((item) => item.region_id === company.region_id);
-      if (!cell || quadrantOf(cell.potential_score, cell.presence_score, 50) !== quadrant) return false;
+      if (
+        !cell ||
+        cell.presence_score === null ||
+        quadrantOf(cell.potential_score, cell.presence_score, 50) !== quadrant
+      ) {
+        return false;
+      }
     }
     return true;
   });
@@ -586,6 +621,16 @@ function buildReply(scenario: MockScenario) {
       return Promise.resolve(
         new Response(JSON.stringify({ detail: 'Сервер недоступен в демонстрационном режиме' }), {
           status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    }
+
+    // Refresh без «cookie» (флага сессии) — 401: клиент не должен считать, что вошёл.
+    if (path === '/auth/refresh' && !globalThis.sessionStorage?.getItem(REFRESH_FLAG)) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ detail: 'No active refresh session' }), {
+          status: 401,
           headers: { 'Content-Type': 'application/json' },
         }),
       );

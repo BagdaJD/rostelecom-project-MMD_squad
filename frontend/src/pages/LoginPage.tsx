@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { api, setToken } from '@/api/client';
+import { api } from '@/api/client';
 import { isMockMode } from '@/api/mocks';
 
 const loginSchema = z.object({
@@ -20,6 +20,7 @@ export function LoginPage({
   onDismissNotice?: () => void;
 } = {}) {
   const [partialToken, setPartialToken] = useState<string | null>(null);
+  const [setupUri, setSetupUri] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -44,16 +45,18 @@ export function LoginPage({
     }
     setPending(true);
     setError(null);
+    setSetupUri(null);
     try {
       const result = await api.login(values.login, values.password);
       if (result.mfa_required && result.partial_token) {
+        if (result.mfa_setup_required) {
+          const setup = await api.setup2fa(result.partial_token);
+          setSetupUri(setup.otpauth_hint);
+        }
         setPartialToken(result.partial_token);
         return;
       }
-      if (result.access_token) {
-        setToken(result.access_token);
-        window.location.assign('/');
-      }
+      setError('Сервер не вернул challenge для второго фактора');
     } catch (exc) {
       setError(exc instanceof Error ? exc.message : 'Не удалось войти');
     } finally {
@@ -68,8 +71,8 @@ export function LoginPage({
     setError(null);
     try {
       const tokens = await api.verify2fa(partialToken, code);
-      setToken(tokens.access_token);
-      window.location.assign('/');
+      // setToken + уведомление App делает клиент: перезагрузка не нужна.
+      void tokens;
     } catch (exc) {
       setError(exc instanceof Error ? exc.message : 'Неверный код');
     } finally {
@@ -119,6 +122,13 @@ export function LoginPage({
       {partialToken && (
         <form className="card" onSubmit={onCode}>
           <h2>Подтверждение второго фактора</h2>
+          {setupUri && (
+            <p className="muted" role="note">
+              Добавьте этот ключ в приложение-аутентификатор, затем введите одноразовый код:
+              <br />
+              <code>{setupUri}</code>
+            </p>
+          )}
           <label>
             Одноразовый код
             <input

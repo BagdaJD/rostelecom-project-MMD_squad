@@ -4,6 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 
 import { api, downloadBlob } from '@/api/client';
 import { DataGap, EmptyState, ErrorState, Loading, Warning } from '@/components/states';
+import { DataTable, type DataTableColumn } from '@/components/DataTable';
+import { useGlobalRegion } from '@/components/GlobalFilter';
+import { formatNumber } from '@/lib/format';
 import { MapView } from '@/features/radar/MapView';
 import { QuadrantChart, quadrantLabel, quadrantOf, type Quadrant } from '@/features/radar/QuadrantChart';
 import { clientStatusLabel } from '@/styles/tokens';
@@ -34,8 +37,13 @@ function readFilters(params: URLSearchParams): Filters {
 export function RadarPage() {
   const [params, setParams] = useSearchParams();
   const filters = readFilters(params);
+  const globalRegion = useGlobalRegion();
   const [exportError, setExportError] = useState<string | null>(null);
   const [openCompany, setOpenCompany] = useState<number | null>(null);
+
+  // Глобальный фильтр шапки — fallback: URL-фильтр страницы переносим по ссылке,
+  // а без него срез задаёт выбор в шапке (ТЗ 11.1).
+  const effectiveRegion = filters.region_id ?? globalRegion;
 
   // Фильтры живут в URL: ссылку на срез можно переслать коллеге, а «назад» работает.
   function patchFilters(patch: Partial<Filters>) {
@@ -48,27 +56,30 @@ export function RadarPage() {
   }
 
   const cells = useQuery({
-    queryKey: ['heatmap', { region_id: filters.region_id, industry_group: filters.industry_group }],
-    queryFn: () => api.heatmap({ region_id: filters.region_id, industry_group: filters.industry_group }),
+    queryKey: ['heatmap', { region_id: effectiveRegion, industry_group: filters.industry_group }],
+    queryFn: () => api.heatmap({ region_id: effectiveRegion, industry_group: filters.industry_group }),
   });
   const spaces = useQuery({
-    queryKey: ['white-spaces', { region_id: filters.region_id, industry_group: filters.industry_group }],
-    queryFn: () => api.whiteSpaces({ region_id: filters.region_id, industry_group: filters.industry_group }),
+    queryKey: ['white-spaces', { region_id: effectiveRegion, industry_group: filters.industry_group }],
+    queryFn: () => api.whiteSpaces({ region_id: effectiveRegion, industry_group: filters.industry_group }),
   });
   const companies = useQuery({
-    queryKey: ['companies', { region_id: filters.region_id }],
-    queryFn: () => api.companies({ region_id: filters.region_id }),
+    queryKey: ['companies', { region_id: effectiveRegion }],
+    queryFn: () => api.companies({ region_id: effectiveRegion }),
   });
+  // Полный список для селектора: фильтрованные ячейки показывали бы один регион,
+  // и переключить срез было бы невозможно.
+  const regions = useQuery({ queryKey: ['regions'], queryFn: api.regions });
 
   const regionOptions = Array.from(
-    new Map((cells.data ?? []).map((c) => [c.region_id, c.region_name])).entries(),
+    new Map((regions.data ?? []).map((item) => [item.id, item.name])).entries(),
   );
 
   /** Строки компаний, попадающие в выбранный квадрант по региональному срезу. */
   const companiesInQuadrant = (companies.data ?? []).filter((company) => {
     if (!filters.quadrant) return true;
     const cell = (cells.data ?? []).find((item) => item.region_id === company.region_id);
-    if (!cell) return false;
+    if (!cell || cell.presence_score === null) return false;
     return (
       quadrantOf(cell.potential_score, cell.presence_score, 50) === filters.quadrant
     );
@@ -78,7 +89,7 @@ export function RadarPage() {
     setExportError(null);
     try {
       // Текущий набор фильтров: регион, отрасль и квадрант — как в URL (ТЗ 12).
-      const blob = await api.exportCsv('companies', { ...filters }, mode);
+      const blob = await api.exportCsv('companies', { ...filters, region_id: effectiveRegion }, mode);
       downloadBlob(blob, mode === 'crm' ? 'companies-crm.csv' : 'companies.csv');
     } catch (exc) {
       setExportError(exc instanceof Error ? exc.message : 'Экспорт не выполнен');
@@ -93,7 +104,7 @@ export function RadarPage() {
           <label>
             Регион
             <select
-              value={filters.region_id ?? ''}
+              value={effectiveRegion ?? ''}
               onChange={(event) =>
                 patchFilters({ region_id: event.target.value ? Number(event.target.value) : null })
               }
@@ -163,15 +174,17 @@ export function RadarPage() {
               longitude: cell.longitude,
               latitude: cell.latitude,
               colorValue: cell.potential_score,
-              radiusValue: 100 - cell.presence_score,
+              radiusValue:
+                cell.presence_score === null ? null : 100 - cell.presence_score,
             }))}
-            selectedRegion={filters.region_id}
+            selectedRegion={filters.region_id ?? globalRegion}
             onSelectRegion={(regionId) => patchFilters({ region_id: regionId })}
             ariaLabel="Тепловая карта потенциала регионов"
           />
           <p className="muted">
-            Цвет — потенциал среза, радиус — присутствие: чем больше точка при ярком цвете, тем
-            отчётливее белое пятно. Клик по точке задаёт фильтр региона.
+            Цвет — потенциал среза, радиус — подтверждённое присутствие: без координат точка не
+            размещается, без данных о присутствии используется нейтральный размер. Клик по точке
+            задаёт фильтр региона.
           </p>
         </section>
       )}
@@ -181,7 +194,7 @@ export function RadarPage() {
           <h2>Квадрант «потенциал × присутствие»</h2>
           <QuadrantChart
             cells={cells.data ?? []}
-            selected={filters.region_id}
+            selected={filters.region_id ?? globalRegion}
             onSelect={(q) => patchFilters({ quadrant: q })}
             onSelectCell={(regionId) => patchFilters({ region_id: regionId })}
           />
@@ -271,7 +284,7 @@ function CompanyCardPanel({ companyId, onClose }: { companyId: number; onClose: 
             {metric.value === null ? (
               <DataGap what="Значение" />
             ) : (
-              Number(metric.value).toLocaleString('ru-RU')
+              formatNumber(metric.value)
             )}
           </li>
         ))}
@@ -281,53 +294,74 @@ function CompanyCardPanel({ companyId, onClose }: { companyId: number; onClose: 
 }
 
 function CompanyTable({ rows, onOpen }: { rows: Company[]; onOpen: (id: number) => void }) {
+  const columns: DataTableColumn<Company>[] = [
+    {
+      key: 'name',
+      header: 'Компания',
+      sortValue: (row) => row.name,
+      render: (row) => row.name,
+    },
+    {
+      key: 'inn',
+      header: 'ИНН',
+      sortValue: (row) => row.inn,
+      render: (row) => row.inn ?? '—',
+    },
+    {
+      key: 'status',
+      header: 'Статус',
+      sortValue: (row) => row.client_status,
+      render: (row) => (
+        <span className={`badge badge--${row.client_status}`}>
+          {clientStatusLabel[row.client_status] ?? row.client_status}
+        </span>
+      ),
+    },
+    {
+      key: 'revenue',
+      header: 'Выручка, млн ₽',
+      align: 'right',
+      sortValue: (row) => (row.revenue_latest ? Number(row.revenue_latest) : null),
+      render: (row) =>
+        row.revenue_latest ? (
+          <>
+            {row.revenue_latest}
+            {row.revenue_year ? <span className="muted"> ({row.revenue_year})</span> : null}
+          </>
+        ) : (
+          <DataGap what="Выручка" />
+        ),
+    },
+    {
+      key: 'dynamics',
+      header: 'Динамика',
+      align: 'right',
+      sortValue: (row) => row.revenue_yoy,
+      render: (row) =>
+        row.revenue_yoy === null ? (
+          <DataGap what="Динамика" />
+        ) : (
+          `${row.revenue_yoy > 0 ? '+' : ''}${row.revenue_yoy} %`
+        ),
+    },
+    {
+      key: 'open',
+      header: '',
+      render: (row) => (
+        <button type="button" onClick={() => onOpen(row.id)}>
+          Карточка
+        </button>
+      ),
+    },
+  ];
+
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Компания</th>
-          <th>ИНН</th>
-          <th>Статус</th>
-          <th>Выручка, млн ₽</th>
-          <th>Динамика</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.id}>
-            <td>{row.name}</td>
-            <td>{row.inn ?? '—'}</td>
-            <td>
-              <span className={`badge badge--${row.client_status}`}>
-                {clientStatusLabel[row.client_status] ?? row.client_status}
-              </span>
-            </td>
-            <td>
-              {row.revenue_latest ? (
-                <>
-                  {row.revenue_latest}
-                  {row.revenue_year ? <span className="muted"> ({row.revenue_year})</span> : null}
-                </>
-              ) : (
-                <DataGap what="Выручка" />
-              )}
-            </td>
-            <td>
-              {row.revenue_yoy === null ? (
-                <DataGap what="Динамика" />
-              ) : (
-                `${row.revenue_yoy > 0 ? '+' : ''}${row.revenue_yoy} %`
-              )}
-            </td>
-            <td>
-              <button type="button" onClick={() => onOpen(row.id)}>
-                Карточка
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <DataTable
+      columns={columns}
+      rows={rows}
+      rowKey={(row) => row.id}
+      pageSize={5}
+      emptyLabel="Нет компаний в срезе"
+    />
   );
 }

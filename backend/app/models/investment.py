@@ -2,19 +2,20 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
+    JSON,
+    Boolean,
     Date,
-    DateTime,
     ForeignKey,
     Index,
-    Integer,
     Numeric,
     String,
     Text,
+    false,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,7 +31,7 @@ class InvestmentProject(Base):
     description: Mapped[str | None] = mapped_column(Text)
     initiator_company_id: Mapped[int | None] = mapped_column(ForeignKey("company.id"), index=True)
     industry_id: Mapped[int | None] = mapped_column(ForeignKey("industry.id"), index=True)
-    # design | modernization | construction | launch | completed
+
     stage: Mapped[str] = mapped_column(String(32), index=True)
     planned_start: Mapped[date | None] = mapped_column(Date)
     planned_end: Mapped[date | None] = mapped_column(Date)
@@ -41,6 +42,13 @@ class InvestmentProject(Base):
     source_id: Mapped[int | None] = mapped_column(ForeignKey("source_record.id"))
     confidence: Mapped[Decimal | None] = mapped_column(Numeric(4, 3))
     status: Mapped[str] = mapped_column(String(24), default="active")
+    municipality: Mapped[str | None] = mapped_column(String(255), index=True)
+    start_precision: Mapped[str] = mapped_column(String(8), default="day", server_default="day")
+    end_precision: Mapped[str] = mapped_column(String(8), default="day", server_default="day")
+    stage_method: Mapped[str] = mapped_column(String(32), default="source", server_default="source")
+    stage_evidence: Mapped[str | None] = mapped_column(Text)
+    is_synthetic: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    attributes_json: Mapped[dict | None] = mapped_column(JSON)
 
     needs: Mapped[list[ProjectNeed]] = relationship(back_populates="project")
 
@@ -54,6 +62,7 @@ class ProjectMilestone(Base):
     planned_date: Mapped[date | None] = mapped_column(Date)
     actual_date: Mapped[date | None] = mapped_column(Date)
     evidence_url: Mapped[str | None] = mapped_column(String(1024))
+    date_precision: Mapped[str] = mapped_column(String(8), default="day", server_default="day")
 
 
 class Tender(Base):
@@ -81,7 +90,7 @@ class ProjectTender(Base):
 
     project_id: Mapped[int] = mapped_column(ForeignKey("investment_project.id"), primary_key=True)
     tender_id: Mapped[int] = mapped_column(ForeignKey("tender.id"), primary_key=True)
-    link_method: Mapped[str] = mapped_column(String(24))  # external_ref | inn_keyword | manual
+    link_method: Mapped[str] = mapped_column(String(24))
     confidence: Mapped[Decimal] = mapped_column(Numeric(4, 3), default=Decimal("0.000"))
     created_by: Mapped[int | None] = mapped_column(ForeignKey("app_user.id"))
 
@@ -96,6 +105,8 @@ class ProjectNeed(Base):
     evidence: Mapped[str | None] = mapped_column(Text)
     rule_id: Mapped[str | None] = mapped_column(String(48))
     model_version: Mapped[str] = mapped_column(String(48))
+    # Дополнительные доказательства NLP; NULL для старых результатов.
+    details_json: Mapped[dict | None] = mapped_column(JSON)
 
     project: Mapped[InvestmentProject] = relationship(back_populates="needs")
 
@@ -113,3 +124,4 @@ class InvestmentEvent(Base):
     region_id: Mapped[int | None] = mapped_column(ForeignKey("region.id"))
     industry_id: Mapped[int | None] = mapped_column(ForeignKey("industry.id"))
     title: Mapped[str | None] = mapped_column(String(512))
+    date_precision: Mapped[str] = mapped_column(String(8), default="day", server_default="day")

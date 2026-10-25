@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 import { api, downloadBlob } from '@/api/client';
 import { DataGap, ErrorState, QualityBadge, Warning } from '@/components/states';
+import { useGlobalRegion } from '@/components/GlobalFilter';
+import { formatMoney } from '@/lib/format';
 import type { DealEstimate } from '@/types/api';
 
 const schema = z.object({
@@ -35,6 +37,7 @@ export function CalculatorPage() {
   const [pending, setPending] = useState(false);
   const [docxError, setDocxError] = useState<string | null>(null);
   const [csvError, setCsvError] = useState<string | null>(null);
+  const globalRegion = useGlobalRegion();
 
   const docx = useMutation({
     mutationFn: (estimateId: number) => api.exportProposal(estimateId),
@@ -46,7 +49,7 @@ export function CalculatorPage() {
   });
 
   const csv = useMutation({
-    mutationFn: (estimateId: number) => api.exportCsv('deals', { estimate_id: estimateId }, 'general'),
+    mutationFn: (estimateId: number) => api.estimateCsv(estimateId),
     onSuccess: (blob) => {
       setCsvError(null);
       downloadBlob(blob, `deal-estimate-${result?.estimate_id ?? 'result'}.csv`);
@@ -81,6 +84,7 @@ export function CalculatorPage() {
         await api.estimateDeal({
           project_type: data.project_type,
           scale: data.scale,
+          region_id: globalRegion,
           works: splitList(data.works),
           equipment: splitList(data.equipment),
           software: splitList(data.software),
@@ -157,15 +161,15 @@ export function CalculatorPage() {
           <h2>Ценовая вилка</h2>
           <div className="grid">
             <div>
-              <div className="metric">{Number(result.estimate.min).toLocaleString('ru-RU')} ₽</div>
+              <div className="metric">{formatMoney(result.estimate.min)}</div>
               <div className="muted">Минимум</div>
             </div>
             <div>
-              <div className="metric">{Number(result.estimate.optimum).toLocaleString('ru-RU')} ₽</div>
+              <div className="metric">{formatMoney(result.estimate.optimum)}</div>
               <div className="muted">Оптимум</div>
             </div>
             <div>
-              <div className="metric">{Number(result.estimate.max).toLocaleString('ru-RU')} ₽</div>
+              <div className="metric">{formatMoney(result.estimate.max)}</div>
               <div className="muted">Максимум</div>
             </div>
           </div>
@@ -182,7 +186,7 @@ export function CalculatorPage() {
           <ul className="explanation">
             {result.comparables.map((item) => (
               <li key={item.deal_id}>
-                {item.title} — {Number(item.contract_value).toLocaleString('ru-RU')} ₽ · сходство{' '}
+                {item.title} — {formatMoney(item.contract_value)} · сходство{' '}
                 {item.similarity} · цена: {item.retro_price_basis || <DataGap what="Основа цены" />}
               </li>
             ))}
@@ -203,7 +207,7 @@ export function CalculatorPage() {
           <ul className="explanation">
             {result.breakdown.map((row) => (
               <li key={row.article}>
-                {row.article}: {row.amount ? `${Number(row.amount).toLocaleString('ru-RU')} ₽` : <DataGap what="Сумма" />}
+                {row.article}: {row.amount ? formatMoney(row.amount) : <DataGap what="Сумма" />}
               </li>
             ))}
             {result.breakdown.length === 0 && <li>Разбивка не рассчитана</li>}

@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { formatDate, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/format';
+import { formatDate, formatMoney, formatNumber, formatPercent, formatShare, safeExternalUrl } from '@/lib/format';
 
 describe('форматирование денег и чисел', () => {
   it('деньги из Decimal-строки не теряют разряды и получают знак ₽', () => {
@@ -38,5 +38,14 @@ describe('форматирование денег и чисел', () => {
     expect(formatDate('2026-09-01')).toBe('01.09.2026');
     expect(formatDate('2026-10-05T09:15:00Z')).toBe('05.10.2026');
     expect(formatDate(null)).toBe('—');
+  });
+
+  it('внешняя ссылка пропускает только http/https, остальное — null (XSS-защита)', () => {
+    expect(safeExternalUrl('https://example.com/a')).toBe('https://example.com/a');
+    expect(safeExternalUrl('http://example.com')).toBe('http://example.com/');
+    expect(safeExternalUrl('javascript:alert(1)')).toBeNull();
+    expect(safeExternalUrl('data:text/html,<script>')).toBeNull();
+    expect(safeExternalUrl('not a url')).toBeNull();
+    expect(safeExternalUrl(null)).toBeNull();
   });
 });

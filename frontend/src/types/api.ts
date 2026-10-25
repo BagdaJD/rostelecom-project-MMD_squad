@@ -25,10 +25,10 @@ export type HeatCell = {
   region_name: string;
   industry_group: string;
   companies_count: number;
-  revenue_sum: string;
-  growth_share: number;
+  revenue_sum: string | null;
+  growth_share: number | null;
   potential_score: number;
-  presence_score: number;
+  presence_score: number | null;
   /** Центр агрегата для карты; приходит из mv_region_density. */
   longitude?: number | null;
   latitude?: number | null;

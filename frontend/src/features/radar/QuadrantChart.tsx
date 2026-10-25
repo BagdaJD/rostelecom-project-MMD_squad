@@ -27,17 +27,19 @@ export const QUADRANTS: {
     hint: 'Потенциал и присутствие выше среднего — удерживаем и расширяем',
     short: 'сильный потенциал',
   },
-  {
-    id: 'stable',
-    label: 'Стабильный клиент',
-    hint: 'Сильное присутствие, средний потенциал — сервисная рутина',
-    short: 'стабильный клиент',
-  },
+  // Порядок = раскладка 2×2: X — присутствие (слева низкое, справа высокое),
+  // Y — потенциал (снизу низкий, сверху высокий).
   {
     id: 'weak',
     label: 'Низкий приоритет',
     hint: 'Потенциал и присутствие ниже среднего — следим, но не инвестируем',
     short: 'низкий приоритет',
+  },
+  {
+    id: 'stable',
+    label: 'Стабильный клиент',
+    hint: 'Сильное присутствие, средний потенциал — сервисная рутина',
+    short: 'стабильный клиент',
   },
 ];
 
@@ -77,7 +79,13 @@ type Props = {
 };
 
 export function QuadrantChart({ cells, selected, threshold = 50, onSelect, onSelectCell }: Props) {
-  const quadrantCells = cells.map((cell) => ({ cell, q: quadrantOf(cell.potential_score, cell.presence_score, threshold) }));
+  const measuredCells = cells.filter(
+    (cell): cell is HeatCell & { presence_score: number } => cell.presence_score !== null,
+  );
+  const quadrantCells = measuredCells.map((cell) => ({
+    cell,
+    q: quadrantOf(cell.potential_score, cell.presence_score, threshold),
+  }));
 
   function zoneTitle(q: Quadrant): string {
     const item = QUADRANTS.find((entry) => entry.id === q);
@@ -134,6 +142,11 @@ export function QuadrantChart({ cells, selected, threshold = 50, onSelect, onSel
         </div>
       </div>
 
+      {measuredCells.length < cells.length && (
+        <p className="muted">
+          Ячейки без данных о присутствии не распределены по квадрантам.
+        </p>
+      )}
       <div className="quadrant-legend" role="list" aria-label="Легенда статусов квадранта">
         {QUADRANTS.map((q) => (
           <div className="quadrant-legend-item" role="listitem" key={q.id}>

@@ -1,11 +1,11 @@
 /** Клиент API: ошибки FastAPI должны приходить в UI читаемыми, а 401 — различаться по смыслу.
  *
- * Среда тестов — node: sessionStorage и fetch подменяются здесь, новых зависимостей нет.
+ * Среда тестов — node: fetch подменяется здесь, новых зависимостей нет.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiError, api, onSessionExpired, setToken } from '@/api/client';
+import { ApiError, api, getToken, onSessionExpired, setToken } from '@/api/client';
 import type { DealEstimateRequest } from '@/types/api';
 
 type Stub = { status: number; body?: string; contentType?: string };
@@ -58,16 +58,9 @@ async function rejectionFrom(promise: Promise<unknown>): Promise<unknown> {
   );
 }
 
-const storage = new Map<string, string>();
-
+/** Токен теперь в памяти: между тестами не должен «протухать» через storage. */
 beforeEach(() => {
-  storage.clear();
-  vi.stubGlobal('sessionStorage', {
-    getItem: (key: string) => storage.get(key) ?? null,
-    setItem: (key: string, value: string) => storage.set(key, value),
-    removeItem: (key: string) => storage.delete(key),
-    clear: () => storage.clear(),
-  } as unknown as Storage);
+  setToken(null);
 });
 
 afterEach(() => {
@@ -176,7 +169,7 @@ describe('401: проверочный запрос против защищённ
     stubFetch({ status: 401, body: JSON.stringify({ detail: 'Could not validate credentials' }) });
 
     expectApiError(await rejectionFrom(api.dashboard()), 401, 'Срок сессии истёк: войдите заново');
-    expect(storage.size).toBe(0);
+    expect(getTokenValue()).toBeNull();
     expect(notified).toHaveBeenCalledWith('Срок сессии истёк: войдите заново');
     unsubscribe();
   });
@@ -191,6 +184,77 @@ describe('401: проверочный запрос против защищённ
     expect(notified).not.toHaveBeenCalled();
   });
 });
+
+describe('контракты API', () => {
+  it('скачивает CSV расчёта по маршруту калькулятора', async () => {
+    const calls = stubFetch({
+      status: 200,
+      body: 'estimate_id;score',
+      contentType: 'text/csv',
+    });
+
+    const blob = await api.estimateCsv(42);
+
+    expect(calls).toEqual(['/api/v1/calculator/estimates/42/csv']);
+    expect(await blob.text()).toBe('estimate_id;score');
+  });
+
+  it('запрашивает настройку 2FA по partial token', async () => {
+    const calls = stubFetch({
+      status: 200,
+      body: JSON.stringify({ secret: 'test-secret', otpauth_hint: 'otpauth://totp/test' }),
+    });
+
+    await api.setup2fa('partial-token');
+
+    expect(calls).toEqual(['/api/v1/auth/2fa/setup']);
+  });
+});
+
+describe('refresh: 401 → /auth/refresh → повтор запроса (ТЗ 13)', () => {
+  it('после успешного refresh сохраняет новый токен и повторяет запрос', async () => {
+    setToken('old-token');
+    const calls = stubFetch([
+      { status: 401, body: JSON.stringify({ detail: 'expired' }) },
+      { status: 200, body: JSON.stringify({ access_token: 'fresh-token' }) },
+      { status: 200, body: '[]' },
+    ]);
+    const rows = await api.companies({});
+    expect(rows).toEqual([]);
+    expect(getTokenValue()).toBe('fresh-token');
+    expect(calls).toEqual([
+      '/api/v1/companies',
+      '/api/v1/auth/refresh',
+      '/api/v1/companies',
+    ]);
+  });
+
+  it('параллельные 401 выполняют только один refresh', async () => {
+    setToken('old-token');
+    const calls = stubFetch([
+      { status: 401, body: '{"detail":"expired"}' },
+      { status: 401, body: '{"detail":"expired"}' },
+      { status: 200, body: '{"access_token":"fresh-token"}' },
+      { status: 200, body: '[]' },
+      { status: 200, body: '{"companies": 1}' },
+    ]);
+    await Promise.all([api.companies({}), api.dashboard()]);
+    expect(calls.filter((url) => url.includes('/auth/refresh'))).toHaveLength(1);
+    expect(getTokenValue()).toBe('fresh-token');
+  });
+
+  it('неудачный refresh не зацикливается: токен гасится как раньше', async () => {
+    setToken('old-token');
+    stubFetch({ status: 401, body: '{"detail":"expired"}' });
+    const reason = await rejectionFrom(api.dashboard()).then((exc) => (exc as Error).message);
+    expect(reason).toBe('Срок сессии истёк: войдите заново');
+    expect(getTokenValue()).toBeNull();
+  });
+});
+
+function getTokenValue(): string | null {
+  return getToken();
+}
 
 describe('запросы', () => {
   it('не отдаёт пустые фильтры в строку запроса', async () => {

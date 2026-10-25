@@ -30,6 +30,12 @@ body {
   min-height: 100vh;
 }
 
+.login-boot {
+  min-height: 100vh;
+  align-content: center;
+  justify-items: center;
+}
+
 .app-header {
   display: flex;
   gap: 16px;
@@ -246,10 +252,103 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
+/* ТЗ 11.1: hover / active / disabled для кнопок. */
+button {
+  transition: filter 0.12s ease;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+button:active:not(:disabled) {
+  filter: brightness(0.88);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Глобальный фильтр региона в шапке (ТЗ 11.1). */
+.global-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.global-filter select {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.6);
+  min-width: 180px;
+}
+
+.user-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Таблица с сортировкой и пагинацией (ТЗ 11.1). */
+.data-table table {
+  margin-bottom: 8px;
+}
+
+.sort-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sort-button:hover:not(:disabled) {
+  filter: none;
+  text-decoration: underline;
+}
+
+.sort-mark {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.pagination button {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
 /* Кнопка в цветной шапке иначе сливается с фоном. */
 .app-header button {
   background: transparent;
   border-color: rgba(255, 255, 255, 0.65);
+}
+
+/* Горизонтальный скролл не должен возникать у всей страницы (ТЗ 14). */
+html,
+body {
+  overflow-x: hidden;
+}
+
+.app-header > * {
+  min-width: 0;
 }
 
 /* Мобильный адаптив: смартфон — целевое устройство (ТЗ 11.2). */
@@ -260,6 +359,7 @@ select:focus-visible {
   .app-header {
     flex-wrap: wrap;
     padding: 8px 12px;
+    row-gap: 8px;
   }
   .app-header nav {
     gap: 10px;
@@ -268,9 +368,27 @@ select:focus-visible {
   table {
     font-size: 12px;
   }
+  .global-filter {
+    order: 5;
+    width: 100%;
+  }
+  .global-filter select {
+    flex: 1;
+    min-width: 0;
+  }
   /* Горизонтальный скролл таблицы лучше обрезки, но карточки — ещё лучше. */
   .table-scroll {
     overflow-x: auto;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .app-header strong {
+    font-size: 16px;
+  }
+  .app-header nav a {
+    font-size: 12px;
   }
 }
 

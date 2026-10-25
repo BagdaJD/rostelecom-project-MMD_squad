@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 
 import { api, downloadBlob } from '@/api/client';
 import { DataGap, EmptyState, ErrorState, Loading, QualityBadge } from '@/components/states';
+import { useGlobalRegion } from '@/components/GlobalFilter';
 import { MapView } from '@/features/radar/MapView';
 import { SubscriptionsPanel } from '@/features/investments/SubscriptionsPanel';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatMoney, formatDate, safeExternalUrl } from '@/lib/format';
 import { needLabel, stageLabel } from '@/types/api';
 
 /**
@@ -13,7 +14,7 @@ import { needLabel, stageLabel } from '@/types/api';
  * Точка таймлайна знает project_ids — по клику фильтруются карточки и карта.
  */
 function formatBudget(value: string | null): string {
-  return value ? `${Number(value).toLocaleString('ru-RU')} ₽` : '—';
+  return value ? formatMoney(value) : '—';
 }
 
 /** Человекочитаемая стоимость закупки: Decimal-строка + ₽, без потери разрядов. */
@@ -21,17 +22,29 @@ function formatTenderPrice(value: string | null): string {
   return value ? formatMoney(value) : '—';
 }
 
+/** Внешняя ссылка после проверки схемы; null — ссылку не рисуем. */
+function externalHref(value: string | null | undefined): string | null {
+  return safeExternalUrl(value);
+}
+
 export function NavigatorPage() {
   const [stage, setStage] = useState<string>('');
   const [selected, setSelected] = useState<number | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<number | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const globalRegion = useGlobalRegion();
+  // Региональный срез: локальный выбор страницы поверх глобального фильтра шапки.
+  const activeRegion = selectedRegion ?? globalRegion;
+  const hasRegionFilter = activeRegion !== null;
 
   const projects = useQuery({
-    queryKey: ['projects', stage],
-    queryFn: () => api.projects({ stage: stage || null }),
+    queryKey: ['projects', stage, { region_id: activeRegion }],
+    queryFn: () => api.projects({ stage: stage || null, region_id: activeRegion }),
   });
-  const timeline = useQuery({ queryKey: ['timeline'], queryFn: () => api.timeline({ period: 'month' }) });
+  const timeline = useQuery({
+    queryKey: ['timeline', { region_id: activeRegion }],
+    queryFn: () => api.timeline({ period: 'month', region_id: activeRegion }),
+  });
 
   const needs = useQuery({
     queryKey: ['needs', selected],
@@ -63,13 +76,13 @@ export function NavigatorPage() {
   ).filter((point) => point.region_id !== 0);
 
   const visibleTimeline = (timeline.data ?? []).filter(
-    (point) => selectedRegion === null || point.region_id === selectedRegion,
+    (point) => activeRegion === null || point.region_id === activeRegion,
   );
 
   const visible = (projects.data ?? []).filter(
     (project) =>
       (selected === null || project.id === selected) &&
-      (selectedRegion === null || project.region_id === selectedRegion),
+      (activeRegion === null || project.region_id === activeRegion),
   );
 
   /** CSV текущего среза: стадия + регион; если открыт проект — только он (+ тендеры). */
@@ -79,7 +92,7 @@ export function NavigatorPage() {
     try {
       const blob = await api.exportCsv('investments', {
         stage: stage || null,
-        region_id: selectedRegion,
+        region_id: activeRegion,
         project_id: projectId,
       }, 'general');
       downloadBlob(blob, projectId ? `project-${projectId}.csv` : 'investments.csv');
@@ -125,7 +138,7 @@ export function NavigatorPage() {
         )}
       </section>
 
-      <SubscriptionsPanel module="investments" filters={{ stage: stage || null }} />
+      <SubscriptionsPanel module="investments" filters={{ stage: stage || null, region_id: activeRegion }} />
 
       <section className="card">
         <h2>Таймлайн инвестсобытий</h2>
@@ -164,7 +177,7 @@ export function NavigatorPage() {
         <h2>Карта инвестсобытий</h2>
         <MapView
           points={regionPoints}
-          selectedRegion={selectedRegion}
+          selectedRegion={activeRegion}
           onSelectRegion={(regionId) => setSelectedRegion(regionId)}
           ariaLabel="Карта инвестсобытий по регионам"
         />
@@ -178,9 +191,9 @@ export function NavigatorPage() {
       {projects.error && <ErrorState error={projects.error} onRetry={() => projects.refetch()} />}
       {visible.length === 0 && projects.data && (
         <EmptyState
-          title={selected === null && selectedRegion === null ? 'Проектов в срезе нет' : 'Проект не попадает в текущий фильтр'}
+          title={selected === null && !hasRegionFilter ? 'Проектов в срезе нет' : 'Проект не попадает в текущий фильтр'}
           hint={
-            selected === null && selectedRegion === null
+            selected === null && !hasRegionFilter
               ? 'Ослабьте фильтр стадии'
               : 'Снимите фильтр стадии или региона — выбранный объект в него не входит'
           }
@@ -198,14 +211,17 @@ export function NavigatorPage() {
               {project.planned_start ?? <DataGap what="Дата старта" />} · бюджет{' '}
               {project.estimated_budget ? formatBudget(project.estimated_budget) : <DataGap what="Бюджет" />}
             </p>
-            {project.source_url && (
-              <p className="muted">
-                Источник:{' '}
-                <a href={project.source_url} target="_blank" rel="noreferrer">
-                  первичная запись
-                </a>
-              </p>
-            )}
+            {project.source_url && (() => {
+              const href = externalHref(project.source_url);
+              return href ? (
+                <p className="muted">
+                  Источник:{' '}
+                  <a href={href} target="_blank" rel="noreferrer">
+                    первичная запись
+                  </a>
+                </p>
+              ) : null;
+            })()}
 
             {selected === project.id && (
               <>
@@ -229,15 +245,18 @@ export function NavigatorPage() {
                           <li key={`${milestone.title}-${index}`}>
                             {formatDate(milestone.date)} · <strong>{milestone.title}</strong> ·{' '}
                             {milestone.status === 'done' ? 'выполнена' : milestone.status === 'planned' ? 'запланирована' : milestone.status}
-                            {milestone.source_url ? (
-                              <>
-                                {' '}
-                                ·{' '}
-                                <a href={milestone.source_url} target="_blank" rel="noreferrer">
-                                  источник
-                                </a>
-                              </>
-                            ) : null}
+                            {milestone.source_url && (() => {
+                const href = externalHref(milestone.source_url);
+                return href ? (
+                  <>
+                    {' '}
+                    ·{' '}
+                    <a href={href} target="_blank" rel="noreferrer">
+                      источник
+                    </a>
+                  </>
+                ) : null;
+              })()}
                           </li>
                         ))}
                       </ul>
@@ -262,13 +281,16 @@ export function NavigatorPage() {
                                   <td>{tender.price ? formatTenderPrice(tender.price) : <DataGap what="Цена" />}</td>
                                   <td>{tender.deadline_date ?? <DataGap what="Срок" />}</td>
                                   <td>
-                                    {tender.source_url ? (
-                                      <a href={tender.source_url} target="_blank" rel="noreferrer">
-                                        первичная запись
-                                      </a>
-                                    ) : (
-                                      '—'
-                                    )}
+                                    {tender.source_url && (() => {
+                                      const href = externalHref(tender.source_url);
+                                      return href ? (
+                                        <a href={href} target="_blank" rel="noreferrer">
+                                          первичная запись
+                                        </a>
+                                      ) : (
+                                        '—'
+                                      );
+                                    })()}
                                   </td>
                                 </tr>
                               ))}

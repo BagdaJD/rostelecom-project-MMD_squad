@@ -1,0 +1,327 @@
+{
+  "baseline": {
+    "source": "Хакатон_2026_фактура.xlsx",
+    "sheets": {
+      "МОД1_Таб1": {
+        "rows": 759,
+        "missing": {
+          "№ п/п": 0,
+          "Наименование / ФИО": 0,
+          "Тип субъекта": 0,
+          "Категория": 0,
+          "ОГРН": 0,
+          "ИНН": 0,
+          "Основной вид деятельности": 0,
+          "Регион": 0,
+          "Район": 505,
+          "Город": 190,
+          "Населенный пункт": 573,
+          "Вновь созданный": 0,
+          "Дата включения в реестр": 0,
+          "Дата исключения из реестра": 759,
+          "Телефон": 756,
+          "E-mail": 756,
+          "WWW": 759,
+          "Наличие лицензий": 0,
+          "Производство инновационной, высокотехнологичной продукции": 0,
+          "Участие в программах партнерства": 0,
+          "Является социальным предприятием": 0,
+          "Среднесписочная численность работников за предшествующий календарный год": 601
+        },
+        "placeholder_136": {
+          "Район": 0,
+          "Город": 0,
+          "Населенный пункт": 0,
+          "Телефон": 0,
+          "E-mail": 0,
+          "WWW": 0
+        }
+      },
+      "МОД\"_Таб1": {
+        "rows": 63,
+        "missing": {
+          "№ п/п": 0,
+          "Муниципальное образование": 0,
+          "Куратор проекта": 0,
+          "Входит в перечень ключевых инвестиционных проектов": 0,
+          "Инициатор инвестиционного проекта": 0,
+          "Название и суть инвестиционного проекта (в том числе и мощность)": 0,
+          "Начало": 0,
+          "Ввод в эксплуатацию": 0,
+          "Всего (млн руб.)": 0,
+          "Количество новых рабочих мест (мест)": 0
+        },
+        "placeholder_136": {}
+      }
+    },
+    "warnings": [],
+    "errors": [],
+    "source_companies": 759,
+    "source_projects": 63,
+    "unique_inn": 759,
+    "valid_inn": 759,
+    "invalid_inn": 0,
+    "valid_inn_percent": 100.0,
+    "duplicate_inn_rows": 0,
+    "duplicate_projects": 0,
+    "excel_seconds": 0.6214818999997078,
+    "entity_matching": {
+      "identifier_matches": 0,
+      "requires_review": 0,
+      "duplicates": 0
+    },
+    "project_matching": {
+      "matched": 0,
+      "requires_review": 0,
+      "unmatched": 63,
+      "unique_review_candidates": 0
+    },
+    "companies": 759,
+    "projects": 63,
+    "feature_coverage": {
+      "industry": 1.0,
+      "employee_count": 0.2082,
+      "sme_category": 1.0,
+      "municipality": 1.0,
+      "included_at": 1.0
+    },
+    "nlp": {
+      "seconds": 0.028787600000214297,
+      "semantic_status": "disabled",
+      "categories": {
+        "iot_asu_tp": 18,
+        "connectivity": 47,
+        "video_surveillance": 49,
+        "it_infrastructure": 11,
+        "information_security": 1
+      },
+      "evidence_types": {
+        "inferred": 126
+      },
+      "without_recommendations": 13,
+      "warm_latency_ms": {
+        "mean": 0.3738555555433517,
+        "p95": 0.5474800003867131,
+        "memory": "not_measured: tracemalloc не учитывает нативную память torch"
+      }
+    },
+    "company_scores": {
+      "histogram": {
+        "60": 99,
+        "40": 450,
+        "50": 180,
+        "80": 2,
+        "30": 19,
+        "70": 9
+      },
+      "min": 36.0,
+      "max": 85.6,
+      "unique_scores": 69,
+      "data_quality": {
+        "limited": 759
+      },
+      "priorities": {
+        "medium": 743,
+        "high": 16
+      },
+      "insufficient_share": 0.0
+    },
+    "territory_scores": {
+      "count": 179,
+      "histogram": {
+        "30": 15,
+        "10": 54,
+        "40": 2,
+        "0": 72,
+        "20": 31,
+        "80": 2,
+        "70": 1,
+        "60": 2
+      },
+      "insufficient_presence": 179
+    },
+    "evaluation": {
+      "status": "not_evaluated",
+      "reason": "Нет экспертной разметки"
+    },
+    "input_sha256": "4aecf646ad6f526c7905d14b50100ba5645436f2a9625caa9855d37b7e187f9b",
+    "original_unchanged": true
+  },
+  "hybrid": {
+    "source": "Хакатон_2026_фактура.xlsx",
+    "sheets": {
+      "МОД1_Таб1": {
+        "rows": 759,
+        "missing": {
+          "№ п/п": 0,
+          "Наименование / ФИО": 0,
+          "Тип субъекта": 0,
+          "Категория": 0,
+          "ОГРН": 0,
+          "ИНН": 0,
+          "Основной вид деятельности": 0,
+          "Регион": 0,
+          "Район": 505,
+          "Город": 190,
+          "Населенный пункт": 573,
+          "Вновь созданный": 0,
+          "Дата включения в реестр": 0,
+          "Дата исключения из реестра": 759,
+          "Телефон": 756,
+          "E-mail": 756,
+          "WWW": 759,
+          "Наличие лицензий": 0,
+          "Производство инновационной, высокотехнологичной продукции": 0,
+          "Участие в программах партнерства": 0,
+          "Является социальным предприятием": 0,
+          "Среднесписочная численность работников за предшествующий календарный год": 601
+        },
+        "placeholder_136": {
+          "Район": 0,
+          "Город": 0,
+          "Населенный пункт": 0,
+          "Телефон": 0,
+          "E-mail": 0,
+          "WWW": 0
+        }
+      },
+      "МОД\"_Таб1": {
+        "rows": 63,
+        "missing": {
+          "№ п/п": 0,
+          "Муниципальное образование": 0,
+          "Куратор проекта": 0,
+          "Входит в перечень ключевых инвестиционных проектов": 0,
+          "Инициатор инвестиционного проекта": 0,
+          "Название и суть инвестиционного проекта (в том числе и мощность)": 0,
+          "Начало": 0,
+          "Ввод в эксплуатацию": 0,
+          "Всего (млн руб.)": 0,
+          "Количество новых рабочих мест (мест)": 0
+        },
+        "placeholder_136": {}
+      }
+    },
+    "warnings": [],
+    "errors": [],
+    "source_companies": 759,
+    "source_projects": 63,
+    "unique_inn": 759,
+    "valid_inn": 759,
+    "invalid_inn": 0,
+    "valid_inn_percent": 100.0,
+    "duplicate_inn_rows": 0,
+    "duplicate_projects": 0,
+    "excel_seconds": 0.6167541000004348,
+    "entity_matching": {
+      "identifier_matches": 0,
+      "requires_review": 0,
+      "duplicates": 0
+    },
+    "project_matching": {
+      "matched": 0,
+      "requires_review": 0,
+      "unmatched": 63,
+      "unique_review_candidates": 0
+    },
+    "companies": 759,
+    "projects": 63,
+    "feature_coverage": {
+      "industry": 1.0,
+      "employee_count": 0.2082,
+      "sme_category": 1.0,
+      "municipality": 1.0,
+      "included_at": 1.0
+    },
+    "nlp": {
+      "seconds": 24.60540409999976,
+      "semantic_status": "available",
+      "categories": {
+        "iot_asu_tp": 18,
+        "connectivity": 47,
+        "video_surveillance": 48,
+        "it_infrastructure": 12,
+        "information_security": 1
+      },
+      "evidence_types": {
+        "inferred": 126
+      },
+      "without_recommendations": 13,
+      "warm_latency_ms": {
+        "mean": 47.52462380945381,
+        "p95": 76.09225999985938,
+        "memory": "not_measured: tracemalloc не учитывает нативную память torch"
+      }
+    },
+    "company_scores": {
+      "histogram": {
+        "60": 99,
+        "40": 450,
+        "50": 180,
+        "80": 2,
+        "30": 19,
+        "70": 9
+      },
+      "min": 36.0,
+      "max": 85.6,
+      "unique_scores": 69,
+      "data_quality": {
+        "limited": 759
+      },
+      "priorities": {
+        "medium": 743,
+        "high": 16
+      },
+      "insufficient_share": 0.0
+    },
+    "territory_scores": {
+      "count": 179,
+      "histogram": {
+        "30": 15,
+        "10": 54,
+        "40": 2,
+        "0": 72,
+        "20": 31,
+        "80": 2,
+        "70": 1,
+        "60": 2
+      },
+      "insufficient_presence": 179
+    },
+    "evaluation": {
+      "status": "not_evaluated",
+      "reason": "Нет экспертной разметки"
+    },
+    "input_sha256": "4aecf646ad6f526c7905d14b50100ba5645436f2a9625caa9855d37b7e187f9b",
+    "original_unchanged": true
+  },
+  "_verification": {
+    "as_of": "2026-10-24",
+    "tests": {
+      "tests": "88",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "5",
+      "time": "40.873"
+    },
+    "passed": 83,
+    "postgresql": "not_available; 5 skipped; no PostGIS/migration validation",
+    "ruff_changed_files": "passed",
+    "ruff_full_existing_issues": 30,
+    "model": "intfloat/multilingual-e5-small",
+    "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "python": "3.12.0",
+    "packages": {
+      "torch": "2.13.0",
+      "sentence-transformers": "5.6.0",
+      "numpy": "2.4.6",
+      "scikit-learn": "1.9.0",
+      "pandas": "3.1.0",
+      "openpyxl": "3.1.5",
+      "lxml": "6.1.3",
+      "sqlalchemy": "2.1.6",
+      "pytest": "9.1.1",
+      "ruff": "0.17.2"
+    }
+  }
+}

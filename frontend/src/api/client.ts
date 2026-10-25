@@ -1,6 +1,8 @@
 /** Тонкий клиент API: единая обработка ошибок и токена.
  *
- * Токен хранится в памяти + sessionStorage; refresh-поток и 2FA — в features/auth.
+ * Access-токен живёт только в памяти (требование ТЗ 13: refresh — httpOnly-cookie,
+ * токен не должен лежать в localStorage/sessionStorage). При старте приложение
+ * пробует молча продлить сессию через /auth/refresh, иначе показывает вход.
  */
 
 import type {
@@ -27,7 +29,9 @@ import type {
  * Полный URL задаётся только если API живёт на другом домене (VITE_API_URL).
  */
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
-const TOKEN_KEY = 'rtk.access';
+
+/** Access-токен в памяти: не пишем его в storage (ТЗ 13 — refresh в httpOnly-cookie). */
+let accessToken: string | null = null;
 
 export class ApiError extends Error {
   constructor(
@@ -40,12 +44,11 @@ export class ApiError extends Error {
 }
 
 export function getToken(): string | null {
-  return sessionStorage.getItem(TOKEN_KEY);
+  return accessToken;
 }
 
 export function setToken(token: string | null): void {
-  if (token) sessionStorage.setItem(TOKEN_KEY, token);
-  else sessionStorage.removeItem(TOKEN_KEY);
+  accessToken = token;
 }
 
 /** Подписка на «сессия истекла»: приложение само уходит на экран входа и показывает причину. */
@@ -62,6 +65,31 @@ export function onSessionExpired(listener: SessionExpiredListener): () => void {
 
 function notifySessionExpired(reason: string): void {
   for (const listener of sessionExpiredListeners) listener(reason);
+}
+
+/** «Логин/2FA успешно завершены» — App должен перейти в Shell без перезагрузки. */
+type AuthenticatedListener = () => void;
+const authenticatedListeners = new Set<AuthenticatedListener>();
+
+export function onAuthenticated(listener: AuthenticatedListener): () => void {
+  authenticatedListeners.add(listener);
+  return () => {
+    authenticatedListeners.delete(listener);
+  };
+}
+
+function notifyAuthenticated(): void {
+  for (const listener of authenticatedListeners) listener();
+}
+
+function csrfCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const prefix = 'rtk_csrf=';
+  const cookie = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix));
+  return cookie ? cookie.slice(prefix.length) : null;
 }
 
 const STATUS_TEXT: Record<number, string> = {
@@ -135,19 +163,69 @@ async function toApiError(response: Response, credentialCheck: boolean): Promise
 type RequestOptions = RequestInit & {
   /** true для /auth/login и /auth/2fa/verify: их 401 — это неверные данные, а не протухшая сессия. */
   credentialCheck?: boolean;
+  /** Внутренний флаг: один повтор после успешного /auth/refresh (ТЗ 13). */
+  retried?: boolean;
 };
 
+/**
+ * Молчаливое продление сессии: 401/нет сессии не должно показывать «сессия истекла»
+ * на старте приложения (httpOnly-cookie читается автоматически).
+ */
+async function refreshSession(): Promise<boolean> {
+  try {
+    const csrf = csrfCookie();
+    const headers = new Headers({ Accept: 'application/json' });
+    if (csrf) headers.set('X-CSRF-Token', csrf);
+    const response = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+    });
+    if (!response.ok) return false;
+    const payload = (await response.json()) as { access_token?: string | null };
+    if (!payload.access_token) return false;
+    setToken(payload.access_token);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Один одновременный refresh на несколько параллельных 401 (ТЗ 13). */
+let refreshPromise: Promise<boolean> | null = null;
+
+function tryRefresh(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = refreshSession().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
 async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
-  const { credentialCheck = false, ...fetchInit } = init;
+  const { credentialCheck = false, retried = false, ...fetchInit } = init;
   const headers = new Headers(fetchInit.headers);
   headers.set('Accept', 'application/json');
   if (fetchInit.body) headers.set('Content-Type', 'application/json');
+  const csrf = csrfCookie();
+  if (csrf) headers.set('X-CSRF-Token', csrf);
   const token = getToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const response = await fetch(`${BASE_URL}${path}`, { ...fetchInit, headers });
+  const response = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include',
+    ...fetchInit,
+    headers,
+  });
 
-  if (!response.ok) throw await toApiError(response, credentialCheck);
+  if (!response.ok) {
+    // 401 на защищённом маршруте: пробуем продлить сессию и повторить запрос один раз.
+    if (response.status === 401 && !credentialCheck && !retried && (await tryRefresh())) {
+      return request<T>(path, { ...init, retried: true });
+    }
+    throw await toApiError(response, credentialCheck);
+  }
   if (response.status === 204) return undefined as T;
 
   // Прокси или каптив-портал может вернуть 200 с HTML: JSON.parse упал бы SyntaxError в UI.
@@ -162,14 +240,25 @@ async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
 
 /** Тот же разбор ошибок, но ответ — файл (CSV, DOCX), а не JSON. */
 async function requestBlob(path: string, init: RequestOptions = {}): Promise<Blob> {
-  const { credentialCheck = false, ...fetchInit } = init;
+  const { credentialCheck = false, retried = false, ...fetchInit } = init;
   const headers = new Headers(fetchInit.headers);
   if (fetchInit.body) headers.set('Content-Type', 'application/json');
+  const csrf = csrfCookie();
+  if (csrf) headers.set('X-CSRF-Token', csrf);
   const token = getToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const response = await fetch(`${BASE_URL}${path}`, { ...fetchInit, headers });
-  if (!response.ok) throw await toApiError(response, credentialCheck);
+  const response = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include',
+    ...fetchInit,
+    headers,
+  });
+  if (!response.ok) {
+    if (response.status === 401 && !credentialCheck && !retried && (await tryRefresh())) {
+      return requestBlob(path, { ...init, retried: true });
+    }
+    throw await toApiError(response, credentialCheck);
+  }
   return response.blob();
 }
 
@@ -185,19 +274,49 @@ function query(params: Record<string, string | number | boolean | null | undefin
 
 export const api = {
   login: (login: string, password: string) =>
-    request<{ mfa_required: boolean; partial_token: string | null; access_token: string | null }>(
-      '/auth/login',
-      { method: 'POST', body: JSON.stringify({ login, password }), credentialCheck: true },
-    ),
-
-  verify2fa: (partial_token: string, code: string) =>
-    request<{ access_token: string; refresh_token: string }>('/auth/2fa/verify', {
+    request<{
+      mfa_required: boolean;
+      partial_token: string | null;
+      mfa_setup_required: boolean;
+    }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ partial_token, code }),
+      body: JSON.stringify({ login, password }),
       credentialCheck: true,
     }),
 
+  setup2fa: (partial_token: string) =>
+    request<{ secret: string; otpauth_hint: string }>('/auth/2fa/setup', {
+      method: 'POST',
+      body: JSON.stringify({ partial_token }),
+      credentialCheck: true,
+    }),
+
+  verify2fa: (partial_token: string, code: string) =>
+    request<{ access_token: string; token_type: string; expires_in: number; csrf_token: string }>(
+      '/auth/2fa/verify',
+      {
+        method: 'POST',
+        body: JSON.stringify({ partial_token, code }),
+        credentialCheck: true,
+      },
+    ).then((tokens) => {
+      setToken(tokens.access_token);
+      notifyAuthenticated();
+      return tokens;
+    }),
+
   me: () => request<{ id: number; login: string; role: string; mfa_enabled: boolean }>('/auth/me'),
+
+  /** Продление сессии: access из тела, refresh читает httpOnly-cookie (ТЗ 13). */
+  refresh: async () => {
+    const ok = await tryRefresh();
+    // Тихий вызов: без токена возвращаем null (App решит, показывать ли вход).
+    if (!ok) return { access_token: null, refresh_token: null };
+    return { access_token: getToken(), refresh_token: null };
+  },
+
+  /** Выход с отзывом refresh-сессии на сервере; локальный токен чистит App. */
+  logout: () => request<{ status: string }>('/auth/logout', { method: 'POST', credentialCheck: true }),
 
   dashboard: () => request<DashboardSummary>('/dashboard/summary'),
 
@@ -256,12 +375,18 @@ export const api = {
       body: JSON.stringify({ module, filters, mode }),
     }),
 
+  estimateCsv: (estimateId: number) =>
+    requestBlob(`/deals/estimates/${estimateId}/csv`),
+
   /** DOCX КП: сначала создаём документ, затем скачиваем его как файл. */
   exportProposal: async (estimateId: number) => {
     // estimate_id — query-параметр (так его читает FastAPI-хэндлер без тела запроса).
-    await request<{ file_ref: string; status: string }>(`/exports/proposal?estimate_id=${estimateId}`, {
-      method: 'POST',
-    });
+    await request<{ download_url: string; status: string }>(
+      `/exports/proposal?estimate_id=${estimateId}`,
+      {
+        method: 'POST',
+      },
+    );
     return requestBlob(`/exports/proposal/${estimateId}/download`);
   },
 };
