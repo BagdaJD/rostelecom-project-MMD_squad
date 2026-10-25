@@ -13,7 +13,7 @@ import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/compon
 import { CanvasRenderer } from 'echarts/renderers';
 
 import { api } from '@/api/client';
-import { EmptyState, ErrorState, Loading, Warning } from '@/components/states';
+import { DataGap, EmptyState, ErrorState, Loading, Warning } from '@/components/states';
 import { formatDate, formatShare } from '@/lib/format';
 import { clientStatusLabel } from '@/styles/tokens';
 import { needLabel, type CompanyMetricPoint } from '@/types/api';
@@ -113,9 +113,9 @@ export function CompanyCardPage() {
           <tbody>
             <tr>
               <th>ИНН</th>
-              <td>{company.inn ?? '—'}</td>
+              <td>{company.inn ?? <DataGap what="ИНН" />}</td>
               <th>ОГРН</th>
-              <td>{company.ogrn ?? '—'}</td>
+              <td>{company.ogrn ?? <DataGap what="ОГРН" />}</td>
               <th>Статус</th>
               <td>
                 <span className={`badge badge--${company.client_status}`}>
@@ -126,21 +126,28 @@ export function CompanyCardPage() {
             <tr>
               <th>Выручка</th>
               <td>
-                {company.revenue_latest
-                  ? `${Number(company.revenue_latest).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} млн ₽`
-                  : '—'}
-                {company.revenue_latest && company.revenue_year ? (
-                  <span className="muted"> ({company.revenue_year})</span>
-                ) : null}
+                {company.revenue_latest ? (
+                  <>
+                    {Number(company.revenue_latest).toLocaleString('ru-RU', {
+                      maximumFractionDigits: 1,
+                    })}{' '}
+                    млн ₽
+                    {company.revenue_year ? <span className="muted"> ({company.revenue_year})</span> : null}
+                  </>
+                ) : (
+                  <DataGap what="Выручка" />
+                )}
               </td>
               <th>Динамика</th>
               <td>
-                {company.revenue_yoy === null
-                  ? '—'
-                  : `${company.revenue_yoy > 0 ? '+' : ''}${company.revenue_yoy} %`}
+                {company.revenue_yoy === null ? (
+                  <DataGap what="Динамика" />
+                ) : (
+                  `${company.revenue_yoy > 0 ? '+' : ''}${company.revenue_yoy} %`
+                )}
               </td>
               <th>Сотрудники</th>
-              <td>{company.employee_count === null ? '—' : company.employee_count}</td>
+              <td>{company.employee_count === null ? <DataGap what="Сотрудники" /> : company.employee_count}</td>
             </tr>
           </tbody>
         </table>
@@ -155,7 +162,7 @@ export function CompanyCardPage() {
                   <span key={`${point.metric_code}-${index}`}>
                     {index > 0 ? ' · ' : ''}
                     {metricName(point.metric_code)}:{' '}
-                    {point.value === null ? 'нет данных' : Number(point.value).toLocaleString('ru-RU')}
+                    {point.value === null ? <DataGap what="Значение" /> : Number(point.value).toLocaleString('ru-RU')}
                   </span>
                 ))}
               </p>
@@ -189,12 +196,16 @@ export function CompanyCardPage() {
                   <td>{needLabel[row.service_type] ?? row.service_type}</td>
                   <td>{row.municipality ?? '—'}</td>
                   <td>
-                    {row.coverage_percent === null
-                      ? '—'
-                      : formatShare(Number(row.coverage_percent) / 100)}
+                    {row.coverage_percent === null ? (
+                      <DataGap what="Покрытие" />
+                    ) : (
+                      formatShare(Number(row.coverage_percent) / 100)
+                    )}
                     {row.is_synthetic ? <span className="muted"> (синтетика)</span> : null}
                   </td>
-                  <td>{row.contracts_count === null ? '—' : row.contracts_count}</td>
+                  <td>
+                    {row.contracts_count === null ? <DataGap what="Контракты" /> : row.contracts_count}
+                  </td>
                   <td>{formatDate(row.as_of_date)}</td>
                 </tr>
               ))}

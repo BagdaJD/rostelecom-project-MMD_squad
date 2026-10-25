@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { api, downloadBlob } from '@/api/client';
-import { EmptyState, ErrorState, Loading, Warning } from '@/components/states';
+import { DataGap, EmptyState, ErrorState, Loading, Warning } from '@/components/states';
 import { MapView } from '@/features/radar/MapView';
 import { QuadrantChart, quadrantLabel, quadrantOf, type Quadrant } from '@/features/radar/QuadrantChart';
 import { clientStatusLabel } from '@/styles/tokens';
@@ -74,11 +74,12 @@ export function RadarPage() {
     );
   });
 
-  async function exportCsv() {
+  async function exportCsv(mode: 'general' | 'crm') {
     setExportError(null);
     try {
-      const blob = await api.exportCsv('companies', { region_id: filters.region_id }, 'general');
-      downloadBlob(blob, 'companies.csv');
+      // Текущий набор фильтров: регион, отрасль и квадрант — как в URL (ТЗ 12).
+      const blob = await api.exportCsv('companies', { ...filters }, mode);
+      downloadBlob(blob, mode === 'crm' ? 'companies-crm.csv' : 'companies.csv');
     } catch (exc) {
       setExportError(exc instanceof Error ? exc.message : 'Экспорт не выполнен');
     }
@@ -131,8 +132,11 @@ export function RadarPage() {
               </select>
             </label>
           )}
-          <button type="button" onClick={exportCsv}>
+          <button type="button" onClick={() => exportCsv('general')}>
             Экспорт CSV
+          </button>
+          <button type="button" onClick={() => exportCsv('crm')}>
+            Экспорт CSV (CRM)
           </button>
         </div>
         {exportError && (
@@ -254,8 +258,9 @@ function CompanyCardPanel({ companyId, onClose }: { companyId: number; onClose: 
         <Link to={`/companies/${company.id}`}>Открыть карточку целиком →</Link>
       </p>
       <p>
-        ИНН {company.inn ?? '—'} · ОГРН {company.ogrn ?? '—'} · сотрудники{' '}
-        {company.employee_count ?? '—'}
+        ИНН {company.inn ?? <DataGap what="ИНН" />} · ОГРН{' '}
+        {company.ogrn ?? <DataGap what="ОГРН" />} · сотрудники{' '}
+        {company.employee_count ?? <DataGap what="Сотрудники" />}
       </p>
       <h4>Метрики по годам</h4>
       {company.metrics.length === 0 && <EmptyState title="Метрик нет" />}
@@ -263,7 +268,11 @@ function CompanyCardPanel({ companyId, onClose }: { companyId: number; onClose: 
         {company.metrics.map((metric) => (
           <li key={`${metric.metric_code}-${metric.period_year}`}>
             {metric.period_year}: {metric.metric_code} —{' '}
-            {metric.value === null ? 'нет данных' : Number(metric.value).toLocaleString('ru-RU')}
+            {metric.value === null ? (
+              <DataGap what="Значение" />
+            ) : (
+              Number(metric.value).toLocaleString('ru-RU')
+            )}
           </li>
         ))}
       </ul>
@@ -295,10 +304,22 @@ function CompanyTable({ rows, onOpen }: { rows: Company[]; onOpen: (id: number) 
               </span>
             </td>
             <td>
-              {row.revenue_latest ?? '—'}
-              {row.revenue_year ? <span className="muted"> ({row.revenue_year})</span> : null}
+              {row.revenue_latest ? (
+                <>
+                  {row.revenue_latest}
+                  {row.revenue_year ? <span className="muted"> ({row.revenue_year})</span> : null}
+                </>
+              ) : (
+                <DataGap what="Выручка" />
+              )}
             </td>
-            <td>{row.revenue_yoy === null ? '—' : `${row.revenue_yoy > 0 ? '+' : ''}${row.revenue_yoy} %`}</td>
+            <td>
+              {row.revenue_yoy === null ? (
+                <DataGap what="Динамика" />
+              ) : (
+                `${row.revenue_yoy > 0 ? '+' : ''}${row.revenue_yoy} %`
+              )}
+            </td>
             <td>
               <button type="button" onClick={() => onOpen(row.id)}>
                 Карточка

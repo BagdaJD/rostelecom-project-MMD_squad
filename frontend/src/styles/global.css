@@ -136,11 +136,42 @@ th {
   font-size: 13px;
 }
 
+/* Демо-режим: синтетические данные помечаются всегда, а не только на карточках (ТЗ 6.8). */
+.demo-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--status-prospect);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.demo-badge--card {
+  display: block;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 400;
+  margin: 0 0 8px;
+}
+
 .explanation {
   margin: 0;
   padding-left: 18px;
   font-size: 13px;
   color: var(--text-muted);
+}
+
+/* Пропуск в источнике: не «0» и не «—», а честная плашка (ТЗ 6.8). */
+.data-gap {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f0f2f5;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 /* Широкая таблица не должна порождать горизонтальный скролл всей страницы (ТЗ 14). */

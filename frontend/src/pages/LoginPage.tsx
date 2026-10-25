@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { api, setToken } from '@/api/client';
+import { isMockMode } from '@/api/mocks';
 
 const loginSchema = z.object({
   login: z.string().min(2, 'Укажите логин или e-mail'),
@@ -78,6 +79,12 @@ export function LoginPage({
 
   return (
     <main className="app-body" style={{ maxWidth: 460, margin: '0 auto' }}>
+      {isMockMode() && (
+        <div className="demo-badge demo-badge--card" role="note">
+          Демо-режим: данные синтетические, сервер — мок. Вход с любыми логином и паролем
+          (минимум 8 символов), код 2FA — любые 6 цифр.
+        </div>
+      )}
       {notice && (
         <div className="warning" role="alert">
           {notice}

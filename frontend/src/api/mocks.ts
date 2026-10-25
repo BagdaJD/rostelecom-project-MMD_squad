@@ -396,6 +396,182 @@ const EMPTY_BY_PATH: Array<[RegExp, unknown]> = [
   ],
 ];
 
+/* ---------------- экспорт CSV (ТЗ 12) ----------------
+ * Контракт мока повторяет backend: POST /exports/csv {module, filters, mode}.
+ * CSV: UTF-8 BOM, запятая, кавычки RFC 4180, заголовки на русском,
+ * идентификаторы (inn, region_code, source_url) и даты ISO 8601.
+ */
+type ExportFilters = Record<string, unknown>;
+
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  const text = String(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function csvLine(...cells: unknown[]): string {
+  return cells.map(csvCell).join(',');
+}
+
+function csvDoc(lines: unknown[][]): string {
+  return lines.map((line) => csvLine(...line)).join('\r\n');
+}
+
+const CLIENT_STATUS: Record<string, string> = {
+  active: 'Действующий клиент',
+  prospect: 'Потенциальный клиент',
+  unknown: 'Не определено',
+};
+
+type QuadrantCode = 'white' | 'strong' | 'stable' | 'weak' | null;
+
+function quadrantOf(potential: number, presence: number, threshold: number): QuadrantCode {
+  if (potential >= threshold && presence < threshold) return 'white';
+  if (potential >= threshold && presence >= threshold) return 'strong';
+  if (presence >= threshold) return 'stable';
+  return 'weak';
+}
+
+/** Тот же срез, что строит Радар: регион + отрасль + квадрант (ТЗ 12 «текущие фильтры»). */
+function filteredCompanies(filters: ExportFilters, empty: boolean): Company[] {
+  if (empty) return [];
+  const region = filters.region_id ? String(filters.region_id) : null;
+  const group =
+    typeof filters.industry_group === 'string' && filters.industry_group
+      ? filters.industry_group.toLowerCase()
+      : null;
+  const quadrant = typeof filters.quadrant === 'string' ? filters.quadrant : null;
+
+  return COMPANIES.filter((company) => {
+    if (region && String(company.region_id) !== region) return false;
+    if (group) {
+      const industry = INDUSTRIES.find((item) => item.id === company.industry_id);
+      if (!industry || industry.group.toLowerCase() !== group) return false;
+    }
+    if (quadrant) {
+      const cell = HEATMAP.find((item) => item.region_id === company.region_id);
+      if (!cell || quadrantOf(cell.potential_score, cell.presence_score, 50) !== quadrant) return false;
+    }
+    return true;
+  });
+}
+
+function companiesCsv(filters: ExportFilters, mode: string, empty: boolean): string {
+  const rows = filteredCompanies(filters, empty).map((company) => {
+    const region = REGIONS.find((item) => item.id === company.region_id);
+    return [
+      company.id,
+      company.name,
+      company.inn,
+      CLIENT_STATUS[company.client_status] ?? company.client_status,
+      region?.name ?? '',
+      region?.code ?? '',
+      company.revenue_latest,
+      company.revenue_year,
+      company.revenue_yoy,
+      `https://example.com/company/${company.id}`,
+    ];
+  });
+  if (mode === 'crm') {
+    // Документированный маппинг CRM-режима: колонки rt_* (целевая CRM — уточняется у куратора).
+    return csvDoc([
+      ['rt_id', 'rt_name', 'rt_inn', 'rt_status', 'rt_region', 'rt_region_code', 'rt_revenue_latest', 'rt_revenue_year', 'rt_revenue_yoy', 'rt_source_url'],
+      ...rows,
+    ]);
+  }
+  return csvDoc([
+    ['Идентификатор', 'Название', 'ИНН', 'Статус клиента', 'Регион', 'Код региона', 'Выручка (млн ₽)', 'Год', 'Динамика (%)', 'Источник'],
+    ...rows,
+  ]);
+}
+
+function investmentsCsv(filters: ExportFilters): string {
+  const stage = typeof filters.stage === 'string' && filters.stage ? filters.stage : null;
+  const region = filters.region_id ? String(filters.region_id) : null;
+  const projectId = filters.project_id ? Number(filters.project_id) : null;
+
+  const projects = PROJECTS.filter((project) => {
+    if (stage && project.stage !== stage) return false;
+    if (region && String(project.region_id) !== region) return false;
+    if (projectId && project.id !== projectId) return false;
+    return true;
+  });
+
+  const lines: unknown[][] = [
+    ['Идентификатор', 'Название', 'Стадия', 'Регион', 'Бюджет (₽)', 'Старт', 'Источник'],
+  ];
+  for (const project of projects) {
+    const regionRow = REGIONS.find((item) => item.id === project.region_id);
+    lines.push([
+      project.id,
+      project.title,
+      project.stage,
+      regionRow?.name ?? '',
+      project.estimated_budget,
+      project.planned_start,
+      project.source_url,
+    ]);
+  }
+
+  // Когда выбран конкретный проект (таблица тендеров в карточке), выгружаем его закупки.
+  if (projectId) {
+    const project = PROJECTS.find((item) => item.id === projectId);
+    lines.push([], ['Тендеры проекта', project?.title ?? '']);
+    lines.push(['Идентификатор', 'Закупка', 'Цена (₽)', 'Дедлайн (ISO 8601)', 'Источник']);
+    for (const tender of PROJECT_CARD.tenders) {
+      lines.push([tender.id, tender.title, tender.price, tender.deadline_date, tender.source_url]);
+    }
+  }
+  return csvDoc(lines);
+}
+
+/** CSV калькулятора: вилка, аналоги, поправки, разбивка — то, что видит пользователь (ТЗ 12). */
+function dealsCsv(filters: ExportFilters): string {
+  const estimate = ESTIMATE;
+  const lines: unknown[][] = [
+    ['Оценка ID', 'Валюта', 'Минимум', 'Оптимум', 'Максимум', 'Метод', 'Модель', 'Качество данных', 'Период цен', 'Требует проверки специалистом'],
+    [
+      estimate.estimate_id,
+      estimate.currency,
+      estimate.estimate.min,
+      estimate.estimate.optimum,
+      estimate.estimate.max,
+      estimate.estimator_mode,
+      estimate.model_version,
+      estimate.data_quality,
+      estimate.price_period ?? '',
+      estimate.requires_human_approval ? 'да' : 'нет',
+    ],
+    [],
+    ['Аналоги'],
+    ['Идентификатор', 'Название', 'Стоимость (₽)', 'Сходство', 'Основа цены'],
+    ...estimate.comparables.map((item) => [
+      item.deal_id,
+      item.title,
+      item.contract_value,
+      item.similarity,
+      item.retro_price_basis,
+    ]),
+    [],
+    ['Поправки'],
+    ['Фактор', 'Значение', 'Пояснение'],
+    ...estimate.adjustments.map((item) => [item.factor, item.value, item.note ?? '']),
+    [],
+    ['Разбивка по статьям'],
+    ['Статья', 'Сумма (₽)'],
+    ...estimate.breakdown.map((item) => [item.article, item.amount]),
+  ];
+  void filters;
+  return csvDoc(lines);
+}
+
+function exportCsvDoc(module: string, filters: ExportFilters, mode: string, empty: boolean): string {
+  // Пустой сценарий — только заголовки: экспорт не должен выдумывать строки.
+  if (module === 'investments') return empty ? csvDoc([['Идентификатор', 'Название', 'Стадия', 'Регион', 'Бюджет (₽)', 'Старт', 'Источник']]) : investmentsCsv(filters);
+  if (module === 'deals') return dealsCsv(filters);
+  return companiesCsv(filters, mode, empty);
+}
+
 function json(value: unknown): Response {
   return new Response(JSON.stringify(value), { status: 200, headers: { 'Content-Type': 'application/json' } });
 }
@@ -417,16 +593,22 @@ function buildReply(scenario: MockScenario) {
 
     // Экспорт отвечает файлом: CSV с UTF-8 BOM (ТЗ 12) и «DOCX» как набор байт.
     if (path === '/exports/csv') {
-      const rows = ['Идентификатор,Название,ИНН,Статус клиента'];
-      for (const company of COMPANIES) {
-        rows.push(`${company.id},${company.name},${company.inn ?? ''},${company.client_status}`);
+      let payload: { module?: string; filters?: ExportFilters; mode?: string } = {};
+      try {
+        payload = JSON.parse(String(init?.body ?? '{}')) as typeof payload;
+      } catch {
+        payload = {};
       }
+      const module = payload.module ?? 'companies';
+      const filters = payload.filters ?? {};
+      const mode = payload.mode === 'crm' ? 'crm' : 'general';
+      const isEmpty = scenario === 'empty';
       return Promise.resolve(
-        new Response('\uFEFF' + rows.join('\r\n'), {
+        new Response('\uFEFF' + exportCsvDoc(module, filters, mode, isEmpty), {
           status: 200,
           headers: {
             'Content-Type': 'text/csv; charset=utf-8',
-            'Content-Disposition': 'attachment; filename="companies.csv"',
+            'Content-Disposition': `attachment; filename="${module}-export.csv"`,
           },
         }),
       );
@@ -466,6 +648,13 @@ function buildReply(scenario: MockScenario) {
       }),
     );
   };
+}
+
+/** Демо-режим активен, если его включил текущий ран (VITE_USE_MOCKS или ?mock). */
+export function isMockMode(): boolean {
+  const persisted = globalThis.sessionStorage?.getItem(MOCK_KEY) ?? null;
+  const search = new URLSearchParams(globalThis.location?.search ?? '');
+  return search.get('mock') !== '0' && (import.meta.env.VITE_USE_MOCKS === '1' || search.has('mock') || persisted !== null);
 }
 
 /** Включает мок, если запрос на то есть. Возвращает выбранный сценарий или null. */
