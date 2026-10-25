@@ -66,3 +66,13 @@ def test_invalid_token_rejected():
 
     with pytest.raises(jwt.PyJWTError):
         decode_token("not-a-token")
+
+
+def test_production_cookies_are_secure_and_cannot_be_disabled():
+    from pydantic import ValidationError
+
+    from app.core.config import Settings
+
+    assert Settings(_env_file=None, app_env="production").secure_cookies
+    with pytest.raises(ValidationError, match="AUTH_COOKIE_SECURE"):
+        Settings(_env_file=None, app_env="production", auth_cookie_secure=False)

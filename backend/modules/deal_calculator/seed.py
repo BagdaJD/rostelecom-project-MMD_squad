@@ -1,6 +1,6 @@
 """Таблицы и данные калькулятора: ``python -m modules.deal_calculator.seed`` (из папки backend).
 
-* создаёт таблицы ``calc_*``, если их нет (существующие не трогает);
+* использует схему после ``alembic upgrade head``;
 * загружает бандл кейса: регионы и коэффициенты (МОД3_Таб1), уровни (Таб2), этапы работ
   (Таб3), каталог (Таб4) и демо-историю сделок. Повторный запуск обновляет справочники
   и не дублирует сделки.
@@ -8,8 +8,7 @@
 Ключи::
 
     --bundle PATH   другой бандл (например, реальные контракты, см. docs/calculator.md)
-    --create-all    создать и недостающие таблицы остальных модулей — для пустой базы,
-                    где миграций ещё нет (существующие таблицы не меняются)
+    --create-all    старый обход миграций, оставлен для совместимости демо
 """
 
 from __future__ import annotations
@@ -40,17 +39,32 @@ def create_tables(bind, everything: bool = False) -> None:
     from app.db.base import Base
 
     if everything:
-        import app.models  # noqa: F401 — регистрирует таблицы остальных модулей
+        from app.models import Base as ApplicationBase
 
-        Base.metadata.create_all(bind)
+        ApplicationBase.metadata.create_all(bind)
     else:
-        Base.metadata.create_all(bind, tables=CALC_TABLES)
+        from app.models import ModelArtifact
+
+        Base.metadata.create_all(bind, tables=[*CALC_TABLES, ModelArtifact.__table__])
 
 
 def _fingerprint(row: dict) -> str:
-    key = json.dumps({k: row.get(k) for k in ("title", "contract_value", "cost_value",
-                                                "closed_at", "outcome", "region_code")},
-                     ensure_ascii=False, sort_keys=True, default=str)
+    key = json.dumps(
+        {
+            k: row.get(k)
+            for k in (
+                "title",
+                "contract_value",
+                "cost_value",
+                "closed_at",
+                "outcome",
+                "region_code",
+            )
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        default=str,
+    )
     return hashlib.sha256(key.encode()).hexdigest()
 
 
@@ -92,8 +106,11 @@ def load_bundle(session: Session, bundle: dict) -> dict[str, int]:
         if dict_code not in DICTIONARIES:
             continue
         for order, item in enumerate(items):
-            row = session.scalar(select(CalcDictionary).where(
-                CalcDictionary.dict_code == dict_code, CalcDictionary.code == item["code"]))
+            row = session.scalar(
+                select(CalcDictionary).where(
+                    CalcDictionary.dict_code == dict_code, CalcDictionary.code == item["code"]
+                )
+            )
             if row is None:
                 row = CalcDictionary(dict_code=dict_code, code=item["code"])
                 session.add(row)
@@ -112,25 +129,31 @@ def load_bundle(session: Session, bundle: dict) -> dict[str, int]:
             continue
         known.add(fp)
         closed = d.get("closed_at")
-        session.add(CalcDeal(
-            title=d["title"][:512],
-            fingerprint=fp,
-            project_type=d.get("project_type") or "dispatching",
-            object_type=d.get("object_type"),
-            scale=d.get("scale"),
-            area_m2=_dec(d.get("area_m2")),
-            project_level=d.get("project_level"),
-            region_code=d.get("region_code"),
-            cost_value=_dec(d.get("cost_value")),
-            contract_value=_dec(d["contract_value"]),
-            outcome=d.get("outcome"),
-            retro_price_basis=d.get("retro_price_basis") or "synthetic",
-            financing_scheme=d.get("financing_scheme"),
-            payment_scheme=d.get("payment_scheme"),
-            closed_at=date.fromisoformat(closed) if closed else None,
-            scope_json=d.get("scope"),
-        ))
+        session.add(
+            CalcDeal(
+                title=d["title"][:512],
+                fingerprint=fp,
+                project_type=d.get("project_type") or "dispatching",
+                object_type=d.get("object_type"),
+                scale=d.get("scale"),
+                area_m2=_dec(d.get("area_m2")),
+                project_level=d.get("project_level"),
+                region_code=d.get("region_code"),
+                cost_value=_dec(d.get("cost_value")),
+                contract_value=_dec(d["contract_value"]),
+                outcome=d.get("outcome"),
+                retro_price_basis=d.get("retro_price_basis") or "synthetic",
+                financing_scheme=d.get("financing_scheme"),
+                payment_scheme=d.get("payment_scheme"),
+                closed_at=date.fromisoformat(closed) if closed else None,
+                scope_json=d.get("scope"),
+            )
+        )
         stats["deals"] += 1
+    session.commit()
+    from modules.deal_calculator.artifacts import prepare
+
+    prepare(session)
     session.commit()
     return stats
 
@@ -143,7 +166,8 @@ def main() -> None:
 
     from app.db.session import SessionLocal, engine
 
-    create_tables(engine, everything=args.create_all)
+    if args.create_all:
+        create_tables(engine, everything=True)
     bundle = json.loads(args.bundle.read_text(encoding="utf-8"))
     with SessionLocal() as session:
         stats = load_bundle(session, bundle)

@@ -82,6 +82,60 @@ def cmd_check_config(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_check_services(_: argparse.Namespace) -> int:
+    from redis import Redis
+    from sqlalchemy import text
+
+    settings, failures = get_settings(), 0
+    try:
+        with SessionLocal() as session:
+            session.execute(text("SELECT 1"))
+            available = session.scalar(
+                text("SELECT count(*) FROM pg_available_extensions WHERE name='postgis'")
+            )
+        print("PostgreSQL: OK; PostGIS: " + ("available" if available else "missing"))
+        failures += not bool(available)
+    except Exception:
+        print("PostgreSQL: unavailable; check DATABASE_URL and the database service")
+        failures += 1
+    try:
+        with Redis.from_url(
+            settings.redis_url, socket_connect_timeout=1, socket_timeout=1
+        ) as redis:
+            redis.ping()
+        print("Redis: OK")
+    except Exception:
+        print("Redis: unavailable; check REDIS_URL and the Redis service")
+        failures += 1
+    return int(bool(failures))
+
+
+def cmd_import_case(args: argparse.Namespace) -> int:
+    from ingestion.case_workbook import import_case
+
+    with SessionLocal() as session:
+        report = import_case(session, Path(args.workbook))
+        session.commit()
+    print("импорт кейса завершён:", report)
+    return 0
+
+
+def cmd_bootstrap_data(_: argparse.Namespace) -> int:
+    settings = get_settings()
+    if settings.data_mode == "case":
+        return cmd_import_case(argparse.Namespace(workbook=settings.case_workbook_path))
+    return cmd_seed(argparse.Namespace(bundle=settings.demo_bundle_path))
+
+
+def cmd_refresh_views(_: argparse.Namespace) -> int:
+    from app.workers.jobs import rebuild_matviews, refresh_models
+
+    count = rebuild_matviews()
+    trained = refresh_models()
+    print(f"витрин подготовлено: {count}; модель обновлена: {trained}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="app.cli", description="Утилиты каркаса")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -98,11 +152,22 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_enable_2fa)
 
     p = sub.add_parser("seed", help="загрузить демонстрационный набор")
-    p.add_argument("--bundle", default="../data/seed/demo_bundle.json")
+    p.add_argument("--bundle", default=str(get_settings().demo_bundle_path))
     p.set_defaults(func=cmd_seed)
+
+    p = sub.add_parser("import-case", help="импорт компаний и инвестпроектов из Excel кейса")
+    p.add_argument("--workbook", default=str(get_settings().case_workbook_path))
+    p.set_defaults(func=cmd_import_case)
+
+    p = sub.add_parser("bootstrap-data", help="данные кейса или demo по DATA_MODE")
+    p.set_defaults(func=cmd_bootstrap_data)
 
     p = sub.add_parser("check-config", help="проверить обязательные переменные окружения")
     p.set_defaults(func=cmd_check_config)
+    p = sub.add_parser("refresh-views", help="подготовить витрины и модель калькулятора")
+    p.set_defaults(func=cmd_refresh_views)
+    p = sub.add_parser("check-services", help="проверить доступность PostgreSQL/PostGIS и Redis")
+    p.set_defaults(func=cmd_check_services)
     return parser
 
 

@@ -9,7 +9,13 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import get_settings
 
-engine = create_engine(get_settings().database_url, pool_pre_ping=True, future=True)
+settings = get_settings()
+engine = create_engine(
+    settings.database_url,
+    pool_pre_ping=True,
+    future=True,
+    connect_args={"connect_timeout": settings.database_connect_timeout_sec},
+)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False, future=True)
 
 
@@ -18,5 +24,8 @@ def get_session() -> Iterator[Session]:
     session = SessionLocal()
     try:
         yield session
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()

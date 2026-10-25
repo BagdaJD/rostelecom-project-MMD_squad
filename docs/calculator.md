@@ -33,11 +33,13 @@
 Из папки `backend` (в Docker — `docker compose … exec backend …`):
 
 ```bash
-python -m modules.deal_calculator.seed               # таблицы calc_* + данные кейса
-python -m modules.deal_calculator.seed --create-all  # то же, если в базе нет и остальных таблиц
+alembic upgrade head                     # схема, включая calc_*
+python -m modules.deal_calculator.seed    # данные кейса
 ```
 
 Повторный запуск безопасен: справочники обновляются, сделки не дублируются.
+В Compose миграции и оба seed выполняет сервис `init`. Флаг `--create-all` оставлен
+для совместимости со старым демо; обычный запуск его не использует.
 Шанс выиграть считает scikit-learn (`pip install -e ".[ml]"`). Без него калькулятор работает
 на упрощённой модели (однофакторная логистика по ближайшим сделкам) и пишет об этом на экране.
 

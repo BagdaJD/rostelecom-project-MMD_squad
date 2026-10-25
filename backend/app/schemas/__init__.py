@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ORMModel(BaseModel):
@@ -29,7 +30,6 @@ class Factor(BaseModel):
     value: str | None = None
 
 
-# --- auth ---
 class LoginRequest(BaseModel):
     login: str = Field(min_length=2, max_length=255)
     password: str = Field(min_length=8, max_length=256)
@@ -38,8 +38,7 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     mfa_required: bool
     partial_token: str | None = None
-    access_token: str | None = None
-    refresh_token: str | None = None
+    mfa_setup_required: bool = False
 
 
 class Verify2FARequest(BaseModel):
@@ -47,13 +46,18 @@ class Verify2FARequest(BaseModel):
     code: str = Field(min_length=6, max_length=10)
 
 
+class Setup2FARequest(BaseModel):
+    partial_token: str = Field(min_length=1, max_length=128)
+
+
 class TokenPair(BaseModel):
     access_token: str
-    refresh_token: str
     token_type: str = "bearer"
+    expires_in: int
+    csrf_token: str
+    backup_codes: list[str] | None = None
 
 
-# --- companies / radar ---
 class CompanyOut(ORMModel):
     id: int
     name: str
@@ -64,19 +68,37 @@ class CompanyOut(ORMModel):
     revenue_latest: Decimal | None = None
     revenue_year: int | None = None
     revenue_yoy: float | None = None
+    revenue_is_synthetic: bool = False
     score: float | None = None
+    municipality: str | None = None
+    city: str | None = None
+    settlement: str | None = None
+    is_synthetic: bool = False
+    source_id: int | None = None
 
 
 class HeatCellOut(BaseModel):
     region_id: int
     region_name: str
     industry_group: str
+    municipality: str | None = None
+    geography_level: str = "region"
     companies_count: int
-    revenue_sum: Decimal
-    growth_share: float
+    revenue_sum: Decimal | None
+    growth_share: float | None
     potential_score: float
-    presence_score: float
-    # Центр агрегата: карта рисует кружки по нему, если полигона нет (ТЗ 11.3).
+    presence_score: float | None
+    revenue_year: int | None = None
+    revenue_companies: int = 0
+    growth_companies: int = 0
+    scoring_mode: str = "heuristic"
+    model_version: str = "radar-scoring-0.2"
+    confidence: str = "low"
+    data_quality: str = "limited"
+    calculated_at: datetime | None = None
+    factors: list[Factor] = []
+    is_synthetic: bool = False
+
     longitude: float | None = None
     latitude: float | None = None
 
@@ -85,13 +107,21 @@ class WhiteSpaceOut(BaseModel):
     region_id: int
     region_name: str
     industry_group: str
+    municipality: str | None = None
+    geography_level: str = "region"
     service_type: str | None = None
     potential_score: float
     presence_score: float
     explanation: list[str]
+    scoring_mode: str = "heuristic"
+    model_version: str = "radar-scoring-0.2"
+    confidence: str = "low"
+    data_quality: str = "limited"
+    calculated_at: datetime | None = None
+    is_synthetic: bool = False
+    thresholds: dict[str, float] = {}
 
 
-# --- investments ---
 class ProjectOut(ORMModel):
     id: int
     title: str
@@ -101,6 +131,14 @@ class ProjectOut(ORMModel):
     region_id: int | None
     initiator_company_id: int | None
     source_url: str | None
+    municipality: str | None = None
+    industry_id: int | None = None
+    planned_start_year: int | None = None
+    planned_end_year: int | None = None
+    start_precision: str = "day"
+    end_precision: str = "day"
+    stage_method: str = "source"
+    is_synthetic: bool = False
 
 
 class NeedOut(ORMModel):
@@ -117,9 +155,9 @@ class TimelinePointOut(BaseModel):
     industry_id: int | None
     events_count: int
     project_ids: list[int]
+    date_precision: str = "day"
 
 
-# --- deals ---
 class DealEstimateRequest(BaseModel):
     project_type: str
     scale: str
@@ -148,7 +186,6 @@ class ComparableOut(BaseModel):
 
 
 class DealEstimateResponse(BaseModel):
-    #: id сохранённой оценки — нужен, чтобы по ней собрать DOCX (exports/proposal).
     estimate_id: int
     currency: str = "RUB"
     estimate: dict[str, Decimal]
@@ -164,11 +201,43 @@ class DealEstimateResponse(BaseModel):
     warning: str | None = None
 
 
-# --- exports / subscriptions ---
+class CompanyExportFilters(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+    region_id: int | None = Field(None, gt=0)
+    industry_id: int | None = Field(None, gt=0)
+    industry_group: str | None = Field(None, max_length=64)
+    client_status: Literal["active", "prospect", "unknown"] | None = None
+    min_revenue: float | None = Field(None, ge=0)
+    min_growth: float | None = None
+    municipality: str | None = Field(None, max_length=255)
+    q: str | None = Field(None, min_length=1, max_length=255)
+    report_year: int | None = Field(None, ge=1900, le=2200)
+
+
+class InvestmentExportFilters(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    region_id: int | None = Field(None, gt=0)
+    industry_id: int | None = Field(None, gt=0)
+    initiator_company_id: int | None = Field(None, gt=0)
+    stage: (
+        Literal["design", "modernization", "construction", "launch", "completed", "unknown"] | None
+    ) = None
+    municipality: str | None = Field(None, max_length=255)
+    q: str | None = Field(None, min_length=1, max_length=255)
+
+
 class ExportCsvRequest(BaseModel):
-    module: str
+    module: Literal["companies", "investments"]
     filters: dict = {}
-    mode: str = "general"
+    mode: Literal["general", "crm"] = "general"
+
+    @model_validator(mode="after")
+    def validate_filters(self):
+        schema = CompanyExportFilters if self.module == "companies" else InvestmentExportFilters
+        self.filters = schema.model_validate(self.filters).model_dump(exclude_none=True)
+        return self
 
 
 class SubscriptionIn(BaseModel):

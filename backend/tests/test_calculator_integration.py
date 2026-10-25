@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -22,15 +23,27 @@ from modules.deal_calculator.schemas import EstimateRequest
 from modules.deal_calculator.seed import DEFAULT_BUNDLE, create_tables, load_bundle
 
 ROOT = Path(__file__).resolve().parents[2]
-TC_ITEMS = [("el_01", 12), ("el_02", 2), ("ht_01", 1), ("ht_02", 8), ("ws_01", 2),
-            ("ws_03", 10), ("vn_01", 3), ("vn_02", 6), ("kd_01", 1), ("kd_02", 10)]
+TC_ITEMS = [
+    ("el_01", 12),
+    ("el_02", 2),
+    ("ht_01", 1),
+    ("ht_02", 8),
+    ("ws_01", 2),
+    ("ws_03", 10),
+    ("vn_01", 3),
+    ("vn_02", 6),
+    ("kd_01", 1),
+    ("kd_02", 10),
+]
 
 
 def _db_available() -> bool:
     try:
         create_tables(engine)
         return True
-    except Exception:  # noqa: BLE001 — отсутствие БД штатно для unit-прогона
+    except Exception:
+        if os.environ.get("REQUIRE_INTEGRATION") == "1":
+            raise
         return False
 
 
@@ -55,8 +68,10 @@ def test_bundle_is_idempotent_and_complete() -> None:
         second = load_bundle(session, json.loads(DEFAULT_BUNDLE.read_text(encoding="utf-8")))
         assert second["deals"] == 0 and second["positions"] == 0 and second["regions"] == 0
         assert session.scalar(select(func.count(CalcPosition.id))) == 20
-        assert session.scalar(select(func.count(CalcDeal.id))
-                              .where(CalcDeal.cost_value.is_not(None))) >= 400
+        assert (
+            session.scalar(select(func.count(CalcDeal.id)).where(CalcDeal.cost_value.is_not(None)))
+            >= 400
+        )
 
 
 def test_region_coefficient_is_inherited_from_zone() -> None:
@@ -69,8 +84,11 @@ def test_region_coefficient_is_inherited_from_zone() -> None:
 def test_control_example_through_service() -> None:
     with SessionLocal() as session:
         payload = EstimateRequest(
-            object_type="retail", area_m2=4500, project_level="advanced",
-            region_id=_rostov_id(session), duration_months=3,
+            object_type="retail",
+            area_m2=4500,
+            project_level="advanced",
+            region_id=_rostov_id(session),
+            duration_months=3,
             items=[{"code": c, "qty": q} for c, q in TC_ITEMS],
         )
         result = calculator.estimate(session, payload, author_id=None)
@@ -82,16 +100,16 @@ def test_control_example_through_service() -> None:
     assert len(result.curve) > 10 and result.comparables
     assert result.win_model is not None
     assert sum(float(b["amount"]) for b in result.breakdown) == pytest.approx(
-        float(est["optimum"]), abs=1)
-    with SessionLocal() as session:  # расчёт сохранён — по нему собирается КП
+        float(est["optimum"]), abs=1
+    )
+    with SessionLocal() as session:
         row = session.get(CalcEstimate, result.estimate_id)
         assert row is not None and float(row.cost_total) == pytest.approx(668_528.74, abs=0.01)
 
 
 def test_price_below_cost_cannot_be_approved_and_kp_uses_approved_price() -> None:
     with SessionLocal() as session:
-        payload = EstimateRequest(object_type="office", area_m2=1500,
-                                  region_id=_rostov_id(session))
+        payload = EstimateRequest(object_type="office", area_m2=1500, region_id=_rostov_id(session))
         result = calculator.estimate(session, payload, author_id=None)
         with pytest.raises(ValueError):
             calculator.approve(session, result.estimate_id, result.cost["total"] * 0.9, None)
@@ -118,13 +136,22 @@ def test_real_contracts_load_and_feed_the_model() -> None:
     script = ROOT / "infra" / "scripts" / "import_contracts.py"
     spec = importlib.util.spec_from_file_location("import_contracts", script)
     contracts = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(contracts)  # type: ignore[union-attr]
-    rows = [{"Номер в ЕИС": f"TEST-INT-{i}", "Предмет контракта": "Диспетчеризация школы",
-             "Регион": "Ростовская обл.", "Тип объекта": "соцобъект",
-             "Площадь, м²": str(2500 + 300 * i), "Уровень": "базовый", "Закон": "44",
-             "Цена контракта, руб": str(700_000 + 40_000 * i),
-             "Ставки других участников, руб": str(760_000 + 40_000 * i),
-             "Дата контракта": f"2026-0{1 + i % 9}-10"} for i in range(5)]
+    spec.loader.exec_module(contracts)
+    rows = [
+        {
+            "Номер в ЕИС": f"TEST-INT-{i}",
+            "Предмет контракта": "Диспетчеризация школы",
+            "Регион": "Ростовская обл.",
+            "Тип объекта": "соцобъект",
+            "Площадь, м²": str(2500 + 300 * i),
+            "Уровень": "базовый",
+            "Закон": "44",
+            "Цена контракта, руб": str(700_000 + 40_000 * i),
+            "Ставки других участников, руб": str(760_000 + 40_000 * i),
+            "Дата контракта": f"2026-0{1 + i % 9}-10",
+        }
+        for i in range(5)
+    ]
     deals, problems = contracts.convert(rows)
     assert not problems
     pattern = "Контракт ЕИС № TEST-INT-%"
@@ -133,10 +160,15 @@ def test_real_contracts_load_and_feed_the_model() -> None:
         try:
             loaded = session.scalars(select(CalcDeal).where(CalcDeal.title.like(pattern))).all()
             assert len(loaded) == 10
-            assert all(d.region_code == "RU-ROS" and d.retro_price_basis == "contract"
-                       for d in loaded)
-            payload = EstimateRequest(object_type="social", area_m2=3000,
-                                      region_id=_rostov_id(session), financing_scheme="budget")
+            assert all(
+                d.region_code == "RU-ROS" and d.retro_price_basis == "contract" for d in loaded
+            )
+            payload = EstimateRequest(
+                object_type="social",
+                area_m2=3000,
+                region_id=_rostov_id(session),
+                financing_scheme="budget",
+            )
             result = calculator.estimate(session, payload, author_id=None)
             if result.win_model and result.win_model.get("type") == "multifactor":
                 assert result.win_model["basis"] == "mixed"
