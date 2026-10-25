@@ -55,6 +55,12 @@ CSV_HEADERS["investments"] = {
     "source_url": "Ссылка на источник",
     "is_synthetic": "Синтетический проект",
 }
+CSV_HEADERS["deal_estimate"] = {
+    "section": "Раздел",
+    "name": "Показатель",
+    "value": "Значение",
+    "note": "Пояснение",
+}
 CRM_COLUMNS = ("externalId", "name", "inn", "industry", "region", "phone", "website")
 
 
@@ -227,6 +233,53 @@ def to_csv(rows: list[dict], module: str, mode: str = "general") -> bytes:
     buffer = io.StringIO()
     write_csv(buffer, rows, module, mode)
     return b"\xef\xbb\xbf" + buffer.getvalue().encode("utf-8")
+
+
+def deal_estimate_rows(session: Session, estimate_id: int) -> list[dict]:
+    """CSV старого расчёта (/deals/estimate): вилка, поправки и аналоги одной таблицей."""
+    estimate = session.get(DealEstimate, estimate_id)
+    if estimate is None:
+        raise ValueError("Оценка не найдена")
+    rows = [
+        {
+            "section": "Расчёт",
+            "name": "Метод",
+            "value": estimate.estimator_mode,
+            "note": f"качество данных: {estimate.data_quality}; модель {estimate.model_version}",
+        },
+        *(
+            {"section": "Вилка", "name": label, "value": value, "note": "руб."}
+            for label, value in (
+                ("Минимум", estimate.price_min),
+                ("Оптимум", estimate.price_optimum),
+                ("Максимум", estimate.price_max),
+            )
+        ),
+    ]
+    if estimate.price_period:
+        rows.append({"section": "Расчёт", "name": "Период цен", "value": estimate.price_period})
+    for adjustment in estimate.adjustments_json or []:
+        rows.append(
+            {
+                "section": "Поправка",
+                "name": adjustment.get("factor"),
+                "value": adjustment.get("value"),
+                "note": adjustment.get("note"),
+            }
+        )
+    for comparable in estimate.comparables_json or []:
+        rows.append(
+            {
+                "section": "Аналог",
+                "name": comparable.get("title"),
+                "value": comparable.get("contract_value"),
+                "note": (
+                    f"сходство {comparable.get('similarity')}; "
+                    f"основание цены: {comparable.get('retro_price_basis')}"
+                ),
+            }
+        )
+    return rows
 
 
 def build_proposal_docx(session: Session, estimate_id: int, author_id: int | None) -> str:

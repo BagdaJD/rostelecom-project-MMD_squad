@@ -194,6 +194,37 @@ def test_fallback_estimate_still_produces_docx(api_client):
     assert "Минимум: 0 руб." not in text
 
 
+def test_legacy_estimate_csv_uses_deal_estimate_id(api_client):
+    # Раньше CSV запрашивался у /calculator/estimates/{id}/csv с номером из другой таблицы.
+    client, engine, _, _ = api_client
+    _seed_calculator(engine)
+    estimate_id = _estimate(client)["estimate_id"]
+    response = client.get(f"/api/v1/deals/estimates/{estimate_id}/csv")
+    assert response.status_code == 200, response.text
+    assert response.headers["content-type"].startswith("text/csv")
+    assert response.content.startswith(b"\xef\xbb\xbf"), "UTF-8 BOM для Excel"
+    lines = response.content.decode("utf-8-sig").splitlines()
+    assert lines[0] == "Раздел,Показатель,Значение,Пояснение"
+    assert any(line.startswith("Вилка,Оптимум,") for line in lines)
+    assert any(line.startswith("Поправка,assumed_area_m2,5000") for line in lines)
+
+
+def test_legacy_estimate_csv_is_author_only(api_client):
+    client, engine, _, other_id = api_client
+    with Session(engine) as session:
+        deal = Deal(author_id=other_id, input_params_json={})
+        session.add(deal)
+        session.flush()
+        foreign = DealEstimate(
+            deal_id=deal.id, price_min=1, price_optimum=2, price_max=3, model_version="test"
+        )
+        session.add(foreign)
+        session.commit()
+        foreign_id = foreign.id
+    assert client.get(f"/api/v1/deals/estimates/{foreign_id}/csv").status_code == 404
+    assert client.get("/api/v1/deals/estimates/999999/csv").status_code == 404
+
+
 def test_notifications_have_timestamp_and_remain_user_scoped(api_client):
     client, engine, user_id, other_id = api_client
     with Session(engine) as session:

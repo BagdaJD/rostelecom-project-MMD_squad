@@ -376,7 +376,7 @@ export const api = {
     }),
 
   estimateCsv: (estimateId: number) =>
-    requestBlob(`/calculator/estimates/${estimateId}/csv`),
+    requestBlob(`/deals/estimates/${estimateId}/csv`),
 
   /** DOCX КП: сначала создаём документ, затем скачиваем его как файл. */
   exportProposal: async (estimateId: number) => {
