@@ -35,7 +35,8 @@ ARTICLE_WEIGHTS = {"works": 0.55, "equipment": 0.30, "software": 0.15}
 # Запасной расчёт, когда аналогов нет: старая форма не знает площади объекта, а новому
 # калькулятору без неё нечего считать. Допущения согласованы с командой (задача 1).
 FALLBACK_AREA_M2 = {"small": 1_000.0, "medium": 5_000.0, "large": 20_000.0}
-FALLBACK_MODE = "fallback_dispatching_norms"
+# Не длиннее deal_estimate.estimator_mode (String(16)): PostgreSQL не примет длиннее.
+FALLBACK_MODE = "fallback_norms"
 
 
 def _regional_coefficient(session: Session, region_id: int | None) -> float:

@@ -172,6 +172,11 @@ def test_estimate_without_analogs_uses_calculator_fallback(api_client):
     assert ratio == pytest.approx(1.12, rel=1e-3), "срочность учитывается и в запасном расчёте"
 
 
+def test_fallback_mode_fits_estimator_mode_column():
+    # SQLite не проверяет длину строк, PostgreSQL — проверяет: длиннее колонки → 500.
+    assert len(FALLBACK_MODE) <= DealEstimate.__table__.c.estimator_mode.type.length
+
+
 def test_estimate_with_analogs_does_not_use_fallback(api_client):
     client, engine, _, _ = api_client
     _seed_calculator(engine)
