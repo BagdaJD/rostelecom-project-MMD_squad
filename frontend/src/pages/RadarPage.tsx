@@ -79,7 +79,7 @@ export function RadarPage() {
   const companiesInQuadrant = (companies.data ?? []).filter((company) => {
     if (!filters.quadrant) return true;
     const cell = (cells.data ?? []).find((item) => item.region_id === company.region_id);
-    if (!cell) return false;
+    if (!cell || cell.presence_score === null) return false;
     return (
       quadrantOf(cell.potential_score, cell.presence_score, 50) === filters.quadrant
     );
@@ -174,15 +174,17 @@ export function RadarPage() {
               longitude: cell.longitude,
               latitude: cell.latitude,
               colorValue: cell.potential_score,
-              radiusValue: 100 - cell.presence_score,
+              radiusValue:
+                cell.presence_score === null ? null : 100 - cell.presence_score,
             }))}
             selectedRegion={filters.region_id ?? globalRegion}
             onSelectRegion={(regionId) => patchFilters({ region_id: regionId })}
             ariaLabel="Тепловая карта потенциала регионов"
           />
           <p className="muted">
-            Цвет — потенциал среза, радиус — присутствие: чем больше точка при ярком цвете, тем
-            отчётливее белое пятно. Клик по точке задаёт фильтр региона.
+            Цвет — потенциал среза, радиус — подтверждённое присутствие: без координат точка не
+            размещается, без данных о присутствии используется нейтральный размер. Клик по точке
+            задаёт фильтр региона.
           </p>
         </section>
       )}

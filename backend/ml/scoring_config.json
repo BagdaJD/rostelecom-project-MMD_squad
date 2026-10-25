@@ -1,0 +1,11 @@
+{
+  "version": "heuristic-1.0",
+  "company_weights": {"industry_fit": 0.3, "company_size": 0.2, "investment_activity": 0.3, "timeliness": 0.2},
+  "minimum_coverage": 0.4,
+  "employee_cap": 250,
+  "investment_cap_mln": 10000,
+  "industry_fit": {"agriculture": 0.7, "industry": 0.85, "energy": 0.9, "trade": 0.65, "logistics": 0.9, "services": 0.6, "housing": 0.75},
+  "sme_size_proxy": {"Микропредприятие": 0.2, "Малое предприятие": 0.55, "Среднее предприятие": 0.85},
+  "territory_weights": {"companies": 0.5, "projects": 0.3, "investment": 0.2},
+  "minimum_comparison_size": 4
+}

@@ -36,10 +36,14 @@ from app.models import (
 from ingestion.normalize import (
     RawCompany,
     clean_revenue,
+    is_valid_inn,
+    is_valid_ogrn,
     match_key,
     normalize_name,
     payload_hash,
 )
+from ml.needs import classify_need
+from ml.storage import replace_needs
 
 STAGES = ("design", "modernization", "construction", "launch", "completed")
 NEED_DICT = "project_need"
@@ -197,45 +201,47 @@ def load_companies(
     keys: dict[str, int] = {}
     for record in records:
         source = _source(
-            session, record.source, record.external_id, record.as_dict(), record.license_note
+            session, record.source, record.external_id, record.stable_payload(), record.license_note
         )
         result.source_records += 1
         decision = match_key(record)
-        if decision.method == "inn":
-            company = session.scalar(select(Company).where(Company.inn == record.inn))
-        elif decision.method == "ogrn":
-            company = session.scalar(select(Company).where(Company.ogrn == record.ogrn))
-        elif decision.method == "name_region":
-            candidates = session.scalars(
-                select(Company)
-                .where(
-                    Company.name_normalized == normalize_name(record.name),
-                    Company.region_id == region_codes.get(record.region_code),
-                )
-                .limit(2)
-            ).all()
-            company = candidates[0] if len(candidates) == 1 else None
-        else:
-            company = session.scalar(
-                select(Company)
-                .join(CompanyMatch)
-                .where(
-                    CompanyMatch.source_record_id == source.id,
-                )
-                .limit(1)
-            )
+        company = session.scalar(
+            select(Company)
+            .join(CompanyMatch, CompanyMatch.company_id == Company.id)
+            .where(CompanyMatch.source_record_id == source.id)
+        )
+        if decision.method == "inn" and record.inn:
+            by_inn = session.scalars(select(Company).where(Company.inn == record.inn)).first()
+            if (
+                by_inn
+                and is_valid_ogrn(by_inn.ogrn)
+                and is_valid_ogrn(record.ogrn)
+                and (by_inn.ogrn != record.ogrn)
+            ):
+                raise ValueError("Конфликт валидных идентификаторов компании; требуется проверка")
+            company = company or by_inn
+        if company is None and is_valid_ogrn(record.ogrn):
+            by_ogrn = session.scalars(select(Company).where(Company.ogrn == record.ogrn)).first()
+            if (
+                by_ogrn
+                and is_valid_inn(record.inn)
+                and is_valid_inn(by_ogrn.inn)
+                and (record.inn != by_ogrn.inn)
+            ):
+                raise ValueError("Конфликт ИНН при совпавшем ОГРН; требуется проверка")
+            company = by_ogrn
 
         if company is None:
             company = Company(
                 name=record.name,
                 name_normalized=normalize_name(record.name),
-                inn=record.inn,
-                ogrn=record.ogrn,
+                inn=record.inn if is_valid_inn(record.inn) else None,
+                ogrn=record.ogrn if is_valid_ogrn(record.ogrn) else None,
                 industry_id=industry_by_okved.get(record.industry_code or ""),
                 region_id=region_codes.get(record.region_code or ""),
                 employee_count=record.employee_count,
                 source_id=source.id,
-                client_status="unknown",
+                client_status=record.client_status,
                 first_seen_at=record.fetched_at,
                 last_seen_at=record.fetched_at,
             )
@@ -261,6 +267,8 @@ def load_companies(
             company.source_id = source.id
             company.is_synthetic = synthetic
             company.attributes_json = record.attributes
+        if record.client_status == "active" or company.client_status == "unknown":
+            company.client_status = record.client_status
         company.last_seen_at = record.fetched_at
 
         if not session.scalar(
@@ -301,6 +309,7 @@ def load_companies(
             )
             result.metrics += 1
         keys[decision.company_key] = company.id
+        session.flush()
     return keys, result
 
 
@@ -384,6 +393,7 @@ def load_projects(
                 title=project.title,
             )
         )
+        replace_needs(session, project.id, classify_need(project.title, project.description))
     return result
 
 
@@ -439,6 +449,7 @@ def load_tenders(
                 ProjectTender(
                     project_id=project_id,
                     tender_id=tender.id,
+                    # Способ связи сохраняется: внешняя ссылка и ИНН — разные основания.
                     link_method=row.get("link_method", "inn_keyword"),
                     confidence=Decimal(str(row.get("link_confidence", 0.7))),
                 )

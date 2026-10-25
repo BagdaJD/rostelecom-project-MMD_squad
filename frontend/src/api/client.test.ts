@@ -185,6 +185,32 @@ describe('401: проверочный запрос против защищённ
   });
 });
 
+describe('контракты API', () => {
+  it('скачивает CSV расчёта по маршруту калькулятора', async () => {
+    const calls = stubFetch({
+      status: 200,
+      body: 'estimate_id;score',
+      contentType: 'text/csv',
+    });
+
+    const blob = await api.estimateCsv(42);
+
+    expect(calls).toEqual(['/api/v1/calculator/estimates/42/csv']);
+    expect(await blob.text()).toBe('estimate_id;score');
+  });
+
+  it('запрашивает настройку 2FA по partial token', async () => {
+    const calls = stubFetch({
+      status: 200,
+      body: JSON.stringify({ secret: 'test-secret', otpauth_hint: 'otpauth://totp/test' }),
+    });
+
+    await api.setup2fa('partial-token');
+
+    expect(calls).toEqual(['/api/v1/auth/2fa/setup']);
+  });
+});
+
 describe('refresh: 401 → /auth/refresh → повтор запроса (ТЗ 13)', () => {
   it('после успешного refresh сохраняет новый токен и повторяет запрос', async () => {
     setToken('old-token');

@@ -101,6 +101,8 @@ class HeatCellOut(BaseModel):
 
     longitude: float | None = None
     latitude: float | None = None
+    presence_status: str | None = None
+    aggregation_level: str | None = None
 
 
 class WhiteSpaceOut(BaseModel):
@@ -147,6 +149,11 @@ class NeedOut(ORMModel):
     evidence: str | None
     rule_id: str | None
     model_version: str
+    evidence_type: str | None = None
+    reason: str | None = None
+    semantic_similarity: float | None = None
+    confidence_label: str | None = None
+    data_quality: str | None = None
 
 
 class TimelinePointOut(BaseModel):

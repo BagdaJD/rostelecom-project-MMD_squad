@@ -479,7 +479,13 @@ function filteredCompanies(filters: ExportFilters, empty: boolean): Company[] {
     }
     if (quadrant) {
       const cell = HEATMAP.find((item) => item.region_id === company.region_id);
-      if (!cell || quadrantOf(cell.potential_score, cell.presence_score, 50) !== quadrant) return false;
+      if (
+        !cell ||
+        cell.presence_score === null ||
+        quadrantOf(cell.potential_score, cell.presence_score, 50) !== quadrant
+      ) {
+        return false;
+      }
     }
     return true;
   });

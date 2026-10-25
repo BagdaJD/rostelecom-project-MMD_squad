@@ -82,6 +82,16 @@ function notifyAuthenticated(): void {
   for (const listener of authenticatedListeners) listener();
 }
 
+function csrfCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const prefix = 'rtk_csrf=';
+  const cookie = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix));
+  return cookie ? cookie.slice(prefix.length) : null;
+}
+
 const STATUS_TEXT: Record<number, string> = {
   400: 'Запрос содержит ошибку',
   403: 'Недостаточно прав для этого действия',
@@ -163,9 +173,13 @@ type RequestOptions = RequestInit & {
  */
 async function refreshSession(): Promise<boolean> {
   try {
+    const csrf = csrfCookie();
+    const headers = new Headers({ Accept: 'application/json' });
+    if (csrf) headers.set('X-CSRF-Token', csrf);
     const response = await fetch(`${BASE_URL}/auth/refresh`, {
       method: 'POST',
-      headers: { Accept: 'application/json' },
+      credentials: 'include',
+      headers,
     });
     if (!response.ok) return false;
     const payload = (await response.json()) as { access_token?: string | null };
@@ -194,10 +208,16 @@ async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
   const headers = new Headers(fetchInit.headers);
   headers.set('Accept', 'application/json');
   if (fetchInit.body) headers.set('Content-Type', 'application/json');
+  const csrf = csrfCookie();
+  if (csrf) headers.set('X-CSRF-Token', csrf);
   const token = getToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const response = await fetch(`${BASE_URL}${path}`, { ...fetchInit, headers });
+  const response = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include',
+    ...fetchInit,
+    headers,
+  });
 
   if (!response.ok) {
     // 401 на защищённом маршруте: пробуем продлить сессию и повторить запрос один раз.
@@ -223,10 +243,16 @@ async function requestBlob(path: string, init: RequestOptions = {}): Promise<Blo
   const { credentialCheck = false, retried = false, ...fetchInit } = init;
   const headers = new Headers(fetchInit.headers);
   if (fetchInit.body) headers.set('Content-Type', 'application/json');
+  const csrf = csrfCookie();
+  if (csrf) headers.set('X-CSRF-Token', csrf);
   const token = getToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const response = await fetch(`${BASE_URL}${path}`, { ...fetchInit, headers });
+  const response = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include',
+    ...fetchInit,
+    headers,
+  });
   if (!response.ok) {
     if (response.status === 401 && !credentialCheck && !retried && (await tryRefresh())) {
       return requestBlob(path, { ...init, retried: true });
@@ -248,23 +274,32 @@ function query(params: Record<string, string | number | boolean | null | undefin
 
 export const api = {
   login: (login: string, password: string) =>
-    request<{ mfa_required: boolean; partial_token: string | null; access_token: string | null }>(
-      '/auth/login',
-      { method: 'POST', body: JSON.stringify({ login, password }), credentialCheck: true },
-    ).then((result) => {
-      if (result.access_token) {
-        setToken(result.access_token);
-        notifyAuthenticated();
-      }
-      return result;
+    request<{
+      mfa_required: boolean;
+      partial_token: string | null;
+      mfa_setup_required: boolean;
+    }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ login, password }),
+      credentialCheck: true,
+    }),
+
+  setup2fa: (partial_token: string) =>
+    request<{ secret: string; otpauth_hint: string }>('/auth/2fa/setup', {
+      method: 'POST',
+      body: JSON.stringify({ partial_token }),
+      credentialCheck: true,
     }),
 
   verify2fa: (partial_token: string, code: string) =>
-    request<{ access_token: string; refresh_token: string }>('/auth/2fa/verify', {
-      method: 'POST',
-      body: JSON.stringify({ partial_token, code }),
-      credentialCheck: true,
-    }).then((tokens) => {
+    request<{ access_token: string; token_type: string; expires_in: number; csrf_token: string }>(
+      '/auth/2fa/verify',
+      {
+        method: 'POST',
+        body: JSON.stringify({ partial_token, code }),
+        credentialCheck: true,
+      },
+    ).then((tokens) => {
       setToken(tokens.access_token);
       notifyAuthenticated();
       return tokens;
@@ -340,12 +375,18 @@ export const api = {
       body: JSON.stringify({ module, filters, mode }),
     }),
 
+  estimateCsv: (estimateId: number) =>
+    requestBlob(`/calculator/estimates/${estimateId}/csv`),
+
   /** DOCX КП: сначала создаём документ, затем скачиваем его как файл. */
   exportProposal: async (estimateId: number) => {
     // estimate_id — query-параметр (так его читает FastAPI-хэндлер без тела запроса).
-    await request<{ file_ref: string; status: string }>(`/exports/proposal?estimate_id=${estimateId}`, {
-      method: 'POST',
-    });
+    await request<{ download_url: string; status: string }>(
+      `/exports/proposal?estimate_id=${estimateId}`,
+      {
+        method: 'POST',
+      },
+    );
     return requestBlob(`/exports/proposal/${estimateId}/download`);
   },
 };

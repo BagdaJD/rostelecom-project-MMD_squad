@@ -38,6 +38,15 @@ def insights(
         limit=limit,
         offset=offset,
     )
+@router.get("/companies/{company_id}/score")
+def company_score(company_id: int, session: DbSession, user: CurrentUser) -> dict:
+    from fastapi import HTTPException
+
+    from ingestion.persistence import saved_company_score
+
+    if session.get(Company, company_id) is None:
+        raise HTTPException(404, "Компания не найдена")
+    return saved_company_score(session, company_id)
 
 
 @router.get("/companies", response_model=list[CompanyOut])
