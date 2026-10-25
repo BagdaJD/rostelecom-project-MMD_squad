@@ -14,7 +14,10 @@ engine = create_engine(
     settings.database_url,
     pool_pre_ping=True,
     future=True,
-    connect_args={"connect_timeout": settings.database_connect_timeout_sec},
+    connect_args={
+        "connect_timeout": settings.database_connect_timeout_sec,
+        "options": "-csearch_path=public",
+    },
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False, future=True)
 
