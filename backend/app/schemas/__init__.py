@@ -166,14 +166,16 @@ class TimelinePointOut(BaseModel):
 
 
 class DealEstimateRequest(BaseModel):
-    project_type: str
-    scale: str
+    # Тип проекта не ограничиваем списком: в кейсе и демо разные наборы типов.
+    project_type: str = Field(min_length=2)
+    scale: Literal["small", "medium", "large"]
     region_id: int | None = None
     industry_id: int | None = None
     works: list[str] = []
     equipment: list[str] = []
     software: list[str] = []
-    urgency: str = "normal"
+    # Неизвестная срочность раньше давала KeyError в ml/deal_estimator.py → 500.
+    urgency: Literal["normal", "high", "critical"] = "normal"
     financing_scheme: str | None = None
     has_unique_solution: bool = False
 

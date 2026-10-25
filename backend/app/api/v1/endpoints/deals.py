@@ -1,9 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 
 from app.core import audit
+from app.core.access import legacy_estimate
 from app.core.deps import CurrentUser, DbSession
 from app.schemas import DealEstimateRequest, DealEstimateResponse
 from modules.deals import service as deals
+from modules.exports import service as exports
 
 router = APIRouter(prefix="/deals", tags=["deals"])
 
@@ -24,3 +26,20 @@ def estimate(
     )
     session.commit()
     return result
+
+
+@router.get("/estimates/{estimate_id}/csv")
+def estimate_csv(estimate_id: int, session: DbSession, user: CurrentUser) -> Response:
+    """CSV расчёта из POST /deals/estimate: вилка, поправки, аналоги.
+
+    Номер — из deal_estimate; /calculator/estimates/{id}/csv работает с другой таблицей.
+    """
+    legacy_estimate(session, estimate_id, user)  # автор или admin, иначе 404
+    content = exports.to_csv(exports.deal_estimate_rows(session, estimate_id), "deal_estimate")
+    audit.record(session, user.id, "deals.csv", "deal_estimate", estimate_id)
+    session.commit()
+    return Response(
+        content,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="deal-estimate-{estimate_id}.csv"'},
+    )
