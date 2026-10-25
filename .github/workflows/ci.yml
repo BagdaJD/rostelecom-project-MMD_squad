@@ -44,7 +44,21 @@ jobs:
       - run: pip install -c constraints.txt -e ".[dev]"
       - run: ruff check app modules ingestion ml tests alembic
       - run: alembic upgrade head
-      - run: alembic check
+      - name: Verify database schema
+        run: |
+          schema_log="$RUNNER_TEMP/alembic-check.log"
+          if alembic check > "$schema_log" 2>&1; then
+            cat "$schema_log"
+          else
+            schema_status=$?
+            cat "$schema_log"
+            details=$(cat "$schema_log")
+            details="${details//'%'/'%25'}"
+            details="${details//$'\r'/'%0D'}"
+            details="${details//$'\n'/'%0A'}"
+            printf '::error title=Alembic schema check::%s\n' "$details"
+            exit "$schema_status"
+          fi
       - run: pytest -q
 
   frontend:
