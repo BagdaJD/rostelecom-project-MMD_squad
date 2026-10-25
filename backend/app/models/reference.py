@@ -74,7 +74,7 @@ class Company(Base):
     name: Mapped[str] = mapped_column(String(512), index=True)
     name_normalized: Mapped[str] = mapped_column(String(512), index=True)
     inn: Mapped[str | None] = mapped_column(String(12), index=True)
-    ogrn: Mapped[str | None] = mapped_column(String(15))
+    ogrn: Mapped[str | None] = mapped_column(String(15), index=True)
     industry_id: Mapped[int | None] = mapped_column(ForeignKey("industry.id"))
     region_id: Mapped[int | None] = mapped_column(ForeignKey("region.id"), index=True)
     coordinates = mapped_column(Geometry("POINT", srid=4326))
@@ -128,7 +128,7 @@ class CompanyMatch(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("company.id"), index=True)
-    source_record_id: Mapped[int] = mapped_column(ForeignKey("source_record.id"))
+    source_record_id: Mapped[int] = mapped_column(ForeignKey("source_record.id"), index=True)
     match_method: Mapped[str] = mapped_column(String(24))  # inn | ogrn | name_region
     confidence: Mapped[Decimal] = mapped_column(Numeric(4, 3))
 

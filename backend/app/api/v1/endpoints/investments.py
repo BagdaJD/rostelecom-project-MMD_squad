@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from app.core.deps import CurrentUser, DbSession
 from app.models import InvestmentProject, ProjectNeed, Subscription
@@ -47,9 +46,16 @@ def list_projects(
 
 
 @router.get("/timeline", response_model=list[TimelinePointOut])
-def timeline(session: DbSession, user: CurrentUser, region_id: int | None = None,
-             industry_id: int | None = None, period: str = "month") -> list[TimelinePointOut]:
-    return investments.timeline(session, region_id=region_id, industry_id=industry_id, period=period)
+def timeline(
+    session: DbSession,
+    user: CurrentUser,
+    region_id: int | None = None,
+    industry_id: int | None = None,
+    period: str = "month",
+) -> list[TimelinePointOut]:
+    return investments.timeline(
+        session, region_id=region_id, industry_id=industry_id, period=period
+    )
 
 
 @router.get("/{project_id}")
@@ -93,6 +99,7 @@ def needs(project_id: int, session: DbSession, user: CurrentUser) -> list[NeedOu
             evidence=r.evidence,
             rule_id=r.rule_id,
             model_version=r.model_version,
+            **(r.details_json or {}),
         )
         for r in rows
     ]
@@ -105,8 +112,13 @@ subscriptions_router = APIRouter(prefix="/subscriptions", tags=["subscriptions"]
 def list_subscriptions(session: DbSession, user: CurrentUser) -> list[dict]:
     rows = session.scalars(select(Subscription).where(Subscription.user_id == user.id)).all()
     return [
-        {"id": s.id, "module": s.module, "filters": s.filters_json,
-         "notify_frequency": s.notify_frequency, "is_active": s.is_active}
+        {
+            "id": s.id,
+            "module": s.module,
+            "filters": s.filters_json,
+            "notify_frequency": s.notify_frequency,
+            "is_active": s.is_active,
+        }
         for s in rows
     ]
 

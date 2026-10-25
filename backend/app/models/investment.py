@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
+    JSON,
     Date,
-    DateTime,
     ForeignKey,
     Index,
-    Integer,
     Numeric,
     String,
     Text,
@@ -96,6 +95,8 @@ class ProjectNeed(Base):
     evidence: Mapped[str | None] = mapped_column(Text)
     rule_id: Mapped[str | None] = mapped_column(String(48))
     model_version: Mapped[str] = mapped_column(String(48))
+    # Дополнительные доказательства NLP; NULL для старых результатов.
+    details_json: Mapped[dict | None] = mapped_column(JSON)
 
     project: Mapped[InvestmentProject] = relationship(back_populates="needs")
 

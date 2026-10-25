@@ -1,0 +1,3104 @@
+{
+  "validation_date": "2026-10-25",
+  "calculation_as_of": "2026-10-24",
+  "status": "PARTIALLY_READY",
+  "branch": "feature/ml-stage2-validation",
+  "fns_full_archive": {
+    "scope": "full_archive",
+    "complete": true,
+    "input_file": "data-10102026-structure-12052026.zip",
+    "input_bytes": 2246598554,
+    "sha256": "619612eda1f5275dca3f63e6f39f6acdc8727e471508e847d2c6a66d986438d7",
+    "xml_members": 7594,
+    "xml_uncompressed_bytes": 22793182837,
+    "source_url": "https://www.nalog.gov.ru/opendata/7707329152-rsmp/",
+    "counts": {
+      "documents": 6835377,
+      "other_or_missing_region": 6647333,
+      "completed_xml_members": 7594,
+      "valid_inn": 188044,
+      "accepted": 188044
+    },
+    "unique_region_companies": 188031,
+    "duplicate_inn_rows": 13,
+    "excel_matches": 750,
+    "new_unique_candidates": 187281,
+    "combined_unique_companies": 188040,
+    "feature_coverage": {
+      "industry_code": 0.9999042711042329,
+      "sme_category": 1.0,
+      "employee_count": 0.19183007057346926,
+      "municipality": 0.9999627720960905
+    },
+    "sme_categories": {
+      "Микропредприятие": 181955,
+      "Малое предприятие": 5533,
+      "Среднее предприятие": 543
+    },
+    "regions": {
+      "61": 188031
+    },
+    "dump_dates": {
+      "2026-10-10": 188031
+    },
+    "errors": [],
+    "runtime": {
+      "seconds": 625.7079405999999,
+      "rss_start_bytes": 83558400,
+      "sampled_peak_rss_bytes": 112750592,
+      "process_peak_rss_bytes": 113569792,
+      "measurement": "psutil RSS every 10ms; peak_wset is lifetime OS peak on Windows"
+    },
+    "crc_validation": "All XML streams read to EOF by zipfile"
+  },
+  "xsd_sample_validation": [
+    {
+      "member": "VO_RRMSPSV_0000_9965_20261010_000c48be-5368-4e9c-a9d2-bb1e5ff316b4.xml",
+      "valid": true,
+      "xml_root": "Файл",
+      "format": "4.06",
+      "errors": []
+    },
+    {
+      "member": "VO_RRMSPSV_0000_9965_20261010_001437cc-99e3-42f7-9eef-e3d544d5d53b.xml",
+      "valid": true,
+      "xml_root": "Файл",
+      "format": "4.06",
+      "errors": []
+    },
+    {
+      "member": "VO_RRMSPSV_0000_9965_20261010_001d3a34-ca64-4c8c-a0aa-dad5cecec798.xml",
+      "valid": true,
+      "xml_root": "Файл",
+      "format": "4.06",
+      "errors": []
+    }
+  ],
+  "db_width_validation": {
+    "maxima": {
+      "name": 175,
+      "name_normalized": 165,
+      "external_id": 36,
+      "employee_count": 416
+    },
+    "exceeded_db_limits": {
+      "name_512": 0,
+      "name_normalized_512": 0,
+      "external_id_128": 0
+    }
+  },
+  "combined": {
+    "scope": "full_rostov_from_full_official_archive",
+    "as_of": "2026-10-24",
+    "excel_companies": 759,
+    "fns_companies": 188031,
+    "combined_unique_companies": 188040,
+    "matching": {
+      "projects": 63,
+      "loaded_companies": 188040,
+      "statuses": {
+        "unmatched": 22,
+        "requires_review": 41
+      },
+      "methods": {
+        "new": 22,
+        "name_review": 19,
+        "name_territory": 22
+      },
+      "missing_initiator_inn": 63,
+      "group_name_mentions": 3,
+      "projects_with_cross_municipality_suggestions": 24,
+      "threshold": 0.88,
+      "interpretation": "Text similarity -> requires_review; no verified link or score uplift"
+    },
+    "runtime": {
+      "seconds": 78.20228750000001,
+      "rss_start_bytes": 82202624,
+      "sampled_peak_rss_bytes": 1311776768,
+      "process_peak_rss_bytes": 1315655680,
+      "measurement": "psutil RSS every 10ms; peak_wset is lifetime OS peak on Windows"
+    },
+    "normalized_fns_sha256": "510179c8944ee1e0799c346514e3b4b12f8cd0c2bd820b4caddaef88eb0c7149",
+    "territories": {
+      "count": 395,
+      "scores_min": 4.26,
+      "scores_max": 95.23,
+      "case_clients": 759,
+      "other_candidates": 187281
+    },
+    "white_spaces": {
+      "status": "insufficient_presence_data",
+      "results": []
+    },
+    "entity_matching": {
+      "identifier_matches": 750,
+      "requires_review": 3908,
+      "duplicates": 750
+    },
+    "project_matching": {
+      "matched": 0,
+      "requires_review": 41,
+      "unmatched": 22,
+      "unique_review_candidates": 31
+    },
+    "feature_coverage": {
+      "industry": 0.999867,
+      "employee_count": 0.191832,
+      "sme_category": 1.0,
+      "municipality": 0.999963,
+      "included_at": 1.0
+    },
+    "feature_missing_counts": {
+      "industry": 25,
+      "employee_count": 151968,
+      "sme_category": 0,
+      "municipality": 7,
+      "included_at": 0
+    },
+    "company_scores": {
+      "histogram": {
+        "60": 24959,
+        "40": 108277,
+        "50": 49303,
+        "80": 427,
+        "30": 3152,
+        "70": 1873,
+        "90": 24
+      },
+      "min": 36.0,
+      "max": 93.24,
+      "unique_scores": 714,
+      "data_quality": {
+        "limited": 188015,
+        "insufficient": 25
+      },
+      "priorities": {
+        "medium": 184274,
+        "high": 3741,
+        "unknown": 25
+      },
+      "insufficient_share": 0.00013295043607743033
+    },
+    "territory_scores": {
+      "count": 395,
+      "histogram": {
+        "0": 30,
+        "40": 42,
+        "10": 47,
+        "30": 149,
+        "60": 3,
+        "50": 5,
+        "20": 115,
+        "90": 1,
+        "80": 2,
+        "70": 1
+      },
+      "insufficient_presence": 395
+    }
+  },
+  "nlp_diagnostics": {
+    "projects": 63,
+    "model_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "model_version": "e5-697e553f5e647bfa",
+    "threshold": 0.84,
+    "model_load_including_import_seconds": 57.84934149999998,
+    "encode_batch_seconds": 2.4286025999999765,
+    "baseline_batch_seconds": 0.06156749999996691,
+    "hybrid_combination_seconds": 0.08420300000000225,
+    "hybrid_warm_batch_seconds": 2.5128055999999788,
+    "latency_ms": {
+      "baseline": {
+        "count": 63,
+        "min": 0.4845999999929518,
+        "max": 2.3587000000020453,
+        "mean": 0.9220714285758067,
+        "p5": 0.5373499999564046,
+        "p25": 0.6967999999858421,
+        "p50": 0.8998999999789703,
+        "p75": 1.091750000000502,
+        "p95": 1.4188799999999446,
+        "histogram_10_bins": [
+          13,
+          16,
+          16,
+          13,
+          1,
+          2,
+          1,
+          0,
+          0,
+          1
+        ],
+        "histogram_edges": [
+          0.4845999999929518,
+          0.6720099999938611,
+          0.8594199999947705,
+          1.0468299999956798,
+          1.2342399999965892,
+          1.4216499999974985,
+          1.6090599999984079,
+          1.7964699999993172,
+          1.9838800000002266,
+          2.171290000001136,
+          2.3587000000020453
+        ]
+      },
+      "hybrid": {
+        "count": 63,
+        "min": 22.479099999998198,
+        "max": 61.498599999993075,
+        "mean": 38.9930539682521,
+        "p5": 25.137909999995145,
+        "p25": 30.94574999997235,
+        "p50": 39.051599999993414,
+        "p75": 45.4029999999932,
+        "p95": 54.87730000001534,
+        "histogram_10_bins": [
+          5,
+          7,
+          10,
+          7,
+          10,
+          9,
+          6,
+          5,
+          2,
+          2
+        ],
+        "histogram_edges": [
+          22.479099999998198,
+          26.381049999997686,
+          30.282999999997173,
+          34.18494999999666,
+          38.08689999999615,
+          41.98884999999564,
+          45.890799999995124,
+          49.79274999999461,
+          53.6946999999941,
+          57.59664999999359,
+          61.498599999993075
+        ]
+      }
+    },
+    "runtime": {
+      "seconds": 62.94079499999998,
+      "rss_start_bytes": 53096448,
+      "sampled_peak_rss_bytes": 906850304,
+      "process_peak_rss_bytes": 906854400,
+      "measurement": "psutil RSS every 10ms; peak_wset is lifetime OS peak on Windows"
+    },
+    "similarity_all": {
+      "count": 315,
+      "min": 0.7443572878837585,
+      "max": 0.8517679572105408,
+      "mean": 0.7947480031422206,
+      "p5": 0.7622369885444641,
+      "p25": 0.7809508740901947,
+      "p50": 0.7958189249038696,
+      "p75": 0.8090575039386749,
+      "p95": 0.8240537524223328,
+      "histogram_10_bins": [
+        5,
+        15,
+        42,
+        60,
+        51,
+        63,
+        48,
+        21,
+        7,
+        3
+      ],
+      "histogram_edges": [
+        0.7443572878837585,
+        0.7550983548164367,
+        0.765839421749115,
+        0.7765804886817932,
+        0.7873215556144715,
+        0.7980626225471497,
+        0.8088036894798278,
+        0.8195447564125061,
+        0.8302858233451843,
+        0.8410268902778626,
+        0.8517679572105408
+      ]
+    },
+    "similarity_by_category": {
+      "connectivity": {
+        "count": 63,
+        "min": 0.7461684942245483,
+        "max": 0.8447402715682983,
+        "mean": 0.8005619455897619,
+        "p5": 0.7715892434120178,
+        "p25": 0.7869468033313751,
+        "p50": 0.8030058145523071,
+        "p75": 0.8120319843292236,
+        "p95": 0.8249671518802643,
+        "histogram_10_bins": [
+          1,
+          0,
+          4,
+          9,
+          7,
+          18,
+          11,
+          9,
+          3,
+          1
+        ],
+        "histogram_edges": [
+          0.7461684942245483,
+          0.7560256719589233,
+          0.7658828496932983,
+          0.7757400274276733,
+          0.7855972051620483,
+          0.7954543828964233,
+          0.8053115606307983,
+          0.8151687383651733,
+          0.8250259160995483,
+          0.8348830938339233,
+          0.8447402715682983
+        ]
+      },
+      "it_infrastructure": {
+        "count": 63,
+        "min": 0.766351580619812,
+        "max": 0.8517679572105408,
+        "mean": 0.7994383346466791,
+        "p5": 0.7719049572944641,
+        "p25": 0.7845109105110168,
+        "p50": 0.8005895614624023,
+        "p75": 0.811921626329422,
+        "p95": 0.8284241676330566,
+        "histogram_10_bins": [
+          7,
+          8,
+          10,
+          6,
+          15,
+          7,
+          6,
+          2,
+          1,
+          1
+        ],
+        "histogram_edges": [
+          0.766351580619812,
+          0.7748932182788849,
+          0.7834348559379578,
+          0.7919764935970306,
+          0.8005181312561035,
+          0.8090597689151764,
+          0.8176014065742493,
+          0.8261430442333222,
+          0.834684681892395,
+          0.8432263195514679,
+          0.8517679572105408
+        ]
+      },
+      "information_security": {
+        "count": 63,
+        "min": 0.7443572878837585,
+        "max": 0.8144496083259583,
+        "mean": 0.7798637795069862,
+        "p5": 0.7597198843955993,
+        "p25": 0.7687144875526428,
+        "p50": 0.7787594795227051,
+        "p75": 0.7884186208248138,
+        "p95": 0.8014886319637299,
+        "histogram_10_bins": [
+          1,
+          0,
+          8,
+          12,
+          12,
+          12,
+          6,
+          6,
+          3,
+          3
+        ],
+        "histogram_edges": [
+          0.7443572878837585,
+          0.7513665199279785,
+          0.7583757519721985,
+          0.7653849840164184,
+          0.7723942160606384,
+          0.7794034481048584,
+          0.7864126801490784,
+          0.7934219121932984,
+          0.8004311442375183,
+          0.8074403762817383,
+          0.8144496083259583
+        ]
+      },
+      "video_surveillance": {
+        "count": 63,
+        "min": 0.7493155002593994,
+        "max": 0.8383240699768066,
+        "mean": 0.7999692474092756,
+        "p5": 0.7739567577838897,
+        "p25": 0.7853822708129883,
+        "p50": 0.8023991584777832,
+        "p75": 0.8138329982757568,
+        "p95": 0.8231951177120209,
+        "histogram_10_bins": [
+          1,
+          1,
+          3,
+          11,
+          6,
+          11,
+          9,
+          16,
+          4,
+          1
+        ],
+        "histogram_edges": [
+          0.7493155002593994,
+          0.7582163572311401,
+          0.7671172142028808,
+          0.7760180711746216,
+          0.7849189281463623,
+          0.793819785118103,
+          0.8027206420898437,
+          0.8116214990615844,
+          0.8205223560333252,
+          0.8294232130050659,
+          0.8383240699768066
+        ]
+      },
+      "iot_asu_tp": {
+        "count": 63,
+        "min": 0.7484314441680908,
+        "max": 0.8398815989494324,
+        "mean": 0.7939067085584005,
+        "p5": 0.7593396306037903,
+        "p25": 0.7798521220684052,
+        "p50": 0.795461118221283,
+        "p75": 0.8094615340232849,
+        "p95": 0.8282458662986756,
+        "histogram_10_bins": [
+          3,
+          5,
+          6,
+          7,
+          8,
+          13,
+          7,
+          8,
+          3,
+          3
+        ],
+        "histogram_edges": [
+          0.7484314441680908,
+          0.757576459646225,
+          0.7667214751243592,
+          0.7758664906024932,
+          0.7850115060806274,
+          0.7941565215587616,
+          0.8033015370368958,
+          0.81244655251503,
+          0.821591567993164,
+          0.8307365834712982,
+          0.8398815989494324
+        ]
+      }
+    },
+    "candidate_decisions": {
+      "below_threshold": 127,
+      "scenario_not_applicable": 185,
+      "semantic_candidate": 3
+    },
+    "eligible_similarity": {
+      "count": 130,
+      "min": 0.7616431713104248,
+      "max": 0.8517679572105408,
+      "mean": 0.8044534215560326,
+      "p5": 0.7765582472085952,
+      "p25": 0.7917054146528244,
+      "p50": 0.8053865730762482,
+      "p75": 0.8157778531312943,
+      "p95": 0.8321683943271637,
+      "histogram_10_bins": [
+        2,
+        7,
+        19,
+        15,
+        27,
+        27,
+        21,
+        6,
+        4,
+        2
+      ],
+      "histogram_edges": [
+        0.7616431713104248,
+        0.7706556499004364,
+        0.779668128490448,
+        0.7886806070804596,
+        0.7976930856704711,
+        0.8067055642604828,
+        0.8157180428504944,
+        0.824730521440506,
+        0.8337430000305176,
+        0.8427554786205291,
+        0.8517679572105408
+      ]
+    },
+    "threshold_what_if_not_tuned": {
+      "0.78": {
+        "candidate_pairs": 120,
+        "projects_with_candidates": 46
+      },
+      "0.8": {
+        "candidate_pairs": 83,
+        "projects_with_candidates": 34
+      },
+      "0.82": {
+        "candidate_pairs": 23,
+        "projects_with_candidates": 12
+      },
+      "0.84": {
+        "candidate_pairs": 3,
+        "projects_with_candidates": 3
+      },
+      "0.86": {
+        "candidate_pairs": 0,
+        "projects_with_candidates": 0
+      }
+    },
+    "project_similarities": [
+      {
+        "project_id": "МОД\"_Таб1:2",
+        "similarities": {
+          "connectivity": 0.8005422353744507,
+          "it_infrastructure": 0.8070096969604492,
+          "information_security": 0.7932677268981934,
+          "video_surveillance": 0.8112963438034058,
+          "iot_asu_tp": 0.8102666139602661
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:3",
+        "similarities": {
+          "connectivity": 0.8322198390960693,
+          "it_infrastructure": 0.8287217617034912,
+          "information_security": 0.8144496083259583,
+          "video_surveillance": 0.8383240699768066,
+          "iot_asu_tp": 0.8145014047622681
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:4",
+        "similarities": {
+          "connectivity": 0.805309534072876,
+          "it_infrastructure": 0.804658055305481,
+          "information_security": 0.7956262230873108,
+          "video_surveillance": 0.8023996949195862,
+          "iot_asu_tp": 0.809438943862915
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:5",
+        "similarities": {
+          "connectivity": 0.8013401031494141,
+          "it_infrastructure": 0.8230977058410645,
+          "information_security": 0.798821747303009,
+          "video_surveillance": 0.8114191293716431,
+          "iot_asu_tp": 0.8080226182937622
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:7",
+        "similarities": {
+          "connectivity": 0.8040305376052856,
+          "it_infrastructure": 0.8131508231163025,
+          "information_security": 0.7893850803375244,
+          "video_surveillance": 0.8121057748794556,
+          "iot_asu_tp": 0.8143018484115601
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:8",
+        "similarities": {
+          "connectivity": 0.8082053661346436,
+          "it_infrastructure": 0.8147791624069214,
+          "information_security": 0.8014904260635376,
+          "video_surveillance": 0.8060473799705505,
+          "iot_asu_tp": 0.8048035502433777
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:9",
+        "similarities": {
+          "connectivity": 0.8050541877746582,
+          "it_infrastructure": 0.8071767687797546,
+          "information_security": 0.784721314907074,
+          "video_surveillance": 0.8238809108734131,
+          "iot_asu_tp": 0.821674108505249
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:10",
+        "similarities": {
+          "connectivity": 0.7859352827072144,
+          "it_infrastructure": 0.7782487869262695,
+          "information_security": 0.7823308110237122,
+          "video_surveillance": 0.7820305824279785,
+          "iot_asu_tp": 0.7648700475692749
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:11",
+        "similarities": {
+          "connectivity": 0.769753634929657,
+          "it_infrastructure": 0.7793608903884888,
+          "information_security": 0.7610599994659424,
+          "video_surveillance": 0.7767143249511719,
+          "iot_asu_tp": 0.7484314441680908
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:12",
+        "similarities": {
+          "connectivity": 0.8015319108963013,
+          "it_infrastructure": 0.8067019581794739,
+          "information_security": 0.7991586327552795,
+          "video_surveillance": 0.8112565875053406,
+          "iot_asu_tp": 0.7973716855049133
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:14",
+        "similarities": {
+          "connectivity": 0.808283805847168,
+          "it_infrastructure": 0.8199765682220459,
+          "information_security": 0.7972599864006042,
+          "video_surveillance": 0.8144917488098145,
+          "iot_asu_tp": 0.817592442035675
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:48",
+        "similarities": {
+          "connectivity": 0.8120447397232056,
+          "it_infrastructure": 0.7849434614181519,
+          "information_security": 0.7714569568634033,
+          "video_surveillance": 0.8086760640144348,
+          "iot_asu_tp": 0.781773567199707
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:49",
+        "similarities": {
+          "connectivity": 0.822699785232544,
+          "it_infrastructure": 0.8123875856399536,
+          "information_security": 0.7787594795227051,
+          "video_surveillance": 0.8196689486503601,
+          "iot_asu_tp": 0.8180164098739624
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:50",
+        "similarities": {
+          "connectivity": 0.7856950759887695,
+          "it_infrastructure": 0.7794210314750671,
+          "information_security": 0.7721624970436096,
+          "video_surveillance": 0.784626841545105,
+          "iot_asu_tp": 0.7874916791915894
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:51",
+        "similarities": {
+          "connectivity": 0.8229383826255798,
+          "it_infrastructure": 0.822384238243103,
+          "information_security": 0.782212495803833,
+          "video_surveillance": 0.8234109878540039,
+          "iot_asu_tp": 0.8208006620407104
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:195",
+        "similarities": {
+          "connectivity": 0.8110746145248413,
+          "it_infrastructure": 0.8225278854370117,
+          "information_security": 0.7905466556549072,
+          "video_surveillance": 0.8131383657455444,
+          "iot_asu_tp": 0.8263671398162842
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:196",
+        "similarities": {
+          "connectivity": 0.7821564078330994,
+          "it_infrastructure": 0.766351580619812,
+          "information_security": 0.7607544660568237,
+          "video_surveillance": 0.7737551927566528,
+          "iot_asu_tp": 0.7562131881713867
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:197",
+        "similarities": {
+          "connectivity": 0.783501923084259,
+          "it_infrastructure": 0.7741813659667969,
+          "information_security": 0.7629920244216919,
+          "video_surveillance": 0.7876129150390625,
+          "iot_asu_tp": 0.7590775489807129
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:198",
+        "similarities": {
+          "connectivity": 0.7797581553459167,
+          "it_infrastructure": 0.7712886929512024,
+          "information_security": 0.7615636587142944,
+          "video_surveillance": 0.776111364364624,
+          "iot_asu_tp": 0.753799557685852
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:199",
+        "similarities": {
+          "connectivity": 0.8447402715682983,
+          "it_infrastructure": 0.8194355964660645,
+          "information_security": 0.7958189249038696,
+          "video_surveillance": 0.824457049369812,
+          "iot_asu_tp": 0.8185082674026489
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:200",
+        "similarities": {
+          "connectivity": 0.7996361255645752,
+          "it_infrastructure": 0.7866530418395996,
+          "information_security": 0.7679623365402222,
+          "video_surveillance": 0.7963401079177856,
+          "iot_asu_tp": 0.7922154664993286
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:202",
+        "similarities": {
+          "connectivity": 0.7841426134109497,
+          "it_infrastructure": 0.7895579934120178,
+          "information_security": 0.776217520236969,
+          "video_surveillance": 0.7914992570877075,
+          "iot_asu_tp": 0.7687362432479858
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:203",
+        "similarities": {
+          "connectivity": 0.7846549153327942,
+          "it_infrastructure": 0.7815974950790405,
+          "information_security": 0.7587394714355469,
+          "video_surveillance": 0.7860822677612305,
+          "iot_asu_tp": 0.7752231359481812
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:205",
+        "similarities": {
+          "connectivity": 0.792323887348175,
+          "it_infrastructure": 0.7840783596038818,
+          "information_security": 0.7728831768035889,
+          "video_surveillance": 0.7764305472373962,
+          "iot_asu_tp": 0.7746161222457886
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:210",
+        "similarities": {
+          "connectivity": 0.8060592412948608,
+          "it_infrastructure": 0.8065128326416016,
+          "information_security": 0.7820357084274292,
+          "video_surveillance": 0.7980029582977295,
+          "iot_asu_tp": 0.8128225207328796
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:211",
+        "similarities": {
+          "connectivity": 0.7912460565567017,
+          "it_infrastructure": 0.7938295006752014,
+          "information_security": 0.783056378364563,
+          "video_surveillance": 0.7971395254135132,
+          "iot_asu_tp": 0.7875025868415833
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:212",
+        "similarities": {
+          "connectivity": 0.7959403991699219,
+          "it_infrastructure": 0.7903168201446533,
+          "information_security": 0.767513632774353,
+          "video_surveillance": 0.8146576881408691,
+          "iot_asu_tp": 0.7948691844940186
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:213",
+        "similarities": {
+          "connectivity": 0.8306459784507751,
+          "it_infrastructure": 0.8517679572105408,
+          "information_security": 0.8133212327957153,
+          "video_surveillance": 0.8212522864341736,
+          "iot_asu_tp": 0.8339180946350098
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:214",
+        "similarities": {
+          "connectivity": 0.8134416341781616,
+          "it_infrastructure": 0.8125690221786499,
+          "information_security": 0.8135565519332886,
+          "video_surveillance": 0.8018139600753784,
+          "iot_asu_tp": 0.8007814288139343
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:215",
+        "similarities": {
+          "connectivity": 0.8176370859146118,
+          "it_infrastructure": 0.7863936424255371,
+          "information_security": 0.7694666385650635,
+          "video_surveillance": 0.8054298758506775,
+          "iot_asu_tp": 0.784784734249115
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:216",
+        "similarities": {
+          "connectivity": 0.803320050239563,
+          "it_infrastructure": 0.8055364489555359,
+          "information_security": 0.7679148316383362,
+          "video_surveillance": 0.7965901494026184,
+          "iot_asu_tp": 0.7881850600242615
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:217",
+        "similarities": {
+          "connectivity": 0.8127803206443787,
+          "it_infrastructure": 0.841518759727478,
+          "information_security": 0.7726576328277588,
+          "video_surveillance": 0.8188486099243164,
+          "iot_asu_tp": 0.8056867718696594
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:219",
+        "similarities": {
+          "connectivity": 0.8074835538864136,
+          "it_infrastructure": 0.8119010329246521,
+          "information_security": 0.7751497626304626,
+          "video_surveillance": 0.8054533004760742,
+          "iot_asu_tp": 0.7854948043823242
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:220",
+        "similarities": {
+          "connectivity": 0.7978243827819824,
+          "it_infrastructure": 0.7875025272369385,
+          "information_security": 0.7760359644889832,
+          "video_surveillance": 0.7834435105323792,
+          "iot_asu_tp": 0.7668419480323792
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:221",
+        "similarities": {
+          "connectivity": 0.8251925706863403,
+          "it_infrastructure": 0.8257458209991455,
+          "information_security": 0.7862399816513062,
+          "video_surveillance": 0.8168752193450928,
+          "iot_asu_tp": 0.8284546136856079
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:224",
+        "similarities": {
+          "connectivity": 0.8200908303260803,
+          "it_infrastructure": 0.8328545093536377,
+          "information_security": 0.7946003675460815,
+          "video_surveillance": 0.8185636401176453,
+          "iot_asu_tp": 0.8398815989494324
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:225",
+        "similarities": {
+          "connectivity": 0.8011713027954102,
+          "it_infrastructure": 0.7898776531219482,
+          "information_security": 0.7874521613121033,
+          "video_surveillance": 0.7880477905273438,
+          "iot_asu_tp": 0.7817511558532715
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:227",
+        "similarities": {
+          "connectivity": 0.789569616317749,
+          "it_infrastructure": 0.7748459577560425,
+          "information_security": 0.7664372324943542,
+          "video_surveillance": 0.7810349464416504,
+          "iot_asu_tp": 0.7697386145591736
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:228",
+        "similarities": {
+          "connectivity": 0.7813360691070557,
+          "it_infrastructure": 0.7818632125854492,
+          "information_security": 0.7802392244338989,
+          "video_surveillance": 0.7725112438201904,
+          "iot_asu_tp": 0.7632608413696289
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:229",
+        "similarities": {
+          "connectivity": 0.7810040712356567,
+          "it_infrastructure": 0.7813366055488586,
+          "information_security": 0.7596049308776855,
+          "video_surveillance": 0.7889650464057922,
+          "iot_asu_tp": 0.8000540137290955
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:230",
+        "similarities": {
+          "connectivity": 0.8005317449569702,
+          "it_infrastructure": 0.7976858019828796,
+          "information_security": 0.7852613925933838,
+          "video_surveillance": 0.800833523273468,
+          "iot_asu_tp": 0.7961797714233398
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:379",
+        "similarities": {
+          "connectivity": 0.7801496386528015,
+          "it_infrastructure": 0.8005895614624023,
+          "information_security": 0.7797045111656189,
+          "video_surveillance": 0.7840029001235962,
+          "iot_asu_tp": 0.7759131193161011
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:380",
+        "similarities": {
+          "connectivity": 0.7961406707763672,
+          "it_infrastructure": 0.8014551401138306,
+          "information_security": 0.7831576466560364,
+          "video_surveillance": 0.793978750705719,
+          "iot_asu_tp": 0.7900972962379456
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:381",
+        "similarities": {
+          "connectivity": 0.8211767077445984,
+          "it_infrastructure": 0.8033122420310974,
+          "information_security": 0.7867296934127808,
+          "video_surveillance": 0.8183334469795227,
+          "iot_asu_tp": 0.8011578917503357
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:479",
+        "similarities": {
+          "connectivity": 0.8120192289352417,
+          "it_infrastructure": 0.8059381246566772,
+          "information_security": 0.7893885374069214,
+          "video_surveillance": 0.8150048851966858,
+          "iot_asu_tp": 0.8321055173873901
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:480",
+        "similarities": {
+          "connectivity": 0.8023043274879456,
+          "it_infrastructure": 0.7869160175323486,
+          "information_security": 0.7659950256347656,
+          "video_surveillance": 0.8023991584777832,
+          "iot_asu_tp": 0.799645721912384
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:481",
+        "similarities": {
+          "connectivity": 0.7714308500289917,
+          "it_infrastructure": 0.7878710031509399,
+          "information_security": 0.7663767337799072,
+          "video_surveillance": 0.7757708430290222,
+          "iot_asu_tp": 0.7946525812149048
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:482",
+        "similarities": {
+          "connectivity": 0.8046595454216003,
+          "it_infrastructure": 0.7933416366577148,
+          "information_security": 0.8012831807136536,
+          "video_surveillance": 0.8118767738342285,
+          "iot_asu_tp": 0.7968351244926453
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:483",
+        "similarities": {
+          "connectivity": 0.8154568672180176,
+          "it_infrastructure": 0.8083359003067017,
+          "information_security": 0.7771898508071899,
+          "video_surveillance": 0.8138329982757568,
+          "iot_asu_tp": 0.7987098097801208
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:484",
+        "similarities": {
+          "connectivity": 0.8154568672180176,
+          "it_infrastructure": 0.8083359003067017,
+          "information_security": 0.7771898508071899,
+          "video_surveillance": 0.8138329982757568,
+          "iot_asu_tp": 0.7987098097801208
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:485",
+        "similarities": {
+          "connectivity": 0.8162968754768372,
+          "it_infrastructure": 0.8080935478210449,
+          "information_security": 0.7861167192459106,
+          "video_surveillance": 0.8191848993301392,
+          "iot_asu_tp": 0.7864922285079956
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:486",
+        "similarities": {
+          "connectivity": 0.7730147838592529,
+          "it_infrastructure": 0.7720799446105957,
+          "information_security": 0.7619813084602356,
+          "video_surveillance": 0.7616431713104248,
+          "iot_asu_tp": 0.7623465657234192
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:487",
+        "similarities": {
+          "connectivity": 0.7808976769447327,
+          "it_infrastructure": 0.782496452331543,
+          "information_security": 0.7670859694480896,
+          "video_surveillance": 0.7834290862083435,
+          "iot_asu_tp": 0.7798163294792175
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:488",
+        "similarities": {
+          "connectivity": 0.8077951669692993,
+          "it_infrastructure": 0.8119422197341919,
+          "information_security": 0.8014724850654602,
+          "video_surveillance": 0.8137076497077942,
+          "iot_asu_tp": 0.8195213079452515
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:489",
+        "similarities": {
+          "connectivity": 0.8030669689178467,
+          "it_infrastructure": 0.7970202565193176,
+          "information_security": 0.778944730758667,
+          "video_surveillance": 0.8000006675720215,
+          "iot_asu_tp": 0.7842426300048828
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:490",
+        "similarities": {
+          "connectivity": 0.8229267597198486,
+          "it_infrastructure": 0.8160355091094971,
+          "information_security": 0.7835696339607239,
+          "video_surveillance": 0.818280816078186,
+          "iot_asu_tp": 0.8094841241836548
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:491",
+        "similarities": {
+          "connectivity": 0.7461684942245483,
+          "it_infrastructure": 0.7718855142593384,
+          "information_security": 0.7694802284240723,
+          "video_surveillance": 0.7493155002593994,
+          "iot_asu_tp": 0.7616983652114868
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:492",
+        "similarities": {
+          "connectivity": 0.7952550053596497,
+          "it_infrastructure": 0.7831099033355713,
+          "information_security": 0.7594912052154541,
+          "video_surveillance": 0.7885152101516724,
+          "iot_asu_tp": 0.7798879146575928
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:493",
+        "similarities": {
+          "connectivity": 0.7677484154701233,
+          "it_infrastructure": 0.7683131694793701,
+          "information_security": 0.7443572878837585,
+          "video_surveillance": 0.7781792879104614,
+          "iot_asu_tp": 0.7735649347305298
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:494",
+        "similarities": {
+          "connectivity": 0.806023359298706,
+          "it_infrastructure": 0.8076019883155823,
+          "information_security": 0.7759004235267639,
+          "video_surveillance": 0.7987841367721558,
+          "iot_asu_tp": 0.8062436580657959
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:495",
+        "similarities": {
+          "connectivity": 0.8030058145523071,
+          "it_infrastructure": 0.7966268658638,
+          "information_security": 0.7758512496948242,
+          "video_surveillance": 0.8053432703018188,
+          "iot_asu_tp": 0.795461118221283
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:496",
+        "similarities": {
+          "connectivity": 0.8036019802093506,
+          "it_infrastructure": 0.8082766532897949,
+          "information_security": 0.7777026295661926,
+          "video_surveillance": 0.8067241311073303,
+          "iot_asu_tp": 0.7977761626243591
+        }
+      },
+      {
+        "project_id": "МОД\"_Таб1:582",
+        "similarities": {
+          "connectivity": 0.7879583239555359,
+          "it_infrastructure": 0.7952889204025269,
+          "information_security": 0.7722643613815308,
+          "video_surveillance": 0.7846822738647461,
+          "iot_asu_tp": 0.7874389886856079
+        }
+      }
+    ],
+    "changed_projects": [
+      {
+        "project_id": "МОД\"_Таб1:213",
+        "baseline": [
+          "iot_asu_tp",
+          "connectivity",
+          "video_surveillance"
+        ],
+        "hybrid": [
+          "it_infrastructure",
+          "iot_asu_tp",
+          "connectivity"
+        ],
+        "added": [
+          "it_infrastructure"
+        ],
+        "removed": [
+          "video_surveillance"
+        ],
+        "order_only": false
+      },
+      {
+        "project_id": "МОД\"_Таб1:217",
+        "baseline": [
+          "video_surveillance",
+          "connectivity",
+          "it_infrastructure"
+        ],
+        "hybrid": [
+          "it_infrastructure",
+          "video_surveillance",
+          "connectivity"
+        ],
+        "added": [],
+        "removed": [],
+        "order_only": true
+      }
+    ],
+    "passages": [
+      "passage: Подключение объекта к интернету, оптоволоконные каналы связи, телефония и VPN. Сценарии: production, logistics, hospitality, housing, commerce, health",
+      "passage: Серверное оборудование, хранение данных, ЦОД, облачные вычисления и виртуализация. Сценарии: logistics, health",
+      "passage: Защита информационных систем от кибератак, SIEM, DLP, защита персональных данных. Сценарии: health",
+      "passage: Видеонаблюдение территории и периметра, IP-камеры, видеорегистраторы. Сценарии: production, logistics, hospitality, housing, agriculture, commerce",
+      "passage: Промышленная автоматизация, АСУ ТП, датчики, телеметрия и диспетчеризация оборудования. Сценарии: production, agriculture"
+    ],
+    "unit_norms": {
+      "count": 5,
+      "min": 1.0,
+      "max": 1.0,
+      "mean": 1.0,
+      "p5": 1.0,
+      "p25": 1.0,
+      "p50": 1.0,
+      "p75": 1.0,
+      "p95": 1.0,
+      "histogram_10_bins": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0
+      ],
+      "histogram_edges": [
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.1,
+        1.2000000000000002,
+        1.3,
+        1.4,
+        1.5
+      ]
+    },
+    "accepted_semantic": 3,
+    "baseline_categories": {
+      "iot_asu_tp": 18,
+      "connectivity": 47,
+      "video_surveillance": 49,
+      "it_infrastructure": 11,
+      "information_security": 1
+    },
+    "hybrid_categories": {
+      "iot_asu_tp": 18,
+      "connectivity": 47,
+      "video_surveillance": 48,
+      "it_infrastructure": 12,
+      "information_security": 1
+    },
+    "baseline_abstentions": 13,
+    "hybrid_abstentions": 13,
+    "quality_metrics": "not_evaluated: independent expert labels absent",
+    "threshold_changed": false,
+    "default_algorithm_recommendation": "rules; E5 optional pending expert evaluation"
+  },
+  "nlp_runtime_context": "CPU Windows; concurrent SQL validation; diagnostic timings, not SLA",
+  "scoring_excel_diagnostics": {
+    "companies": 759,
+    "scores": {
+      "count": 759,
+      "min": 36.0,
+      "max": 85.6,
+      "mean": 50.012002635046116,
+      "p5": 44.0,
+      "p25": 44.510000000000005,
+      "p50": 47.0,
+      "p75": 53.0,
+      "p95": 62.0,
+      "histogram_10_bins": [
+        19,
+        179,
+        324,
+        81,
+        46,
+        93,
+        6,
+        6,
+        3,
+        2
+      ],
+      "histogram_edges": [
+        36.0,
+        40.96,
+        45.92,
+        50.879999999999995,
+        55.839999999999996,
+        60.8,
+        65.75999999999999,
+        70.72,
+        75.67999999999999,
+        80.63999999999999,
+        85.6
+      ]
+    },
+    "unique_scores": 69,
+    "largest_tie_group": 254,
+    "by_industry": {
+      "industry": {
+        "count": 54,
+        "min": 51.0,
+        "max": 85.6,
+        "mean": 60.92444444444445,
+        "p5": 51.0,
+        "p25": 59.0,
+        "p50": 59.0,
+        "p75": 61.04,
+        "p95": 76.92249999999999,
+        "histogram_10_bins": [
+          6,
+          6,
+          30,
+          1,
+          3,
+          1,
+          3,
+          2,
+          0,
+          2
+        ],
+        "histogram_edges": [
+          51.0,
+          54.46,
+          57.92,
+          61.379999999999995,
+          64.84,
+          68.3,
+          71.75999999999999,
+          75.22,
+          78.67999999999999,
+          82.14,
+          85.6
+        ]
+      },
+      "services": {
+        "count": 177,
+        "min": 36.0,
+        "max": 64.02,
+        "mean": 44.211129943502826,
+        "p5": 40.016000000000005,
+        "p25": 44.0,
+        "p50": 44.0,
+        "p75": 44.0,
+        "p95": 50.45399999999998,
+        "histogram_10_bins": [
+          9,
+          10,
+          144,
+          1,
+          3,
+          3,
+          2,
+          2,
+          1,
+          2
+        ],
+        "histogram_edges": [
+          36.0,
+          38.802,
+          41.604,
+          44.406,
+          47.208,
+          50.01,
+          52.812,
+          55.614,
+          58.416,
+          61.217999999999996,
+          64.02
+        ]
+      },
+      "trade": {
+        "count": 302,
+        "min": 39.0,
+        "max": 66.23,
+        "mean": 46.92407284768212,
+        "p5": 44.02,
+        "p25": 47.0,
+        "p50": 47.0,
+        "p75": 47.0,
+        "p95": 47.0,
+        "histogram_10_bins": [
+          10,
+          17,
+          262,
+          4,
+          3,
+          0,
+          1,
+          1,
+          2,
+          2
+        ],
+        "histogram_edges": [
+          39.0,
+          41.723,
+          44.446,
+          47.169,
+          49.892,
+          52.615,
+          55.338,
+          58.06100000000001,
+          60.784000000000006,
+          63.507000000000005,
+          66.23
+        ]
+      },
+      "agriculture": {
+        "count": 44,
+        "min": 47.02,
+        "max": 74.81,
+        "mean": 51.345454545454544,
+        "p5": 50.0,
+        "p25": 50.0,
+        "p50": 50.0,
+        "p75": 50.0,
+        "p95": 60.565500000000014,
+        "histogram_10_bins": [
+          1,
+          40,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          2
+        ],
+        "histogram_edges": [
+          47.02,
+          49.79900000000001,
+          52.578,
+          55.357,
+          58.136,
+          60.915000000000006,
+          63.694,
+          66.473,
+          69.25200000000001,
+          72.031,
+          74.81
+        ]
+      },
+      "housing": {
+        "count": 98,
+        "min": 45.0,
+        "max": 73.17,
+        "mean": 53.0904081632653,
+        "p5": 45.0,
+        "p25": 53.0,
+        "p50": 53.0,
+        "p75": 53.0,
+        "p95": 61.12749999999998,
+        "histogram_10_bins": [
+          8,
+          13,
+          63,
+          1,
+          3,
+          5,
+          3,
+          1,
+          0,
+          1
+        ],
+        "histogram_edges": [
+          45.0,
+          47.817,
+          50.634,
+          53.451,
+          56.268,
+          59.085,
+          61.902,
+          64.719,
+          67.536,
+          70.35300000000001,
+          73.17
+        ]
+      },
+      "logistics": {
+        "count": 82,
+        "min": 54.0,
+        "max": 78.62,
+        "mean": 62.00853658536586,
+        "p5": 61.9525,
+        "p25": 62.0,
+        "p50": 62.0,
+        "p75": 62.0,
+        "p95": 62.0,
+        "histogram_10_bins": [
+          2,
+          0,
+          2,
+          76,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1
+        ],
+        "histogram_edges": [
+          54.0,
+          56.462,
+          58.924,
+          61.386,
+          63.848,
+          66.31,
+          68.772,
+          71.23400000000001,
+          73.696,
+          76.158,
+          78.62
+        ]
+      },
+      "energy": {
+        "count": 2,
+        "min": 59.02,
+        "max": 66.97,
+        "mean": 62.995000000000005,
+        "p5": 59.417500000000004,
+        "p25": 61.0075,
+        "p50": 62.995000000000005,
+        "p75": 64.9825,
+        "p95": 66.5725,
+        "histogram_10_bins": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "histogram_edges": [
+          59.02,
+          59.815000000000005,
+          60.61,
+          61.405,
+          62.2,
+          62.995000000000005,
+          63.79,
+          64.585,
+          65.38,
+          66.175,
+          66.97
+        ]
+      }
+    },
+    "by_sme_category": {
+      "Микропредприятие": {
+        "count": 734,
+        "min": 36.0,
+        "max": 69.57,
+        "mean": 49.43193460490464,
+        "p5": 44.0,
+        "p25": 44.02,
+        "p50": 47.0,
+        "p75": 53.0,
+        "p95": 62.0,
+        "histogram_10_bins": [
+          19,
+          10,
+          169,
+          270,
+          64,
+          75,
+          36,
+          83,
+          5,
+          3
+        ],
+        "histogram_edges": [
+          36.0,
+          39.357,
+          42.714,
+          46.071,
+          49.428,
+          52.785,
+          56.141999999999996,
+          59.498999999999995,
+          62.855999999999995,
+          66.213,
+          69.57
+        ]
+      },
+      "Малое предприятие": {
+        "count": 21,
+        "min": 51.0,
+        "max": 82.72,
+        "mean": 67.82000000000001,
+        "p5": 58.0,
+        "p25": 61.0,
+        "p50": 65.09,
+        "p75": 74.59,
+        "p95": 78.62,
+        "histogram_10_bins": [
+          1,
+          0,
+          3,
+          4,
+          3,
+          0,
+          3,
+          4,
+          2,
+          1
+        ],
+        "histogram_edges": [
+          51.0,
+          54.172,
+          57.344,
+          60.516,
+          63.688,
+          66.86,
+          70.032,
+          73.204,
+          76.376,
+          79.548,
+          82.72
+        ]
+      },
+      "Среднее предприятие": {
+        "count": 4,
+        "min": 43.95,
+        "max": 85.6,
+        "mean": 62.962500000000006,
+        "p5": 45.768,
+        "p25": 53.04,
+        "p50": 61.150000000000006,
+        "p75": 71.0725,
+        "p95": 82.69449999999999,
+        "histogram_10_bins": [
+          1,
+          0,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1
+        ],
+        "histogram_edges": [
+          43.95,
+          48.115,
+          52.28,
+          56.445,
+          60.61,
+          64.775,
+          68.94,
+          73.10499999999999,
+          77.27,
+          81.435,
+          85.6
+        ]
+      }
+    },
+    "quality": {
+      "limited": 759
+    },
+    "priorities": {
+      "medium": 743,
+      "high": 16
+    },
+    "size_basis": {
+      "employee_count": 158,
+      "sme_category_proxy": 601
+    },
+    "coverage": {
+      "count": 759,
+      "min": 0.5,
+      "max": 0.5,
+      "mean": 0.5,
+      "p5": 0.5,
+      "p25": 0.5,
+      "p50": 0.5,
+      "p75": 0.5,
+      "p95": 0.5,
+      "histogram_10_bins": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        759,
+        0,
+        0,
+        0,
+        0
+      ],
+      "histogram_edges": [
+        0.0,
+        0.1,
+        0.2,
+        0.30000000000000004,
+        0.4,
+        0.5,
+        0.6000000000000001,
+        0.7000000000000001,
+        0.8,
+        0.9,
+        1.0
+      ]
+    },
+    "factors": {
+      "industry_fit": {
+        "available": 759,
+        "contribution": {
+          "count": 759,
+          "min": 36.0,
+          "max": 54.0,
+          "mean": 41.762845849802375,
+          "p5": 36.0,
+          "p25": 39.0,
+          "p50": 39.0,
+          "p75": 45.0,
+          "p95": 54.0,
+          "histogram_10_bins": [
+            177,
+            302,
+            0,
+            44,
+            0,
+            98,
+            0,
+            0,
+            54,
+            84
+          ],
+          "histogram_edges": [
+            36.0,
+            37.8,
+            39.6,
+            41.4,
+            43.2,
+            45.0,
+            46.8,
+            48.6,
+            50.4,
+            52.2,
+            54.0
+          ]
+        }
+      },
+      "company_size": {
+        "available": 759,
+        "contribution": {
+          "count": 759,
+          "min": 0.0,
+          "max": 34.5972,
+          "mean": 8.249005270092226,
+          "p5": 5.0178,
+          "p25": 8.0,
+          "p50": 8.0,
+          "p75": 8.0,
+          "p95": 14.0869,
+          "histogram_10_bins": [
+            35,
+            50,
+            621,
+            11,
+            13,
+            9,
+            8,
+            6,
+            2,
+            4
+          ],
+          "histogram_edges": [
+            0.0,
+            3.45972,
+            6.91944,
+            10.379159999999999,
+            13.83888,
+            17.2986,
+            20.758319999999998,
+            24.21804,
+            27.67776,
+            31.13748,
+            34.5972
+          ]
+        }
+      },
+      "investment_activity": {
+        "available": 0,
+        "contribution": {
+          "count": 0
+        }
+      },
+      "timeliness": {
+        "available": 0,
+        "contribution": {
+          "count": 0
+        }
+      }
+    },
+    "top10": [
+      {
+        "rank": 1,
+        "industry": "industry",
+        "sme_category": "Среднее предприятие",
+        "size_basis": "employee_count",
+        "score": 85.6,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.85,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 51.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.8649288204529483,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 34.5972
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 42.8,
+        "unknown_factor_upper_bound": 92.8
+      },
+      {
+        "rank": 2,
+        "industry": "industry",
+        "sme_category": "Малое предприятие",
+        "size_basis": "employee_count",
+        "score": 82.72,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.85,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 51.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.7930619775330908,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 31.7225
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 41.36,
+        "unknown_factor_upper_bound": 91.36
+      },
+      {
+        "rank": 3,
+        "industry": "logistics",
+        "sme_category": "Малое предприятие",
+        "size_basis": "employee_count",
+        "score": 78.62,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.9,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 54.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.6155508732278855,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 24.622
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 39.31,
+        "unknown_factor_upper_bound": 89.31
+      },
+      {
+        "rank": 4,
+        "industry": "industry",
+        "sme_category": "Малое предприятие",
+        "size_basis": "employee_count",
+        "score": 78.06,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.85,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 51.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.6764458333927408,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 27.0578
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 39.03,
+        "unknown_factor_upper_bound": 89.03
+      },
+      {
+        "rank": 5,
+        "industry": "industry",
+        "sme_category": "Малое предприятие",
+        "size_basis": "employee_count",
+        "score": 76.31,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.85,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 51.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.632800170408453,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 25.312
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 38.16,
+        "unknown_factor_upper_bound": 88.16
+      },
+      {
+        "rank": 6,
+        "industry": "agriculture",
+        "sme_category": "Малое предприятие",
+        "size_basis": "employee_count",
+        "score": 74.81,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.7,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 42.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.8203127495762302,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 32.8125
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 37.41,
+        "unknown_factor_upper_bound": 87.41
+      },
+      {
+        "rank": 7,
+        "industry": "industry",
+        "sme_category": "Малое предприятие",
+        "size_basis": "employee_count",
+        "score": 74.59,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.85,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 51.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.5896523911998838,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 23.5861
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 37.3,
+        "unknown_factor_upper_bound": 87.3
+      },
+      {
+        "rank": 8,
+        "industry": "agriculture",
+        "sme_category": "Малое предприятие",
+        "size_basis": "employee_count",
+        "score": 73.26,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.7,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 42.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.7813817547805807,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 31.2553
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 36.63,
+        "unknown_factor_upper_bound": 86.63
+      },
+      {
+        "rank": 9,
+        "industry": "housing",
+        "sme_category": "Малое предприятие",
+        "size_basis": "employee_count",
+        "score": 73.17,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.75,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 45.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.7043441218272596,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 28.1738
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 36.59,
+        "unknown_factor_upper_bound": 86.59
+      },
+      {
+        "rank": 10,
+        "industry": "industry",
+        "sme_category": "Малое предприятие",
+        "size_basis": "sme_category_proxy",
+        "score": 73.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.85,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 51.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.55,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 22.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна",
+          "Размер оценён по категории МСП; численность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 36.5,
+        "unknown_factor_upper_bound": 86.5
+      }
+    ],
+    "bottom10": [
+      {
+        "rank": 1,
+        "industry": "services",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 36.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.6,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 36.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 18.0,
+        "unknown_factor_upper_bound": 68.0
+      },
+      {
+        "rank": 2,
+        "industry": "services",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 36.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.6,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 36.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 18.0,
+        "unknown_factor_upper_bound": 68.0
+      },
+      {
+        "rank": 3,
+        "industry": "services",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 36.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.6,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 36.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 18.0,
+        "unknown_factor_upper_bound": 68.0
+      },
+      {
+        "rank": 4,
+        "industry": "services",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 36.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.6,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 36.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 18.0,
+        "unknown_factor_upper_bound": 68.0
+      },
+      {
+        "rank": 5,
+        "industry": "services",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 36.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.6,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 36.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 18.0,
+        "unknown_factor_upper_bound": 68.0
+      },
+      {
+        "rank": 6,
+        "industry": "services",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 36.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.6,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 36.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 18.0,
+        "unknown_factor_upper_bound": 68.0
+      },
+      {
+        "rank": 7,
+        "industry": "services",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 36.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.6,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 36.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 18.0,
+        "unknown_factor_upper_bound": 68.0
+      },
+      {
+        "rank": 8,
+        "industry": "services",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 36.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.6,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 36.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 18.0,
+        "unknown_factor_upper_bound": 68.0
+      },
+      {
+        "rank": 9,
+        "industry": "services",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 36.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.6,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 36.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 18.0,
+        "unknown_factor_upper_bound": 68.0
+      },
+      {
+        "rank": 10,
+        "industry": "trade",
+        "sme_category": "Микропредприятие",
+        "size_basis": "employee_count",
+        "score": 39.0,
+        "feature_coverage": 0.5,
+        "data_quality": "limited",
+        "factors": [
+          {
+            "code": "industry_fit",
+            "available": true,
+            "value": 0.65,
+            "weight": 0.3,
+            "effective_weight": 0.6,
+            "contribution": 39.0
+          },
+          {
+            "code": "company_size",
+            "available": true,
+            "value": 0.0,
+            "weight": 0.2,
+            "effective_weight": 0.4,
+            "contribution": 0.0
+          },
+          {
+            "code": "investment_activity",
+            "available": false,
+            "value": null,
+            "weight": 0.3,
+            "effective_weight": 0,
+            "contribution": null
+          },
+          {
+            "code": "timeliness",
+            "available": false,
+            "value": null,
+            "weight": 0.2,
+            "effective_weight": 0,
+            "contribution": null
+          }
+        ],
+        "explanation": [
+          "Экспертные веса; рейтинг не является вероятностью продажи",
+          "Веса перенормированы по доступным факторам; неполные профили несопоставимы с полными",
+          "Нет подтверждённых связей с инвестиционными проектами; активность неизвестна"
+        ],
+        "observed_weighted_lower_bound": 19.5,
+        "unknown_factor_upper_bound": 69.5
+      }
+    ],
+    "sensitivity_experiment_only": [
+      {
+        "factor": "industry_fit",
+        "multiplier": 0.8,
+        "max_absolute_score_delta": 4.909999999999997,
+        "mean_absolute_score_delta": 2.676363636363637,
+        "spearman_with_average_ties": 0.9881829059466058,
+        "top10_jaccard": 1.0
+      },
+      {
+        "factor": "industry_fit",
+        "multiplier": 1.2,
+        "max_absolute_score_delta": 3.8599999999999994,
+        "mean_absolute_score_delta": 2.1035836627140974,
+        "spearman_with_average_ties": 0.9991791292423726,
+        "top10_jaccard": 0.8181818181818182
+      },
+      {
+        "factor": "company_size",
+        "multiplier": 0.8,
+        "max_absolute_score_delta": 4.700000000000003,
+        "mean_absolute_score_delta": 2.562042160737814,
+        "spearman_with_average_ties": 0.997993299236635,
+        "top10_jaccard": 0.8181818181818182
+      },
+      {
+        "factor": "company_size",
+        "multiplier": 1.2,
+        "max_absolute_score_delta": 4.0,
+        "mean_absolute_score_delta": 2.1816864295125167,
+        "spearman_with_average_ties": 0.9885515673266608,
+        "top10_jaccard": 1.0
+      },
+      {
+        "factor": "investment_activity",
+        "multiplier": 0.8,
+        "max_absolute_score_delta": 0.0,
+        "mean_absolute_score_delta": 0.0,
+        "spearman_with_average_ties": 1.0,
+        "top10_jaccard": 1.0
+      },
+      {
+        "factor": "investment_activity",
+        "multiplier": 1.2,
+        "max_absolute_score_delta": 0.0,
+        "mean_absolute_score_delta": 0.0,
+        "spearman_with_average_ties": 1.0,
+        "top10_jaccard": 1.0
+      },
+      {
+        "factor": "timeliness",
+        "multiplier": 0.8,
+        "max_absolute_score_delta": 0.0,
+        "mean_absolute_score_delta": 0.0,
+        "spearman_with_average_ties": 1.0,
+        "top10_jaccard": 1.0
+      },
+      {
+        "factor": "timeliness",
+        "multiplier": 1.2,
+        "max_absolute_score_delta": 0.0,
+        "mean_absolute_score_delta": 0.0,
+        "spearman_with_average_ties": 1.0,
+        "top10_jaccard": 1.0
+      }
+    ],
+    "business_weights_changed": false,
+    "quality_filter_recommendation": "Compare same factors and size_basis; coverage >=0.8",
+    "bounds_interpretation": "Unknown factors in [0,1]; bounds are not confidence intervals"
+  },
+  "manual_evaluation": {
+    "baseline": {
+      "dev": {
+        "status": "not_evaluated",
+        "reason": "Нет ручных меток",
+        "split": "dev"
+      },
+      "test": {
+        "status": "not_evaluated",
+        "reason": "Нет ручных меток",
+        "split": "test"
+      },
+      "rating_coverage": {
+        "resolved_recommendations": 0,
+        "unclear_recommendations": 0,
+        "irrelevant_share_of_resolved": null
+      },
+      "rating_coverage_by_split": {
+        "dev": {
+          "resolved": 0,
+          "irrelevant": 0,
+          "unclear": 0,
+          "irrelevant_share_of_resolved": null
+        },
+        "test": {
+          "resolved": 0,
+          "irrelevant": 0,
+          "unclear": 0,
+          "irrelevant_share_of_resolved": null
+        }
+      }
+    },
+    "hybrid": {
+      "dev": {
+        "status": "not_evaluated",
+        "reason": "Нет ручных меток",
+        "split": "dev"
+      },
+      "test": {
+        "status": "not_evaluated",
+        "reason": "Нет ручных меток",
+        "split": "test"
+      },
+      "rating_coverage": {
+        "resolved_recommendations": 0,
+        "unclear_recommendations": 0,
+        "irrelevant_share_of_resolved": null
+      },
+      "rating_coverage_by_split": {
+        "dev": {
+          "resolved": 0,
+          "irrelevant": 0,
+          "unclear": 0,
+          "irrelevant_share_of_resolved": null
+        },
+        "test": {
+          "resolved": 0,
+          "irrelevant": 0,
+          "unclear": 0,
+          "irrelevant_share_of_resolved": null
+        }
+      }
+    }
+  },
+  "postgres-full-region": {
+    "scope": "full_rostov_postgresql",
+    "stats": {
+      "created_companies": 188040,
+      "created_projects": 63,
+      "processed_projects": 63
+    },
+    "counts": {
+      "Company": 188040,
+      "CompanyMatch": 188790,
+      "InvestmentProject": 63,
+      "ProjectNeed": 139,
+      "ScoringSnapshot": 188435,
+      "SourceRecord": 188853
+    },
+    "runtime": {
+      "seconds": 1108.3338281000001,
+      "rss_start_bytes": 133128192,
+      "sampled_peak_rss_bytes": 1316294656,
+      "process_peak_rss_bytes": 1317855232,
+      "measurement": "psutil RSS every 10ms; peak_wset is lifetime OS peak on Windows"
+    },
+    "geometry_real_records": "all NULL; no invented coordinates",
+    "committed": true
+  },
+  "postgres-full-api": {
+    "scope": "full_188040_companies_postgresql_http_handlers",
+    "auth_scope": "CurrentUser dependency overridden; authorization implementation unchanged",
+    "endpoints": {
+      "/api/v1/investments/1/needs": {
+        "status": 200,
+        "seconds": 0.01716199999964374,
+        "items": 3
+      },
+      "/api/v1/companies?limit=50": {
+        "status": 200,
+        "seconds": 0.07751479999978983,
+        "items": 50
+      },
+      "/api/v1/companies/1/score": {
+        "status": 200,
+        "seconds": 0.020228700000188837,
+        "items": null
+      },
+      "/api/v1/radar/heatmap": {
+        "status": 200,
+        "seconds": 4.801590500000202,
+        "items": 395
+      },
+      "/api/v1/radar/white-spaces": {
+        "status": 200,
+        "seconds": 4.321272799999861,
+        "items": 0
+      },
+      "company_score_NULL_case": {
+        "status": 200,
+        "seconds": 0.008464099999855534,
+        "null_score_preserved": true
+      }
+    },
+    "all_assertions_passed": true
+  },
+  "postgres-full-repeat": {
+    "scope": "full_region_repeat_in_separate_process",
+    "counts_before": {
+      "Company": 188040,
+      "CompanyMatch": 188790,
+      "InvestmentProject": 63,
+      "ProjectNeed": 139,
+      "ScoringSnapshot": 188435,
+      "SourceRecord": 188853
+    },
+    "counts_after": {
+      "Company": 188040,
+      "CompanyMatch": 188790,
+      "InvestmentProject": 63,
+      "ProjectNeed": 139,
+      "ScoringSnapshot": 188435,
+      "SourceRecord": 188853
+    },
+    "stats": {
+      "created_companies": 0,
+      "created_projects": 0,
+      "processed_projects": 63
+    },
+    "runtime": {
+      "seconds": 105.32514260000016,
+      "rss_start_bytes": 121978880,
+      "sampled_peak_rss_bytes": 1251614720,
+      "process_peak_rss_bytes": 1253408768,
+      "measurement": "psutil RSS every 10ms; peak_wset is lifetime OS peak on Windows"
+    },
+    "committed": true,
+    "idempotent": true
+  },
+  "postgres-full-integrity": {
+    "scope": "full_region_committed_data_integrity",
+    "checks": {
+      "duplicate_company_inn_groups": 0,
+      "financial_metric_rows": 0,
+      "customer_presence_rows": 0,
+      "invented_geometry_rows": 0,
+      "non_null_need_probabilities": 0,
+      "confirmed_initiator_links": 0,
+      "null_company_scores": 25,
+      "duplicate_source_groups": 0
+    },
+    "all_assertions_passed": true
+  },
+  "pytest_release": {
+    "tests": 106,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "time_seconds": 91.093
+  }
+}

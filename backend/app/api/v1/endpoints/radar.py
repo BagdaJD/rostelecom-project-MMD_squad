@@ -11,6 +11,17 @@ from modules.radar import service as radar
 router = APIRouter(tags=["radar"])
 
 
+@router.get("/companies/{company_id}/score")
+def company_score(company_id: int, session: DbSession, user: CurrentUser) -> dict:
+    from fastapi import HTTPException
+
+    from ingestion.persistence import saved_company_score
+
+    if session.get(Company, company_id) is None:
+        raise HTTPException(404, "Компания не найдена")
+    return saved_company_score(session, company_id)
+
+
 @router.get("/companies", response_model=list[CompanyOut])
 def list_companies(
     session: DbSession,
@@ -34,8 +45,12 @@ def list_companies(
 
 
 @router.get("/radar/heatmap")
-def heatmap(session: DbSession, user: CurrentUser, region_id: int | None = None,
-            industry_group: str | None = None) -> list[dict]:
+def heatmap(
+    session: DbSession,
+    user: CurrentUser,
+    region_id: int | None = None,
+    industry_group: str | None = None,
+) -> list[dict]:
     cells = radar.heatmap(
         session,
         region_id=region_id,
@@ -47,8 +62,12 @@ def heatmap(session: DbSession, user: CurrentUser, region_id: int | None = None,
 
 
 @router.get("/radar/white-spaces")
-def white_spaces(session: DbSession, user: CurrentUser, region_id: int | None = None,
-                 industry_group: str | None = None) -> list[dict]:
+def white_spaces(
+    session: DbSession,
+    user: CurrentUser,
+    region_id: int | None = None,
+    industry_group: str | None = None,
+) -> list[dict]:
     result = radar.white_spaces(
         session,
         region_id=region_id,
@@ -67,7 +86,8 @@ def summary(session: DbSession, user: CurrentUser) -> dict:
             select(func.count(InvestmentProject.id)).where(
                 InvestmentProject.stage.in_(("design", "modernization", "construction"))
             )
-        ) or 0,
+        )
+        or 0,
         "open_tenders": session.scalar(select(func.count(Tender.id))) or 0,
         "unread_notifications": len(investments_unread(session, user.id)),
     }

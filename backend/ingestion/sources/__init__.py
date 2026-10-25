@@ -12,7 +12,7 @@ import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-SOURCES: dict[str, type["BaseSource"]] = {}
+SOURCES: dict[str, type[BaseSource]] = {}
 
 
 def register(name: str):
@@ -44,7 +44,7 @@ class DemoSource(BaseSource):
     requires_consent = False
 
     def __init__(self, path: Path | str | None = None) -> None:
-        default = Path(__file__).resolve().parents[2] / "data" / "seed" / "demo_bundle.json"
+        default = Path(__file__).resolve().parents[3] / "data" / "seed" / "demo_bundle.json"
         self.path = Path(path or default)
 
     def fetch(self) -> dict:
@@ -56,14 +56,21 @@ class DemoSource(BaseSource):
 
 @register("fns")
 class FnsSource(BaseSource):
-    """Заглушка ФНС. Реализуется после подтверждения доступа и лицензии."""
+    """Совместимый адаптер локального файла; сетевых обращений нет."""
 
     name = "fns"
 
+    def __init__(self, path: Path | str, region_code: str = "61", dump_date=None):
+        from ingestion.sources.fns_source import LocalFnsSource
+
+        self.local = LocalFnsSource(path, region_code, dump_date)
+
     def fetch(self) -> dict:
-        raise NotImplementedError(
-            "Доступ к данным ФНС согласуется отдельно: API, условия использования, лицензия"
-        )
+        records = list(self.local.iter_companies())
+        return {
+            "companies": [c.as_dict() for c in records],
+            "quality": {"counts": dict(self.local.counts), "errors": self.local.errors},
+        }
 
 
 @register("eis")

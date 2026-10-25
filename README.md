@@ -65,10 +65,13 @@ python -m app.cli enable-2fa --email a@example.com   # выведет secret д�
 | Импорт демо-набора, нормализация, дедупликация по ИНН/имени, provenance | реализованы |
 | CSV/CRM и DOCX-экспорт | реализованы, формат CRM описан в `docs/export-mapping.md` |
 | 2FA TOTP, роли, rate-limit входа, аудит | реализованы |
-| Адаптеры ФНС / ЕИС | заглушки: доступ и лицензии согласуются отдельно (см. `docs/data-sources.md`) |
+| Адаптеры ФНС / ЕИС | ФНС: локальный XML/ZIP, проверен реальный архив; ЕИС: заглушка (см. `docs/data-sources.md`) |
 | Обучение CatBoost, дашборд маржинальности | не реализованы, см. раздел 3 ТЗ «вне скоупа» |
 
 ## Документация
+
+- [`docs/ml-quick-check.md`](docs/ml-quick-check.md) — быстро проверить Excel/NLP/Scoring
+- [`docs/ml-stage2-report.md`](docs/ml-stage2-report.md) — реальные проверки ML, ФНС и PostGIS
 
 - [`docs/export-mapping.md`](docs/export-mapping.md) — колонки CSV и маппинг в CRM
 - [`docs/data-sources.md`](docs/data-sources.md) — источники, лицензии, ограничения доступа

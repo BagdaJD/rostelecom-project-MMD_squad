@@ -139,7 +139,7 @@ class ScoringSnapshot(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     subject_type: Mapped[str] = mapped_column(String(16))  # company | region
     subject_id: Mapped[int] = mapped_column(index=True)
-    score: Mapped[float] = mapped_column()
+    score: Mapped[float | None] = mapped_column()
     factors_json: Mapped[list] = mapped_column(JSON, default=list)
     # heuristic | trained — обязателен в ответе API (ТЗ 8).
     scoring_mode: Mapped[str] = mapped_column(String(16), default="heuristic")

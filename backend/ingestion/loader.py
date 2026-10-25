@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -27,20 +27,23 @@ from app.models import (
     InvestmentProject,
     OkvedToIndustry,
     PositionPrice,
-    RegionalCoefficient,
+    ProjectTender,
     Region,
+    RegionalCoefficient,
     SourceRecord,
     Tender,
 )
 from ingestion.normalize import (
     RawCompany,
     clean_revenue,
+    is_valid_inn,
+    is_valid_ogrn,
     match_key,
     normalize_name,
     payload_hash,
 )
 from ml.needs import classify_need
-from app.models import ProjectNeed, ProjectTender
+from ml.storage import replace_needs
 
 STAGES = ("design", "modernization", "construction", "launch", "completed")
 NEED_DICT = "project_need"
@@ -62,7 +65,11 @@ DICTIONARIES: dict[str, list[tuple[str, str]]] = {
         ("iot_asu_tp", "IoT и АСУ ТП"),
         ("insufficient_data", "Недостаточно данных"),
     ],
-    "urgency": [("normal", "Стандартные сроки"), ("high", "Сжатые сроки"), ("critical", "Критично")],
+    "urgency": [
+        ("normal", "Стандартные сроки"),
+        ("high", "Сжатые сроки"),
+        ("critical", "Критично"),
+    ],
     "financing_scheme": [
         ("budget", "Бюджетное финансирование"),
         ("own", "Собственные средства"),
@@ -90,8 +97,13 @@ class SeedResult:
         return {k: v for k, v in self.__dict__.items()}
 
 
-def _source(session: Session, source: str, external_id: str | None, payload: dict,
-            license_note: str | None = None) -> SourceRecord:
+def _source(
+    session: Session,
+    source: str,
+    external_id: str | None,
+    payload: dict,
+    license_note: str | None = None,
+) -> SourceRecord:
     """Одна запись происхождения на объект; повторный импорт узнаётся по hash."""
     digest = payload_hash(payload)
     existing = session.scalar(
@@ -109,7 +121,7 @@ def _source(session: Session, source: str, external_id: str | None, payload: dic
         payload_hash=digest,
         raw_payload=payload,
         processing_status="processed",
-        fetched_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(UTC),
         license_note=license_note,
     )
     session.add(record)
@@ -128,7 +140,9 @@ def load_dictionaries(session: Session) -> int:
             )
             if exists:
                 continue
-            session.add(DictionaryItem(dict_code=dict_code, code=code, label=label, order_no=order_no))
+            session.add(
+                DictionaryItem(dict_code=dict_code, code=code, label=label, order_no=order_no)
+            )
             created += 1
     return created
 
@@ -182,24 +196,47 @@ def load_companies(
     result = SeedResult()
     keys: dict[str, int] = {}
     for record in records:
-        source = _source(session, record.source, record.external_id, record.as_dict(), record.license_note)
+        source = _source(
+            session, record.source, record.external_id, record.stable_payload(), record.license_note
+        )
         result.source_records += 1
         decision = match_key(record)
-        company = session.scalar(select(Company).where(Company.name_normalized == normalize_name(record.name)))
+        company = session.scalar(
+            select(Company)
+            .join(CompanyMatch, CompanyMatch.company_id == Company.id)
+            .where(CompanyMatch.source_record_id == source.id)
+        )
         if decision.method == "inn" and record.inn:
             by_inn = session.scalars(select(Company).where(Company.inn == record.inn)).first()
-            company = by_inn or company
+            if (
+                by_inn
+                and is_valid_ogrn(by_inn.ogrn)
+                and is_valid_ogrn(record.ogrn)
+                and (by_inn.ogrn != record.ogrn)
+            ):
+                raise ValueError("Конфликт валидных идентификаторов компании; требуется проверка")
+            company = company or by_inn
+        if company is None and is_valid_ogrn(record.ogrn):
+            by_ogrn = session.scalars(select(Company).where(Company.ogrn == record.ogrn)).first()
+            if (
+                by_ogrn
+                and is_valid_inn(record.inn)
+                and is_valid_inn(by_ogrn.inn)
+                and (record.inn != by_ogrn.inn)
+            ):
+                raise ValueError("Конфликт ИНН при совпавшем ОГРН; требуется проверка")
+            company = by_ogrn
 
         if company is None:
             company = Company(
                 name=record.name,
                 name_normalized=normalize_name(record.name),
-                inn=record.inn,
-                ogrn=record.ogrn,
+                inn=record.inn if is_valid_inn(record.inn) else None,
+                ogrn=record.ogrn if is_valid_ogrn(record.ogrn) else None,
                 industry_id=industry_by_okved.get(record.industry_code or ""),
                 region_id=region_codes.get(record.region_code or ""),
                 employee_count=record.employee_count,
-                client_status="unknown",
+                client_status=record.client_status,
                 first_seen_at=record.fetched_at,
                 last_seen_at=record.fetched_at,
             )
@@ -208,15 +245,28 @@ def load_companies(
             result.companies += 1
         else:
             result.skipped += 1
+            if record.client_status == "active":
+                company.client_status = "active"
+            if company.employee_count is None:
+                company.employee_count = record.employee_count
+            if company.industry_id is None:
+                company.industry_id = industry_by_okved.get(record.industry_code or "")
+            if company.region_id is None:
+                company.region_id = region_codes.get(record.region_code or "")
 
-        session.add(
-            CompanyMatch(
-                company_id=company.id,
-                source_record_id=source.id,
-                match_method=decision.method,
-                confidence=Decimal(str(round(decision.confidence, 3))),
+        if not session.scalar(
+            select(CompanyMatch.id).where(
+                CompanyMatch.company_id == company.id, CompanyMatch.source_record_id == source.id
             )
-        )
+        ):
+            session.add(
+                CompanyMatch(
+                    company_id=company.id,
+                    source_record_id=source.id,
+                    match_method=decision.method,
+                    confidence=Decimal(str(round(decision.confidence, 3))),
+                )
+            )
         for year, value in sorted(clean_revenue(record.revenue).items()):
             exists = session.scalar(
                 select(CompanyMetric).where(
@@ -241,12 +291,18 @@ def load_companies(
             )
             result.metrics += 1
         keys[decision.company_key] = company.id
+        session.flush()
     return keys, result
 
 
-def load_projects(session: Session, rows: list[dict], region_codes: dict[str, int],
-                  industry_codes: dict[str, int], company_ids: dict[str, int],
-                  model_version: str) -> SeedResult:
+def load_projects(
+    session: Session,
+    rows: list[dict],
+    region_codes: dict[str, int],
+    industry_codes: dict[str, int],
+    company_ids: dict[str, int],
+    model_version: str,
+) -> SeedResult:
     result = SeedResult()
     for row in rows:
         source = _source(session, row.get("source", "investregistry"), row.get("external_id"), row)
@@ -261,9 +317,13 @@ def load_projects(session: Session, rows: list[dict], region_codes: dict[str, in
             title=row["title"],
             description=row.get("description"),
             stage=row["stage"],
-            planned_start=date.fromisoformat(row["planned_start"]) if row.get("planned_start") else None,
+            planned_start=date.fromisoformat(row["planned_start"])
+            if row.get("planned_start")
+            else None,
             planned_end=date.fromisoformat(row["planned_end"]) if row.get("planned_end") else None,
-            estimated_budget=Decimal(str(row["estimated_budget"])) if row.get("estimated_budget") else None,
+            estimated_budget=Decimal(str(row["estimated_budget"]))
+            if row.get("estimated_budget")
+            else None,
             region_id=region_codes.get(row.get("region_code") or ""),
             industry_id=industry_codes.get(row.get("industry_code") or ""),
             initiator_company_id=company_ids.get(row.get("initiator_key") or ""),
@@ -285,22 +345,13 @@ def load_projects(session: Session, rows: list[dict], region_codes: dict[str, in
                 title=project.title,
             )
         )
-        for prediction in classify_need(project.title, project.description):
-            session.add(
-                ProjectNeed(
-                    project_id=project.id,
-                    need_category=prediction.category,
-                    probability=Decimal(str(prediction.probability)),
-                    evidence=prediction.evidence,
-                    rule_id=prediction.rule_id,
-                    model_version=model_version,
-                )
-            )
+        replace_needs(session, project.id, classify_need(project.title, project.description))
     return result
 
 
-def load_tenders(session: Session, rows: list[dict], company_ids: dict[str, int],
-                 project_titles: dict[str, int]) -> SeedResult:
+def load_tenders(
+    session: Session, rows: list[dict], company_ids: dict[str, int], project_titles: dict[str, int]
+) -> SeedResult:
     result = SeedResult()
     for row in rows:
         source = _source(session, row.get("source", "eis"), row.get("external_id"), row)
@@ -314,8 +365,12 @@ def load_tenders(session: Session, rows: list[dict], company_ids: dict[str, int]
             title=row["title"],
             description=row.get("description"),
             price=Decimal(str(row["price"])) if row.get("price") else None,
-            publication_date=date.fromisoformat(row["publication_date"]) if row.get("publication_date") else None,
-            deadline_date=date.fromisoformat(row["deadline_date"]) if row.get("deadline_date") else None,
+            publication_date=date.fromisoformat(row["publication_date"])
+            if row.get("publication_date")
+            else None,
+            deadline_date=date.fromisoformat(row["deadline_date"])
+            if row.get("deadline_date")
+            else None,
             category=row.get("category"),
             source_url=row.get("source_url"),
             source_id=source.id,
@@ -331,7 +386,7 @@ def load_tenders(session: Session, rows: list[dict], company_ids: dict[str, int]
                 ProjectTender(
                     project_id=project_id,
                     tender_id=tender.id,
-                    # Способ связи сохраняется: «связано по внешнему номеру» и «по ИНН» — не одно и то же.
+                    # Способ связи сохраняется: внешняя ссылка и ИНН — разные основания.
                     link_method=row.get("link_method", "inn_keyword"),
                     confidence=Decimal(str(row.get("link_confidence", 0.7))),
                 )
@@ -354,7 +409,9 @@ def load_presence(session: Session, rows: list[dict], region_codes: dict[str, in
         if exists or not region_id:
             result.skipped += 1
             continue
-        source = _source(session, "synthetic_presence", None, row, "синтетические данные присутствия")
+        source = _source(
+            session, "synthetic_presence", None, row, "синтетические данные присутствия"
+        )
         session.add(
             CustomerPresence(
                 region_id=region_id,
@@ -385,7 +442,9 @@ def load_reference_prices(session: Session, rows: list[dict]) -> SeedResult:
                 unit=row.get("unit", "шт"),
                 price_min=Decimal(str(row["price_min"])) if row.get("price_min") else None,
                 price_max=Decimal(str(row["price_max"])) if row.get("price_max") else None,
-                price_typical=Decimal(str(row["price_typical"])) if row.get("price_typical") else None,
+                price_typical=Decimal(str(row["price_typical"]))
+                if row.get("price_typical")
+                else None,
                 price_period=row.get("price_period"),
                 source_id=source.id,
                 is_synthetic=True,
@@ -395,7 +454,9 @@ def load_reference_prices(session: Session, rows: list[dict]) -> SeedResult:
     return result
 
 
-def load_coefficients(session: Session, rows: list[dict], region_codes: dict[str, int]) -> SeedResult:
+def load_coefficients(
+    session: Session, rows: list[dict], region_codes: dict[str, int]
+) -> SeedResult:
     result = SeedResult()
     for row in rows:
         region_id = region_codes.get(row.get("region_code") or "")
@@ -420,8 +481,9 @@ def load_coefficients(session: Session, rows: list[dict], region_codes: dict[str
     return result
 
 
-def load_historical_deals(session: Session, rows: list[dict], region_codes: dict[str, int],
-                          industry_codes: dict[str, int]) -> SeedResult:
+def load_historical_deals(
+    session: Session, rows: list[dict], region_codes: dict[str, int], industry_codes: dict[str, int]
+) -> SeedResult:
     result = SeedResult()
     for row in rows:
         if session.scalar(select(HistoricalDeal).where(HistoricalDeal.title == row["title"])):
@@ -456,8 +518,10 @@ def load_bundle(session: Session, bundle: dict, model_version: str = "seed-0.1")
     _merge(total, res)
 
     projects = bundle.get("projects", [])
-    _merge(total, load_projects(session, projects, region_codes, industry_codes, company_ids, model_version))
-    titles = {p["title"]: p["title"] for p in projects}
+    _merge(
+        total,
+        load_projects(session, projects, region_codes, industry_codes, company_ids, model_version),
+    )
     title_ids = {
         t: pid
         for t, pid in session.execute(select(InvestmentProject.title, InvestmentProject.id)).all()
@@ -466,7 +530,12 @@ def load_bundle(session: Session, bundle: dict, model_version: str = "seed-0.1")
     _merge(total, load_presence(session, bundle.get("presence", []), region_codes))
     _merge(total, load_coefficients(session, bundle.get("coefficients", []), region_codes))
     load_reference_prices(session, bundle.get("positions", []))
-    _merge(total, load_historical_deals(session, bundle.get("historical_deals", []), region_codes, industry_codes))
+    _merge(
+        total,
+        load_historical_deals(
+            session, bundle.get("historical_deals", []), region_codes, industry_codes
+        ),
+    )
     session.flush()
     return total
 

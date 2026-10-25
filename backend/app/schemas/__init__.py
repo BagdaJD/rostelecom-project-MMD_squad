@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ORMModel(BaseModel):
@@ -72,13 +72,17 @@ class HeatCellOut(BaseModel):
     region_name: str
     industry_group: str
     companies_count: int
-    revenue_sum: Decimal
-    growth_share: float
+    revenue_sum: Decimal | None
+    growth_share: float | None
     potential_score: float
-    presence_score: float
+    presence_score: float | None
     # Центр агрегата: карта рисует кружки по нему, если полигона нет (ТЗ 11.3).
     longitude: float | None = None
     latitude: float | None = None
+    data_quality: str | None = None
+    presence_status: str | None = None
+    model_version: str | None = None
+    aggregation_level: str | None = None
 
 
 class WhiteSpaceOut(BaseModel):
@@ -109,6 +113,11 @@ class NeedOut(ORMModel):
     evidence: str | None
     rule_id: str | None
     model_version: str
+    evidence_type: str | None = None
+    reason: str | None = None
+    semantic_similarity: float | None = None
+    confidence_label: str | None = None
+    data_quality: str | None = None
 
 
 class TimelinePointOut(BaseModel):
