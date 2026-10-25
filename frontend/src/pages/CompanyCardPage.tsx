@@ -7,18 +7,35 @@
 import { useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import * as echarts from 'echarts/core';
-import { LineChart } from 'echarts/charts';
-import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
 
 import { api } from '@/api/client';
 import { DataGap, EmptyState, ErrorState, Loading, Warning } from '@/components/states';
-import { formatDate, formatShare } from '@/lib/format';
+import { formatNumber, formatDate, formatShare, safeExternalUrl } from '@/lib/format';
 import { clientStatusLabel } from '@/styles/tokens';
 import { needLabel, type CompanyMetricPoint } from '@/types/api';
 
-echarts.use([LineChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
+// ECharts подгружается только на странице карточки компании (lazy chunk), не в основном бандле.
+let echartsPromise: Promise<typeof import('echarts/core')> | null = null;
+function loadEcharts() {
+  if (!echartsPromise) {
+    echartsPromise = Promise.all([
+      import('echarts/core'),
+      import('echarts/charts'),
+      import('echarts/components'),
+      import('echarts/renderers'),
+    ]).then(([core, charts, components, renderers]) => {
+      core.use([
+        charts.LineChart,
+        components.GridComponent,
+        components.LegendComponent,
+        components.TooltipComponent,
+        renderers.CanvasRenderer,
+      ]);
+      return core;
+    });
+  }
+  return echartsPromise;
+}
 
 const metricLabel: Record<string, string> = {
   revenue: 'Выручка',
@@ -36,41 +53,51 @@ function MetricChart({ metrics }: { metrics: CompanyMetricPoint[] }) {
   useEffect(() => {
     const container = holder.current;
     if (!container) return;
-    const chart = echarts.init(container);
+    let disposed = false;
+    let chart: { clear: () => void; setOption: (option: unknown) => void; resize: () => void; dispose: () => void } | null = null;
+    let observer: ResizeObserver | null = null;
 
-    const years = Array.from(new Set(metrics.map((m) => m.period_year))).sort((a, b) => a - b);
-    const codes = Array.from(new Set(metrics.map((m) => m.metric_code)));
+    void loadEcharts().then((echarts) => {
+      if (disposed || !container) return;
+      chart = echarts.init(container);
 
-    chart.clear();
-    chart.setOption({
-      tooltip: {
-        trigger: 'axis',
-        valueFormatter: (value: number | null) =>
-          value === null || Number.isNaN(value) ? 'нет данных' : String(value),
-      },
-      legend: { bottom: 0 },
-      xAxis: { type: 'category', data: years },
-      yAxis: { type: 'value', scale: true },
-      grid: { left: 48, right: 16, top: 16, bottom: 32 },
-      series: codes.map((code) => ({
-        name: metricName(code),
-        type: 'line',
-        connectNulls: false,
-        symbolSize: 6,
-        data: years.map((year) => {
-          const point = metrics.find((m) => m.metric_code === code && m.period_year === year);
-          if (!point || point.value === null) return null;
-          return Number(point.value);
-        }),
-      })),
+      const years = Array.from(new Set(metrics.map((m) => m.period_year))).sort((a, b) => a - b);
+      const codes = Array.from(new Set(metrics.map((m) => m.metric_code)));
+
+      chart.clear();
+      chart.setOption({
+        tooltip: {
+          trigger: 'axis',
+          valueFormatter: (value: number | null) =>
+            value === null || Number.isNaN(value) ? 'нет данных' : String(value),
+        },
+        legend: { bottom: 0 },
+        xAxis: { type: 'category', data: years },
+        yAxis: { type: 'value', scale: true },
+        grid: { left: 48, right: 16, top: 16, bottom: 32 },
+        series: codes.map((code) => ({
+          name: metricName(code),
+          type: 'line',
+          connectNulls: false,
+          symbolSize: 6,
+          data: years.map((year) => {
+            const point = metrics.find((m) => m.metric_code === code && m.period_year === year);
+            if (!point || point.value === null) return null;
+            return Number(point.value);
+          }),
+        })),
+      });
+
+      if (typeof ResizeObserver !== 'undefined') {
+        observer = new ResizeObserver(() => chart?.resize());
+        observer.observe(container);
+      }
     });
 
-    const observer =
-      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => chart.resize()) : null;
-    observer?.observe(container);
     return () => {
+      disposed = true;
       observer?.disconnect();
-      chart.dispose();
+      chart?.dispose();
     };
   }, [metrics]);
 
@@ -128,9 +155,7 @@ export function CompanyCardPage() {
               <td>
                 {company.revenue_latest ? (
                   <>
-                    {Number(company.revenue_latest).toLocaleString('ru-RU', {
-                      maximumFractionDigits: 1,
-                    })}{' '}
+                    {formatNumber(company.revenue_latest)}{' '}
                     млн ₽
                     {company.revenue_year ? <span className="muted"> ({company.revenue_year})</span> : null}
                   </>
@@ -162,7 +187,7 @@ export function CompanyCardPage() {
                   <span key={`${point.metric_code}-${index}`}>
                     {index > 0 ? ' · ' : ''}
                     {metricName(point.metric_code)}:{' '}
-                    {point.value === null ? <DataGap what="Значение" /> : Number(point.value).toLocaleString('ru-RU')}
+                    {point.value === null ? <DataGap what="Значение" /> : formatNumber(point.value)}
                   </span>
                 ))}
               </p>
@@ -228,14 +253,17 @@ export function CompanyCardPage() {
             Источник: <strong>{item.source}</strong> · получено {formatDate(item.fetched_at)}
             {item.external_id ? ` · внешний id ${item.external_id}` : ''}
             {item.license_note ? ` · ${item.license_note}` : ''}
-            {item.source_url ? (
-              <>
-                {' · '}
-                <a href={item.source_url} target="_blank" rel="noreferrer">
-                  первичная запись
-                </a>
-              </>
-            ) : null}
+            {item.source_url && (() => {
+              const href = safeExternalUrl(item.source_url);
+              return href ? (
+                <>
+                  {' · '}
+                  <a href={href} target="_blank" rel="noreferrer">
+                    первичная запись
+                  </a>
+                </>
+              ) : null;
+            })()}
           </p>
         ))}
       </section>

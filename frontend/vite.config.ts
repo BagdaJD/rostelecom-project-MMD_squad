@@ -28,7 +28,13 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    test: { environment: 'node', include: ['src/**/*.test.ts'] },
+    test: {
+      environment: 'jsdom',
+      include: ['src/**/*.test.{ts,tsx}'],
+      setupFiles: ['./src/test/setup.ts'],
+      // Нагрузка на CPU: параллельные форки экономичнее воркеров для строковых замен.
+      pool: 'forks',
+    },
     build: { outDir: 'dist', sourcemap: false },
   };
 });
