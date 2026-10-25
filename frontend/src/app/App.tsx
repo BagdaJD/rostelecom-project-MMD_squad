@@ -9,6 +9,7 @@ import { CalculatorPage } from '@/pages/CalculatorPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { CompanyCardPage } from '@/pages/CompanyCardPage';
 import { getToken, onSessionExpired, setToken } from '@/api/client';
+import { isMockMode } from '@/api/mocks';
 import '../styles/global.css';
 
 const queryClient = new QueryClient({
@@ -16,6 +17,7 @@ const queryClient = new QueryClient({
 });
 
 function Shell({ onLogout }: { onLogout: () => void }) {
+  const demoMode = isMockMode();
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -26,6 +28,11 @@ function Shell({ onLogout }: { onLogout: () => void }) {
           <NavLink to="/navigator">Инвестиционный навигатор</NavLink>
           <NavLink to="/calculator">Калькулятор сделок</NavLink>
         </nav>
+        {demoMode && (
+          <span className="demo-badge" role="note" title="Синтетические данные и мок-сервер: не является реальной аналитикой">
+            Демо-режим: синтетические данные
+          </span>
+        )}
         <button type="button" onClick={onLogout}>
           Выйти
         </button>

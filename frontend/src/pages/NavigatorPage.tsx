@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import { api } from '@/api/client';
-import { EmptyState, ErrorState, Loading, QualityBadge } from '@/components/states';
+import { api, downloadBlob } from '@/api/client';
+import { DataGap, EmptyState, ErrorState, Loading, QualityBadge } from '@/components/states';
 import { MapView } from '@/features/radar/MapView';
 import { SubscriptionsPanel } from '@/features/investments/SubscriptionsPanel';
 import { formatDate, formatMoney } from '@/lib/format';
@@ -25,6 +25,7 @@ export function NavigatorPage() {
   const [stage, setStage] = useState<string>('');
   const [selected, setSelected] = useState<number | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<number | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const projects = useQuery({
     queryKey: ['projects', stage],
@@ -71,6 +72,22 @@ export function NavigatorPage() {
       (selectedRegion === null || project.region_id === selectedRegion),
   );
 
+  /** CSV текущего среза: стадия + регион; если открыт проект — только он (+ тендеры). */
+  async function exportCsv(manualProjectId?: number) {
+    setExportError(null);
+    const projectId = manualProjectId ?? selected;
+    try {
+      const blob = await api.exportCsv('investments', {
+        stage: stage || null,
+        region_id: selectedRegion,
+        project_id: projectId,
+      }, 'general');
+      downloadBlob(blob, projectId ? `project-${projectId}.csv` : 'investments.csv');
+    } catch (exc) {
+      setExportError(exc instanceof Error ? exc.message : 'Экспорт не выполнен');
+    }
+  }
+
   return (
     <main className="app-body">
       <section className="card">
@@ -92,7 +109,20 @@ export function NavigatorPage() {
               Показать все проекты
             </button>
           )}
+          <button type="button" onClick={() => exportCsv()}>
+            Экспорт CSV
+          </button>
+          {selected !== null && (
+            <button type="button" onClick={() => exportCsv(selected)}>
+              Только проект #{selected}
+            </button>
+          )}
         </div>
+        {exportError && (
+          <p className="warning" role="alert">
+            {exportError}
+          </p>
+        )}
       </section>
 
       <SubscriptionsPanel module="investments" filters={{ stage: stage || null }} />
@@ -164,8 +194,9 @@ export function NavigatorPage() {
           <article className="card" key={project.id}>
             <h2>{project.title}</h2>
             <p className="muted">
-              {stageLabel[project.stage] ?? project.stage} · старт {project.planned_start ?? '—'}{' '}
-              · бюджет {formatBudget(project.estimated_budget)}
+              {stageLabel[project.stage] ?? project.stage} · старт{' '}
+              {project.planned_start ?? <DataGap what="Дата старта" />} · бюджет{' '}
+              {project.estimated_budget ? formatBudget(project.estimated_budget) : <DataGap what="Бюджет" />}
             </p>
             {project.source_url && (
               <p className="muted">
@@ -187,7 +218,7 @@ export function NavigatorPage() {
                     <h3>Стадии и вехи</h3>
                     <p className="muted">
                       {stageLabel[card.stage] ?? card.stage} · окно контакта:{' '}
-                      {card.contact_window ?? '—'}
+                      {card.contact_window ?? <DataGap what="Окно контакта" />}
                     </p>
                     <p>
                       {card.description ?? 'Описание проекта не добавлено'}
@@ -228,8 +259,8 @@ export function NavigatorPage() {
                               {card.tenders.map((tender) => (
                                 <tr key={tender.id}>
                                   <td>{tender.title}</td>
-                                  <td>{tender.price ? formatTenderPrice(tender.price) : '—'}</td>
-                                  <td>{tender.deadline_date ?? '—'}</td>
+                                  <td>{tender.price ? formatTenderPrice(tender.price) : <DataGap what="Цена" />}</td>
+                                  <td>{tender.deadline_date ?? <DataGap what="Срок" />}</td>
                                   <td>
                                     {tender.source_url ? (
                                       <a href={tender.source_url} target="_blank" rel="noreferrer">
@@ -253,7 +284,7 @@ export function NavigatorPage() {
                 {needs.data?.map((need) => (
                   <p key={need.need_category}>
                     <strong>{needLabel[need.need_category] ?? need.need_category}</strong>{' '}
-                    {need.probability !== null ? `· ${(need.probability * 100).toFixed(0)} %` : ''}{' '}
+                    {need.probability !== null ? `· ${(need.probability * 100).toFixed(0)} %` : <DataGap what="Вероятность" />}{' '}
                     <QualityBadge quality="limited" />
                     <br />
                     <span className="muted">

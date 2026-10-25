@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { installMocks } from '@/api/mocks';
+import { installMocks, isMockMode } from '@/api/mocks';
 import type { Company, HeatCell, ProjectCard, WhiteSpace } from '@/types/api';
 
 const realFetch = globalThis.fetch;
@@ -68,6 +68,26 @@ describe('включение мока', () => {
   it('неизвестный сценарий сводится к данным, а не к падению', () => {
     enableMocks('?mock=1&scenario=whatever');
     expect(installMocks()).toBe('data');
+  });
+
+  it('isMockMode: включён при ?mock и после перехода, выключен без мока', () => {
+    enableMocks('?mock=1');
+    installMocks();
+    expect(isMockMode()).toBe(true);
+
+    // После входа параметр теряется, но флаг живёт в sessionStorage — индикатор остаётся.
+    vi.stubGlobal('location', { search: '' });
+    expect(isMockMode()).toBe(true);
+
+    enableMocks('');
+    expect(isMockMode()).toBe(false);
+  });
+
+  it('isMockMode: ?mock=0 выключает индикатор', () => {
+    enableMocks('?mock=1');
+    installMocks();
+    vi.stubGlobal('location', { search: '?mock=0' });
+    expect(isMockMode()).toBe(false);
   });
 });
 
@@ -147,6 +167,100 @@ describe('сценарий data', () => {
     const text = await new Response(bytes.slice(3)).text();
     expect(text.split('\r\n')[0]).toContain('ИНН');
     expect(text.split('\r\n')[1]).toContain('7700000016');
+  });
+
+  it('экспорт компаний уважает текущий фильтр региона и квадранта', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'companies', filters: { region_id: 3, quadrant: 'white' } }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    const lines = text.split('\r\n');
+    expect(lines[0]).toContain('ИНН');
+    // Тюменская область — единственная компания в этом срезе.
+    expect(lines[1]).toContain('7200000044');
+    expect(lines).toHaveLength(2);
+  });
+
+  it('CRM-режим отдаёт документированный маппинг колонок rt_*', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'companies', filters: {}, mode: 'crm' }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    expect(text.split('\r\n')[0]).toContain('rt_inn');
+    expect(text.split('\r\n')[0]).toContain('rt_source_url');
+  });
+
+  it('экспорт инвестиций выгружает проекты и тендеры выбранного проекта', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'investments', filters: { project_id: 201 } }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    const lines = text.split('\r\n');
+    expect(lines[0]).toContain('Стадия');
+    expect(lines[1]).toContain('201');
+    expect(text).toContain('Тендеры проекта');
+    expect(text).toContain('Дедлайн');
+  });
+
+  it('CSV калькулятора содержит вилку, аналоги и разбивку', async () => {
+    enableMocks('?mock=1');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'deals', filters: { estimate_id: 5501 } }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    expect(text).toContain('Оптимум');
+    expect(text).toContain('1650000.00');
+    expect(text).toContain('Аналоги');
+    expect(text).toContain('Поправки');
+    expect(text).toContain('Разбивка по статьям');
+  });
+
+  it('пустой сценарий не выдумывает строки данных', async () => {
+    enableMocks('?mock=1&scenario=empty');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'investments', filters: {} }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    const lines = text.split('\r\n').filter(Boolean);
+    expect(lines).toHaveLength(1);
+  });
+
+  it('пустой сценарий не выдумывает и компании — только заголовки', async () => {
+    enableMocks('?mock=1&scenario=empty');
+    installMocks();
+
+    const response = await call('/exports/csv', {
+      method: 'POST',
+      body: JSON.stringify({ module: 'companies', filters: {} }),
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const text = await new Response(bytes.slice(3)).text();
+    const lines = text.split('\r\n').filter(Boolean);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('ИНН');
   });
 
   it('DOCX создаётся первым запросом и скачивается вторым', async () => {

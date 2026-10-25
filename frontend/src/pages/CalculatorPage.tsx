@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { api, downloadBlob } from '@/api/client';
-import { ErrorState, QualityBadge, Warning } from '@/components/states';
+import { DataGap, ErrorState, QualityBadge, Warning } from '@/components/states';
 import type { DealEstimate } from '@/types/api';
 
 const schema = z.object({
@@ -34,6 +34,7 @@ export function CalculatorPage() {
   const [error, setError] = useState<Error | null>(null);
   const [pending, setPending] = useState(false);
   const [docxError, setDocxError] = useState<string | null>(null);
+  const [csvError, setCsvError] = useState<string | null>(null);
 
   const docx = useMutation({
     mutationFn: (estimateId: number) => api.exportProposal(estimateId),
@@ -42,6 +43,15 @@ export function CalculatorPage() {
       downloadBlob(blob, 'commercial-proposal.docx');
     },
     onError: (exc: Error) => setDocxError(exc.message),
+  });
+
+  const csv = useMutation({
+    mutationFn: (estimateId: number) => api.exportCsv('deals', { estimate_id: estimateId }, 'general'),
+    onSuccess: (blob) => {
+      setCsvError(null);
+      downloadBlob(blob, `deal-estimate-${result?.estimate_id ?? 'result'}.csv`);
+    },
+    onError: (exc: Error) => setCsvError(exc.message),
   });
 
   const {
@@ -163,7 +173,7 @@ export function CalculatorPage() {
           <p>
             <QualityBadge quality={result.data_quality} /> метод: {result.estimator_mode} · модель{' '}
             {result.model_version}
-            {result.price_period ? ` · цены периода ${result.price_period}` : ''}
+            {result.price_period ? ` · цены периода ${result.price_period}` : <DataGap what="Период цен" />}
           </p>
 
           {result.warning && <Warning>{result.warning}</Warning>}
@@ -173,7 +183,7 @@ export function CalculatorPage() {
             {result.comparables.map((item) => (
               <li key={item.deal_id}>
                 {item.title} — {Number(item.contract_value).toLocaleString('ru-RU')} ₽ · сходство{' '}
-                {item.similarity} · цена: {item.retro_price_basis}
+                {item.similarity} · цена: {item.retro_price_basis || <DataGap what="Основа цены" />}
               </li>
             ))}
             {result.comparables.length === 0 && <li>Аналоги не подобраны</li>}
@@ -193,7 +203,7 @@ export function CalculatorPage() {
           <ul className="explanation">
             {result.breakdown.map((row) => (
               <li key={row.article}>
-                {row.article}: {Number(row.amount).toLocaleString('ru-RU')} ₽
+                {row.article}: {row.amount ? `${Number(row.amount).toLocaleString('ru-RU')} ₽` : <DataGap what="Сумма" />}
               </li>
             ))}
             {result.breakdown.length === 0 && <li>Разбивка не рассчитана</li>}
@@ -204,6 +214,7 @@ export function CalculatorPage() {
             стоимостную экспертизу.
           </Warning>
 
+          <div className="form-row" style={{ marginTop: 16 }}>
           <button
             type="button"
             disabled={docx.isPending}
@@ -211,9 +222,22 @@ export function CalculatorPage() {
           >
             {docx.isPending ? 'Готовим документ…' : 'Скачать КП (DOCX)'}
           </button>
+          <button
+            type="button"
+            disabled={csv.isPending}
+            onClick={() => result && csv.mutate(result.estimate_id)}
+          >
+            {csv.isPending ? 'Готовим CSV…' : 'Выгрузить вилку и аналоги (CSV)'}
+          </button>
+        </div>
           {docxError && (
             <p className="warning" role="alert">
               {docxError}
+            </p>
+          )}
+          {csvError && (
+            <p className="warning" role="alert">
+              {csvError}
             </p>
           )}
         </section>

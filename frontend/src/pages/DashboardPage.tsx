@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import { api } from '@/api/client';
+import { api, downloadBlob } from '@/api/client';
 import { EmptyState, ErrorState, Loading } from '@/components/states';
 
 /** Главный дашборд: счётчики и переход в модули (ТЗ 11.3). */
@@ -9,6 +10,17 @@ export function DashboardPage() {
     queryKey: ['dashboard'],
     queryFn: api.dashboard,
   });
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  async function exportCsv(mode: 'general' | 'crm') {
+    setExportError(null);
+    try {
+      const blob = await api.exportCsv('companies', {}, mode);
+      downloadBlob(blob, mode === 'crm' ? 'companies-crm.csv' : 'companies.csv');
+    } catch (exc) {
+      setExportError(exc instanceof Error ? exc.message : 'Экспорт не выполнен');
+    }
+  }
 
   if (isPending) return <Loading label="Загружаем показатели" />;
   if (error) return <ErrorState error={error} onRetry={() => refetch()} />;
@@ -33,6 +45,19 @@ export function DashboardPage() {
             </div>
           ))}
         </div>
+        <div className="form-row" style={{ marginTop: 16 }}>
+          <button type="button" onClick={() => exportCsv('general')}>
+            Экспорт CSV (общий)
+          </button>
+          <button type="button" onClick={() => exportCsv('crm')}>
+            Экспорт CSV (CRM-режим)
+          </button>
+        </div>
+        {exportError && (
+          <p className="warning" role="alert">
+            {exportError}
+          </p>
+        )}
       </section>
     </main>
   );
